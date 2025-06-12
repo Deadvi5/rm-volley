@@ -32,6 +32,16 @@
             100% { background-position: 75% 25%, 15% 85%; }
         }
 
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-top: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
         .language-toggle {
             position: absolute;
             top: 20px;
@@ -309,6 +319,12 @@
             </div>
         </div>
     </div>
+
+    <footer class="footer">
+        <p id="cookie-title">© 2025 RMVolley Piacenza. Tutti i diritti riservati.</p>
+        <p id="cookie-text">Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.</p>
+    </footer>
+    
     <script>
         const translations = {
             it: {
@@ -316,14 +332,18 @@
                 mainText: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
                 ageRequirement: "Solo per atlete nate nel 2012-2013",
                 dateTime: "GIOVEDÌ 19 GIUGNO 2025",
-                time: "ORE 18:00"
+                time: "ORE 18:00",
+                cookieText: "Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.",
+                cookieTitle: "© 2025 RMVolley Piacenza. Tutti i diritti riservati."
             },
             en: {
                 subtitle: "OPEN DAY",
                 mainText: "RM Volley selections are open: show your skills to become part of our team.",
                 ageRequirement: "Only for athletes born in 2012-2013",
                 dateTime: "THURSDAY JUNE 19, 2025",
-                time: "at 6 P.M."
+                time: "at 6 P.M.",
+                cookieText: "Cookies: this site does not use cookies or tracking technologies.",
+                cookieTitle: "© 2025 RMVolley Piacenza. All rights reserved.",
             }
         };
         function switchLanguage(lang) {
@@ -334,6 +354,8 @@
             document.getElementById('age-requirement').textContent = translations[lang].ageRequirement;
             document.getElementById('date-time').textContent = translations[lang].dateTime;
             document.getElementById('time').textContent = translations[lang].time;
+            document.getElementById('cookie-text').textContent = translations[lang].cookieText;
+            document.getElementById('cookie-title').textContent = translations[lang].cookieTitle;
             document.documentElement.lang = lang;
         }
     </script>

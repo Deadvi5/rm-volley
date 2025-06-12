@@ -294,7 +294,7 @@
             <div class="date-time" id="date-time">
                 GIOVEDÌ 19 GIUGNO 2025
             </div>
-            <div class="time">ORE 18:00</div>
+            <div class="time" id="time">ORE 18:00</div>
             <div class="location">
                 <strong>PALESTRA ANNA FRANK</strong><br>
                 VIA ALESSANDRO MANZONI<br>
@@ -316,13 +316,15 @@
                 subtitle: "OPEN DAY",
                 mainText: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
                 ageRequirement: "Solo per atleti nati nel 2012-2013",
-                dateTime: "GIOVEDÌ 19 GIUGNO 2025"
+                dateTime: "GIOVEDÌ 19 GIUGNO 2025",
+                time: "ORE 18:00"
             },
             en: {
                 subtitle: "OPEN DAY",
                 mainText: "RM Volley selections are open: show your skills to become part of our team.",
                 ageRequirement: "Only for athletes born in 2012-2013",
-                dateTime: "THURSDAY JUNE 19, 2025"
+                dateTime: "THURSDAY JUNE 19, 2025",
+                time: "at 6 P.M."
             }
         };
         function switchLanguage(lang) {
@@ -332,6 +334,7 @@
             document.getElementById('main-text').textContent = translations[lang].mainText;
             document.getElementById('age-requirement').textContent = translations[lang].ageRequirement;
             document.getElementById('date-time').textContent = translations[lang].dateTime;
+            document.getElementById('time').textContent = translations[lang].time;
             document.documentElement.lang = lang;
         }
     </script>

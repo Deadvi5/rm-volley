@@ -144,7 +144,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff7fb; /* leggero sfondo, opzionale */
+            background: #fff7fb;
         }
         .logo-img {
             max-width: 80%;
@@ -248,39 +248,27 @@
         }
 
         @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-54px);}
-            to   { opacity: 1; transform: translateY(0);}
-        }
+            from { opacity: 0; transform: translateY(-54px);}  to { opacity: 1; transform: translateY(0);}        }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(54px);}
-            to   { opacity: 1; transform: translateY(0);}
-        }
+            from { opacity: 0; transform: translateY(54px);}   to { opacity: 1; transform: translateY(0);}        }
         @keyframes bounceIn {
-            0%   { opacity: 0; transform: scale(0.5);}
-            55%  { opacity: 1; transform: scale(1.08);}
-            85%  { transform: scale(0.92);}
-            100% { opacity: 1; transform: scale(1);}
-        }
+            0%   { opacity: 0; transform: scale(0.5);}   55%  { opacity: 1; transform: scale(1.08);}   85%  { transform: scale(0.92);}   100% { opacity: 1; transform: scale(1);}        }
 
         /* Responsive */
         @media (max-width: 830px) {
-            .container { padding: 42px 4vw 20px 4vw;}
-            .logo-container { width: 180px; height: 180px; }
-            .year, .title { font-size: 2.12rem; }
-            .date-time { font-size: 1.42rem; }
-        }
+            .container { padding: 42px 4vw 20px 4vw;}            .logo-container { width: 180px; height: 180px; }            .year, .title { font-size: 2.12rem; }            .date-time { font-size: 1.42rem; }        }
         @media (max-width: 550px) {
-            .logo-container { width: 120px; height: 120px; }
-            .container { padding-top: 23vw; }
-            .title { font-size: 1.58rem; }
-            .subtitle { font-size: 1rem; letter-spacing: 3.5px; }
-        }
+            .logo-container { width: 120px; height: 120px; }            .container { padding-top: 23vw; }            .title { font-size: 1.58rem; }            .subtitle { font-size: 1rem; letter-spacing: 3.5px; }        }
     </style>
 </head>
 <body>
     <div class="language-toggle">
         <button class="lang-btn active" onclick="switchLanguage('it')" data-tooltip="Italiano">🇮🇹 IT</button>
         <button class="lang-btn" onclick="switchLanguage('en')" data-tooltip="English">🇬🇧 EN</button>
+        <button class="lang-btn" onclick="switchLanguage('fr')" data-tooltip="Français">🇫🇷 FR</button>
+        <button class="lang-btn" onclick="switchLanguage('es')" data-tooltip="Español">🇪🇸 ES</button>
+        <button class="lang-btn" onclick="switchLanguage('ar')" data-tooltip="العربية">🇸🇦 AR</button>
+        <button class="lang-btn" onclick="switchLanguage('zh')" data-tooltip="中文">🇨🇳 ZH</button>
     </div>
     <div class="container">
         <div class="header">
@@ -344,6 +332,42 @@
                 time: "at 6 P.M.",
                 cookieText: "Cookies: this site does not use cookies or tracking technologies.",
                 cookieTitle: "© 2025 RMVolley Piacenza. All rights reserved.",
+            },
+            fr: {
+                subtitle: "JOURNÉE PORTES OUVERTES",
+                mainText: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.",
+                ageRequirement: "Seulement pour les athlètes nées en 2012-2013",
+                dateTime: "JEUDI 19 JUIN 2025",
+                time: "À 18h00",
+                cookieText: "Cookies : ce site n'utilise pas de cookies ni de technologies de suivi.",
+                cookieTitle: "© 2025 RMVolley Piacenza. Tous droits réservés."
+            },
+            es: {
+                subtitle: "JORNADA DE PUERTAS ABIERTAS",
+                mainText: "Las selecciones de RM Volley están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.",
+                ageRequirement: "Solo para atletas nacidas en 2012-2013",
+                dateTime: "JUEVES 19 DE JUNIO DE 2025",
+                time: "A LAS 18:00",
+                cookieText: "Cookies: este sitio no utiliza cookies ni tecnologías de seguimiento.",
+                cookieTitle: "© 2025 RMVolley Piacenza. Todos los derechos reservados."
+            },
+            ar: {
+                subtitle: "اليوم المفتوح",
+                mainText: "اختبارات RM Volley مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.",
+                ageRequirement: "للعابِرات المولودات عام 2012-2013 فقط",
+                dateTime: "الخميس 19 يونيو 2025",
+                time: "الساعة 18:00",
+                cookieText: "ملفات تعريف الارتباط: هذا الموقع لا يستخدم ملفات تعريف الارتباط أو تقنيات التتبع.",
+                cookieTitle: "© 2025 RMVolley Piacenza. جميع الحقوق محفوظة."
+            },
+            zh: {
+                subtitle: "开放日",
+                mainText: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。",
+                ageRequirement: "仅限2012-2013年出生的运动员",
+                dateTime: "2025年6月19日 星期四",
+                time: "下午6点",
+                cookieText: "Cookies：本网站不使用Cookies或跟踪技术。",
+                cookieTitle: "© 2025 RMVolley Piacenza。版权所有。"
             }
         };
         function switchLanguage(lang) {
@@ -356,6 +380,12 @@
             document.getElementById('time').textContent = translations[lang].time;
             document.getElementById('cookie-text').textContent = translations[lang].cookieText;
             document.getElementById('cookie-title').textContent = translations[lang].cookieTitle;
+            // Handle RTL direction for Arabic
+            if (lang === 'ar') {
+                document.documentElement.dir = 'rtl';
+            } else {
+                document.documentElement.dir = 'ltr';
+            }
             document.documentElement.lang = lang;
         }
     </script>

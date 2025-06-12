@@ -48,6 +48,8 @@
       border: none;
       padding: 8px;
       border-radius: 50%;
+      width: 45px;
+      height: 45px;
       font-size: 1.2rem;
       cursor: pointer;
       transition: background 0.2s, transform 0.2s;
@@ -69,18 +71,25 @@
       border: 0;
     }
     .lang-select {
+      display: block;
+      border: none;
+      font-size: 1rem;
+      color: #fff;
+      cursor: pointer;
+      background: none;
+      outline: none;
+    }
+    .lang-select-wrapper {
       display: none;
       background: rgba(255,255,255,0.15);
       border: none;
       padding: 8px 12px;
       border-radius: 24px;
-      font-size: 1rem;
-      color: #fff;
-      cursor: pointer;
     }
+
     @media (max-width: 600px) {
       .lang-buttons { display: none; }
-      .lang-select { display: block; }
+      .lang-select-wrapper { display: block; }
     }
     /* Container */
     .container {
@@ -170,14 +179,16 @@
       <button class="lang-btn" data-lang="ar" role="radio" aria-checked="false">🇸🇦<span class="sr-only">العربية</span></button>
       <button class="lang-btn" data-lang="zh" role="radio" aria-checked="false">🇨🇳<span class="sr-only">中文</span></button>
     </div>
-    <select class="lang-select" aria-label="Seleziona lingua">
-      <option value="it">🇮🇹 Italiano</option>
-      <option value="en">🇬🇧 English</option>
-      <option value="fr">🇫🇷 Français</option>
-      <option value="es">🇪🇸 Español</option>
-      <option value="ar">🇸🇦 العربية</option>
-      <option value="zh">🇨🇳 中文</option>
-    </select>
+    <div class="lang-select-wrapper">
+        <select class="lang-select" aria-label="Seleziona lingua">
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="ar">🇸🇦 العربية</option>
+        <option value="zh">🇨🇳 中文</option>
+        </select>
+    </div>
   </div>
 
   <div class="container">

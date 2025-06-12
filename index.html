@@ -278,34 +278,43 @@
         <div class="volleyball-container">
             <div class="volleyball-outer">
                 <!-- SVG: Colorful Volleyball (white, pink, light blue) -->
-                <svg class="volleyball-svg" viewBox="0 0 200 200">
-                    <defs>
-                        <linearGradient id="pink" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#ff85b3"/>
-                            <stop offset="100%" stop-color="#ff61a6"/>
-                        </linearGradient>
-                        <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#70a1ff"/>
-                            <stop offset="100%" stop-color="#4b89ff"/>
-                        </linearGradient>
-                        <linearGradient id="white" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#fff"/>
-                            <stop offset="100%" stop-color="#e7e9f0"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- Panels (sections) -->
-                    <path d="M25,100 A75,75 0 0,1 100,25 L100,100 Z" fill="url(#white)" />
-                    <path d="M100,25 A75,75 0 0,1 175,100 L100,100 Z" fill="url(#blue)" />
-                    <path d="M175,100 A75,75 0 0,1 100,175 L100,100 Z" fill="url(#pink)" />
-                    <path d="M100,175 A75,75 0 0,1 25,100 L100,100 Z" fill="url(#blue)" />
-                    <path d="M100,25 A75,75 0 0,0 25,100 L100,100 Z" fill="url(#pink)" />
-                    <!-- Panel Borders -->
-                    <circle cx="100" cy="100" r="75" fill="none" stroke="#ff61a6" stroke-width="3.5"/>
-                    <!-- Internal curved lines for volleyball effect -->
-                    <path d="M100,25 Q110,50 140,65" stroke="#fff" stroke-width="3.5" fill="none" opacity="0.7"/>
-                    <path d="M175,100 Q150,130 150,180" stroke="#fff" stroke-width="3.5" fill="none" opacity="0.7"/>
-                    <path d="M25,100 Q60,110 80,160" stroke="#fff" stroke-width="3.5" fill="none" opacity="0.7"/>
-                    <path d="M100,175 Q120,140 170,130" stroke="#fff" stroke-width="3.5" fill="none" opacity="0.7"/>
+                <svg viewBox="0 0 200 200" width="200" height="200" style="display:block;">
+                  <!-- Panel 1: Hot Pink -->
+                  <path d="M20,100
+                           A80,80 0 0,1 100,20
+                           L120,70
+                           A50,50 0 0,0 70,120
+                           Z"
+                        fill="#ff23b8"/>
+                  <!-- Panel 2: Orange -->
+                  <path d="M100,20
+                           A80,80 0 0,1 180,100
+                           L120,130
+                           A50,50 0 0,0 120,70
+                           Z"
+                        fill="#ff8670"/>
+                  <!-- Panel 3: Dark Purple -->
+                  <path d="M180,100
+                           A80,80 0 0,1 100,180
+                           L80,130
+                           A50,50 0 0,0 120,130
+                           Z"
+                        fill="#2d0666"/>
+                  <!-- Panel 4: Hot Pink 2 -->
+                  <path d="M100,180
+                           A80,80 0 0,1 20,100
+                           L70,80
+                           A50,50 0 0,0 80,130
+                           Z"
+                        fill="#e722b2"/>
+                  <!-- Panel 5: Navy/Blue -->
+                  <path d="M120,70
+                           L120,130
+                           A50,50 0 0,1 70,120
+                           L70,80
+                           A50,50 0 0,1 120,70
+                           Z"
+                        fill="#401587"/>
                 </svg>
             </div>
         </div>

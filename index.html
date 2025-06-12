@@ -113,6 +113,8 @@
             color: #ff61a6;
             text-shadow: 0 0 18px #ff85b3, 0 1px 0 #fff2;
         }
+
+        /* Logo container */
         .volleyball-container {
             margin: 42px 0 34px 0;
             display: flex;
@@ -120,42 +122,45 @@
             align-items: center;
             animation: bounceIn 1.4s cubic-bezier(.55,.7,.5,1.05);
         }
-        .volleyball-outer {
-            background: linear-gradient(120deg, #fff7fb 50%, #e6e7ee 100%);
-            border-radius: 50%;
-            box-shadow: 0 10px 30px rgba(52, 38, 86, 0.15), 0 4px 25px 6px #ff61a633;
-            width: 220px; height: 220px;
+        .logo-container {
+            width: 220px;
+            height: 220px;
             position: relative;
-            overflow: hidden;
+            border-radius: 50%;
             border: 4.5px solid #ff85b3;
-            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 10px 30px rgba(52,38,86,0.15),
+                        0 4px 25px 6px #ff61a633;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff7fb; /* leggero sfondo, opzionale */
         }
-        .volleyball-svg {
-            width: 200px; height: 200px;
+        .logo-img {
+            max-width: 80%;
+            height: auto;
             display: block;
+            z-index: 1;
         }
-        /* "Glow" effect */
-        .volleyball-outer::before {
+        .logo-container::before {
             content: '';
             position: absolute;
             top: 18px; left: 32px;
             width: 60px; height: 60px;
             background: radial-gradient(circle at 35% 30%, #fff7 0%, #fff0 90%);
             border-radius: 50%;
-            z-index: 2;
             opacity: 0.7;
         }
-        .volleyball-outer::after {
+        .logo-container::after {
             content: '';
             position: absolute;
             bottom: 14px; right: 22px;
             width: 50px; height: 35px;
             background: radial-gradient(circle at 60% 60%, #ff61a677 10%, #fff0 80%);
             border-radius: 45%;
-            z-index: 2;
             opacity: 0.48;
         }
-        /* Main info card */
+
         .info-section {
             background: rgba(255,255,255,0.14);
             border-radius: 23px;
@@ -250,17 +255,15 @@
         /* Responsive */
         @media (max-width: 830px) {
             .container { padding: 42px 4vw 20px 4vw;}
-            .volleyball-outer { width: 180px; height: 180px;}
-            .volleyball-svg { width: 165px; height: 165px;}
+            .logo-container { width: 180px; height: 180px; }
             .year, .title { font-size: 2.12rem; }
             .date-time { font-size: 1.42rem; }
         }
         @media (max-width: 550px) {
-            .volleyball-outer { width: 120px; height: 120px;}
-            .volleyball-svg { width: 95px; height: 95px;}
-            .container { padding-top: 23vw;}
-            .title { font-size: 1.58rem;}
-            .subtitle { font-size: 1rem; letter-spacing: 3.5px;}
+            .logo-container { width: 120px; height: 120px; }
+            .container { padding-top: 23vw; }
+            .title { font-size: 1.58rem; }
+            .subtitle { font-size: 1rem; letter-spacing: 3.5px; }
         }
     </style>
 </head>
@@ -276,12 +279,8 @@
             <div class="subtitle" id="subtitle">OPEN DAY</div>
         </div>
         <div class="volleyball-container">
-            <div class="volleyball-outer">
-                <svg width="200" height="200" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="50" cy="50" r="40" fill="pink" stroke="black" stroke-width="5" />
-                  <path d="M 25,25 A 10,10 0 0,0 75,75 Z" fill="orange" />
-                  <path d="M 75,75 A 10,10 0 0,0 25,25 Z" fill="violet" />
-                </svg>
+            <div class="logo-container">
+                <img src="assets/rm-volley.logo.png" alt="Logo RM Volley Piacenza" class="logo-img">
             </div>
         </div>
         <div class="info-section">

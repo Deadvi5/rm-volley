@@ -46,7 +46,7 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-    .hamburger-menu { position: fixed; top: 20px; left: 20px; z-index: 1000; }
+    .hamburger-menu { position: absolute; top: 20px; left: 20px; z-index: 1000; }
     .hamburger-btn {
       width: 50px; height: 50px; background: rgba(255,255,255,0.15); border: none; border-radius: 50%;
       cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -87,7 +87,6 @@
     .menu-item:hover::before { left: 100%; }
     .menu-item:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
 
-    /* --------------------- MODAL CHANGES --------------------- */
     .image-modal {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.93);
       z-index: 1001; display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -183,16 +182,19 @@
     .language-selector { position: absolute; top: 20px; right: 20px; z-index: 10; }
     .lang-buttons { display: flex; gap: 8px; }
     .lang-btn {
+      display: flex;
       background: rgba(255,255,255,0.15);
       border: none;
       padding: 8px;
       border-radius: 50%;
-      width: 45px;
-      height: 45px;
+      width: 40px;
+      height: 40px;
       font-size: 1.2rem;
       cursor: pointer;
       transition: background 0.2s, transform 0.2s;
       position: relative;
+      align-items: center;
+      justify-content: center;
     }
     .lang-btn.active,
     .lang-btn:hover { background: #ff61a6; transform: translateY(-2px) scale(1.1); }
@@ -308,26 +310,45 @@
     </div>
   </div>
   <!-- Language Selector -->
-  <div class="language-selector reveal">
-    <div class="lang-buttons" role="radiogroup" aria-label="Seleziona lingua">
-      <button class="lang-btn active" data-lang="it" role="radio" aria-checked="true">🇮🇹<span class="sr-only">Italiano</span></button>
-      <button class="lang-btn" data-lang="en" role="radio" aria-checked="false">🇬🇧<span class="sr-only">English</span></button>
-      <button class="lang-btn" data-lang="fr" role="radio" aria-checked="false">🇫🇷<span class="sr-only">Français</span></button>
-      <button class="lang-btn" data-lang="es" role="radio" aria-checked="false">🇪🇸<span class="sr-only">Español</span></button>
-      <button class="lang-btn" data-lang="ar" role="radio" aria-checked="false">🇸🇦<span class="sr-only">العربية</span></button>
-      <button class="lang-btn" data-lang="zh" role="radio" aria-checked="false">🇨🇳<span class="sr-only">中文</span></button>
-    </div>
-    <div class="lang-select-wrapper">
-      <select class="lang-select" aria-label="Seleziona lingua">
-        <option value="it">🇮🇹 Italiano</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="ar">🇸🇦 العربية</option>
-        <option value="zh">🇨🇳 中文</option>
-      </select>
-    </div>
+<div class="language-selector reveal">
+  <div class="lang-buttons" role="radiogroup" aria-label="Seleziona lingua">
+    <button class="lang-btn active" data-lang="it" role="radio" aria-checked="true">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/it.svg" alt="Italiano" width="24" height="18" />
+      <span class="sr-only">Italiano</span>
+    </button>
+    <button class="lang-btn" data-lang="en" role="radio" aria-checked="false">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/gb.svg" alt="English" width="24" height="18" />
+      <span class="sr-only">English</span>
+    </button>
+    <button class="lang-btn" data-lang="fr" role="radio" aria-checked="false">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/fr.svg" alt="Français" width="24" height="18" />
+      <span class="sr-only">Français</span>
+    </button>
+    <button class="lang-btn" data-lang="es" role="radio" aria-checked="false">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/es.svg" alt="Español" width="24" height="18" />
+      <span class="sr-only">Español</span>
+    </button>
+    <button class="lang-btn" data-lang="ar" role="radio" aria-checked="false">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/sa.svg" alt="العربية" width="24" height="18" />
+      <span class="sr-only">العربية</span>
+    </button>
+    <button class="lang-btn" data-lang="zh" role="radio" aria-checked="false">
+      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/cn.svg" alt="中文" width="24" height="18" />
+      <span class="sr-only">中文</span>
+    </button>
   </div>
+  <div class="lang-select-wrapper">
+    <select class="lang-select" aria-label="Seleziona lingua">
+      <option value="it">Italiano</option>
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="es">Español</option>
+      <option value="ar">العربية</option>
+      <option value="zh">中文</option>
+    </select>
+  </div>
+</div>
+
   <div class="container reveal">
     <div class="header">
       <div class="year">2025</div>

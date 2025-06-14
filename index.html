@@ -372,6 +372,12 @@
         <div class="contact-item mail"><a href="mailto:info@rmvolley.piacenza" title="Scrivi una mail">📧 INFO@RMVOLLEY.PIACENZA</a></div>
         <div class="contact-item phone"><a href="tel:+393336466990" title="Chiama ora">📱 333 646 6990</a></div>
       </div>
+      <div class="calendar-section" style="margin-top:20px;">
+        <button id="add-to-calendar-btn" class="modal-btn download-btn" style="font-size:1.15rem;display:inline-flex;align-items:center;gap:10px;">
+          <span>📅</span>
+          <span id="calendar-btn-text">Aggiungi al calendario</span>
+        </button>
+    </div>
     </div>
   </div>
   <footer class="footer reveal">
@@ -457,103 +463,128 @@
 
     // Traduzioni
     const translations = {
-      it: { 
-        subtitle: "OPEN DAY", 
-        mainText: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.", 
-        ageRequirement: "Solo per atlete nate nel 2012-2013", 
-        dateTime: "GIOVEDÌ 19 GIUGNO 2025", 
-        time: "ORE 18:00", 
-        cookieText: "Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.", 
-        cookieTitle: "© 2025 RMVolley Piacenza. Tutti i diritti riservati.",
-        menuItem1: "Invito Ufficiale 2012-2013",
-        menuItem2: "Unisciti al Nostro Team",
-        download: "Scarica",
-        contact: "Contattaci",
-        call: "Chiama",
-        email: "Email",
-        close: "Chiudi"
-      },
-      en: { 
-        subtitle: "OPEN DAY", 
-        mainText: "RM Volley selections are open: show your skills to become part of our team.", 
-        ageRequirement: "Only for athletes born in 2012-2013", 
-        dateTime: "THURSDAY JUNE 19, 2025", 
-        time: "at 6 P.M.", 
-        cookieText: "Cookies: this site does not use cookies or tracking technologies.", 
-        cookieTitle: "© 2025 RMVolley Piacenza. All rights reserved.",
-        menuItem1: "2012-2013 Official Invite",
-        menuItem2: "Join Our Team",
-        download: "Download",
-        contact: "Contact Us",
-        call: "Call",
-        email: "Email",
-        close: "Close"
-      },
-      fr: { 
-        subtitle: "JOURNÉE PORTES OUVERTES", 
-        mainText: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.", 
-        ageRequirement: "Seulement pour les athlètes nées en 2012-2013", 
-        dateTime: "JEUDI 19 JUIN 2025", 
-        time: "À 18h00", 
-        cookieText: "Cookies : ce site n'utilise pas de cookies ni de technologies de suivi.", 
-        cookieTitle: "© 2025 RMVolley Piacenza. Tous droits réservés.",
-        menuItem1: "Invitation Officielle 2012-2013",
-        menuItem2: "Rejoignez Notre Équipe",
-        download: "Télécharger",
-        contact: "Nous Contacter",
-        call: "Appeler",
-        email: "Email",
-        close: "Fermer"
-      },
-      es: { 
-        subtitle: "JORNADA DE PUERTAS ABIERTAS", 
-        mainText: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.", 
-        ageRequirement: "Solo para atletas nacidas en 2012-2013", 
-        dateTime: "JUEVES 19 DE JUNIO DE 2025", 
-        time: "A LAS 18:00", 
-        cookieText: "Cookies: este sitio no utiliza cookies ni tecnologías de seguimiento.", 
-        cookieTitle: "© 2025 RMVolley Piacenza. Todos los derechos reservados.",
-        menuItem1: "Invitación Oficial 2012-2013",
-        menuItem2: "Únete a Nuestro Equipo",
-        download: "Descargar",
-        contact: "Contáctanos",
-        call: "Llamar",
-        email: "Email",
-        close: "Cerrar"
-      },
-      ar: { 
-        subtitle: "اليوم المفتوح", 
-        mainText: "اختبارات RM Volleyball مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.", 
-        ageRequirement: "للعابِرات المولودات عام 2012-2013 فقط", 
-        dateTime: "الخميس 19 يونيو 2025", 
-        time: "الساعة 18:00", 
-        cookieText: "ملفات تعريف الارتباط: هذا الموقع لا يستخدم ملفات تعريف ارتباط أو تقنيات تتبع.", 
-        cookieTitle: "© 2025 RMVolley Piacenza. جميع الحقوق محفوظة.",
-        menuItem1: "دعوة رسمية 2012-2013",
-        menuItem2: "انضم إلى فريقنا",
-        download: "تحميل",
-        contact: "اتصل بنا",
-        call: "اتصال",
-        email: "البريد الإلكتروني",
-        close: "إغلاق"
-      },
-      zh: { 
-        subtitle: "开放日", 
-        mainText: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。", 
-        ageRequirement: "仅限2012-2013年出生的运动员", 
-        dateTime: "2025年6月19日 星期四", 
-        time: "下午6点", 
-        cookieText: "Cookies：本网站不使用Cookies或跟踪技术。", 
-        cookieTitle: "© 2025 RMVolley Piacenza。版权所有。",
-        menuItem1: "2012-2013官方邀请",
-        menuItem2: "加入我们的团队",
-        download: "下载",
-        contact: "联系我们",
-        call: "电话",
-        email: "邮件",
-        close: "关闭"
-      }
-    };
+    it: { 
+      subtitle: "OPEN DAY", 
+      mainText: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.", 
+      ageRequirement: "Solo per atlete nate nel 2012-2013", 
+      dateTime: "GIOVEDÌ 19 GIUGNO 2025", 
+      time: "ORE 18:00", 
+      cookieText: "Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.", 
+      cookieTitle: "© 2025 RMVolley Piacenza. Tutti i diritti riservati.",
+      menuItem1: "Invito Ufficiale 2012-2013",
+      menuItem2: "Unisciti al Nostro Team",
+      download: "Scarica",
+      contact: "Contattaci",
+      call: "Chiama",
+      email: "Email",
+      close: "Chiudi",
+      btn: "Aggiungi al calendario",
+      title: "VOLLEYBALL OPEN DAY",
+      description: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
+      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
+    },
+    en: { 
+      subtitle: "OPEN DAY", 
+      mainText: "RM Volley selections are open: show your skills to become part of our team.", 
+      ageRequirement: "Only for athletes born in 2012-2013", 
+      dateTime: "THURSDAY JUNE 19, 2025", 
+      time: "at 6 P.M.", 
+      cookieText: "Cookies: this site does not use cookies or tracking technologies.", 
+      cookieTitle: "© 2025 RMVolley Piacenza. All rights reserved.",
+      menuItem1: "2012-2013 Official Invite",
+      menuItem2: "Join Our Team",
+      download: "Download",
+      contact: "Contact Us",
+      call: "Call",
+      email: "Email",
+      close: "Close",
+      btn: "Add to calendar",
+      title: "VOLLEYBALL OPEN DAY",
+      description: "RM Volley selections are open: show your skills to become part of our team.",
+      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
+    },
+    fr: { 
+      subtitle: "JOURNÉE PORTES OUVERTES", 
+      mainText: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.", 
+      ageRequirement: "Seulement pour les athlètes nées en 2012-2013", 
+      dateTime: "JEUDI 19 JUIN 2025", 
+      time: "À 18h00", 
+      cookieText: "Cookies : ce site n'utilise pas de cookies ni de technologies de suivi.", 
+      cookieTitle: "© 2025 RMVolley Piacenza. Tous droits réservés.",
+      menuItem1: "Invitation Officielle 2012-2013",
+      menuItem2: "Rejoignez Notre Équipe",
+      download: "Télécharger",
+      contact: "Nous Contacter",
+      call: "Appeler",
+      email: "Email",
+      close: "Fermer",
+      btn: "Ajouter au calendrier",
+      title: "JOURNÉE PORTES OUVERTES VOLLEY",
+      description: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.",
+      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
+    },
+    es: { 
+      subtitle: "JORNADA DE PUERTAS ABIERTAS", 
+      mainText: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.", 
+      ageRequirement: "Solo para atletas nacidas en 2012-2013", 
+      dateTime: "JUEVES 19 DE JUNIO DE 2025", 
+      time: "A LAS 18:00", 
+      cookieText: "Cookies: este sitio no utiliza cookies ni tecnologías de seguimiento.", 
+      cookieTitle: "© 2025 RMVolley Piacenza. Todos los derechos reservados.",
+      menuItem1: "Invitación Oficial 2012-2013",
+      menuItem2: "Únete a Nuestro Equipo",
+      download: "Descargar",
+      contact: "Contáctanos",
+      call: "Llamar",
+      email: "Email",
+      close: "Cerrar",
+      btn: "Añadir al calendario",
+      title: "VOLLEYBALL OPEN DAY",
+      description: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.",
+      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
+    },
+    ar: { 
+      subtitle: "اليوم المفتوح", 
+      mainText: "اختبارات RM Volleyball مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.", 
+      ageRequirement: "للعابِرات المولودات عام 2012-2013 فقط", 
+      dateTime: "الخميس 19 يونيو 2025", 
+      time: "الساعة 18:00", 
+      cookieText: "ملفات تعريف الارتباط: هذا الموقع لا يستخدم ملفات تعريف ارتباط أو تقنيات تتبع.", 
+      cookieTitle: "© 2025 RMVolley Piacenza. جميع الحقوق محفوظة.",
+      menuItem1: "دعوة رسمية 2012-2013",
+      menuItem2: "انضم إلى فريقنا",
+      download: "تحميل",
+      contact: "اتصل بنا",
+      call: "اتصال",
+      email: "البريد الإلكتروني",
+      close: "إغلاق",
+      btn: "أضف إلى التقويم",
+      title: "يوم كرة الطائرة المفتوح",
+      description: "اختبارات RM Volleyball مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.",
+      location: "PALESTRA ANNA FRANK، VIA ALESSANDRO MANZONI، PIACENZA"
+    },
+    zh: { 
+      subtitle: "开放日", 
+      mainText: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。", 
+      ageRequirement: "仅限2012-2013年出生的运动员", 
+      dateTime: "2025年6月19日 星期四", 
+      time: "下午6点", 
+      cookieText: "Cookies：本网站不使用Cookies或跟踪技术。", 
+      cookieTitle: "© 2025 RMVolley Piacenza。版权所有。",
+      menuItem1: "2012-2013官方邀请",
+      menuItem2: "加入我们的团队",
+      download: "下载",
+      contact: "联系我们",
+      call: "电话",
+      email: "邮件",
+      close: "关闭",
+      btn: "添加到日历",
+      title: "排球开放日",
+      description: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。",
+      location: "PALESTRA ANNA FRANK，VIA ALESSANDRO MANZONI，PIACENZA"
+    }
+  };
+
     const buttons = document.querySelectorAll('.lang-btn');
     const select = document.querySelector('.lang-select');
     function switchLang(lang) {
@@ -573,6 +604,9 @@
       document.getElementById('contact-text').textContent = t.contact;
       document.getElementById('call-text').textContent = t.call;
       document.getElementById('email-text').textContent = t.email;
+      if (document.getElementById('calendar-btn-text') && translations[lang].btn)
+        document.getElementById('calendar-btn-text').textContent = translations[lang].btn;
+
       closeModalBtn.setAttribute('aria-label', t.close);
       buttons.forEach(btn => {
         const isActive = btn.dataset.lang === lang;
@@ -595,6 +629,85 @@
     }, { threshold: 0.2 });
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   });
+  // ---- AGGIUNGI AL CALENDARIO ----
+  const addToCalendarBtn = document.getElementById('add-to-calendar-btn');
+  if (addToCalendarBtn) {
+    addToCalendarBtn.addEventListener('click', function() {
+      // Recupera i dati dell’evento dalla pagina
+      const translations = {
+        it: {
+          title: "VOLLEYBALL OPEN DAY",
+          description: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
+          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
+          btn: "Aggiungi al calendario"
+        },
+        en: {
+          title: "VOLLEYBALL OPEN DAY",
+          description: "RM Volley selections are open: show your skills to become part of our team.",
+          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
+          btn: "Add to calendar"
+        },
+        fr: {
+          title: "JOURNÉE PORTES OUVERTES VOLLEY",
+          description: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.",
+          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
+          btn: "Ajouter au calendrier"
+        },
+        es: {
+          title: "VOLLEYBALL OPEN DAY",
+          description: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.",
+          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
+          btn: "Añadir al calendario"
+        }
+        // Puoi aggiungere altre lingue qui...
+      };
+
+      // Prendi lingua corrente della pagina
+      let lang = document.documentElement.lang || "it";
+      if (!translations[lang]) lang = "it";
+      const t = translations[lang];
+
+      // Data e orari dell’evento
+      const start = new Date("2025-06-19T18:00:00+02:00");
+      const end = new Date("2025-06-19T20:00:00+02:00"); // esempio: evento di 2 ore
+
+      // Formatta data per iCalendar (UTC, formato: YYYYMMDDTHHMMSSZ)
+      function formatICSDate(date) {
+        return date.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+      }
+
+      // Testo .ics
+      const icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//RMVolley Piacenza//Open Day//IT",
+        "BEGIN:VEVENT",
+        `UID:rmvolley-openday-2025@rmvolley.piacenza`,
+        `DTSTAMP:${formatICSDate(new Date())}`,
+        `DTSTART:${formatICSDate(start)}`,
+        `DTEND:${formatICSDate(end)}`,
+        `SUMMARY:${t.title}`,
+        `DESCRIPTION:${t.description}`,
+        `LOCATION:${t.location}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].join("\r\n");
+
+      // Crea il blob e il download
+      const blob = new Blob([icsContent], { type: "text/calendar" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "RMVolley-OpenDay-2025.ics";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+    });
+  }
   </script>
 </body>
 </html>

@@ -1,0 +1,267 @@
+name: Aggiorna Dati RM Volley (Avanzato)
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Forza aggiornamento anche senza cambiamenti'
+        required: false
+        default: false
+        type: boolean
+  
+  schedule:
+    # Run weekly: every Sunday at 08:00 UTC (09:00 CET)
+    - cron: '0 8 * * 0'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      issues: write
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for backup
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 📦 Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install pandas openpyxl xlrd requests
+          fi
+      
+      - name: 💾 Backup existing file
+        if: always()
+        run: |
+          if [ -f "Gare.xls" ]; then
+            BACKUP_NAME="backups/Gare_$(date +'%Y%m%d_%H%M%S').xls"
+            mkdir -p backups
+            cp Gare.xls "$BACKUP_NAME"
+            echo "✅ Backup created: $BACKUP_NAME"
+            echo "BACKUP_FILE=$BACKUP_NAME" >> $GITHUB_ENV
+            
+            # Keep only last 10 backups
+            cd backups
+            ls -t Gare_*.xls | tail -n +11 | xargs -r rm
+            cd ..
+          else
+            echo "ℹ️ No existing file to backup"
+            echo "BACKUP_FILE=none" >> $GITHUB_ENV
+          fi
+      
+      - name: 🔄 Run update script
+        id: update
+        run: |
+          echo "Starting update at $(date)"
+          python update_gare.py 2>&1 | tee update_log.txt
+          
+          # Check exit code
+          if [ ${PIPESTATUS[0]} -eq 0 ]; then
+            echo "update_status=success" >> $GITHUB_OUTPUT
+            echo "✅ Update completed successfully"
+          else
+            echo "update_status=failed" >> $GITHUB_OUTPUT
+            echo "❌ Update failed"
+            exit 1
+          fi
+        continue-on-error: true
+      
+      - name: 📊 Validate output file
+        id: validate
+        if: steps.update.outputs.update_status == 'success'
+        run: |
+          if [ ! -f "Gare.xls" ]; then
+            echo "❌ Gare.xls not found"
+            echo "validation=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          FILE_SIZE=$(stat -f%z "Gare.xls" 2>/dev/null || stat -c%s "Gare.xls")
+          
+          if [ "$FILE_SIZE" -lt 1000 ]; then
+            echo "❌ File too small ($FILE_SIZE bytes)"
+            echo "validation=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ File validated: $FILE_SIZE bytes"
+          echo "file_size=$FILE_SIZE" >> $GITHUB_OUTPUT
+          echo "validation=success" >> $GITHUB_OUTPUT
+          
+          # Extract some stats using Python
+          python << 'EOF'
+          import pandas as pd
+          try:
+              df = pd.read_excel('Gare.xls', engine='xlrd')
+              print(f"Total rows: {len(df)}")
+              print(f"Total columns: {len(df.columns)}")
+              
+              # Write stats to output
+              with open('stats.txt', 'w') as f:
+                  f.write(f"rows={len(df)}\n")
+                  f.write(f"columns={len(df.columns)}\n")
+                  if 'Campionato' in df.columns:
+                      f.write(f"championships={df['Campionato'].nunique()}\n")
+          except Exception as e:
+              print(f"Warning: Could not extract stats: {e}")
+          EOF
+          
+          if [ -f "stats.txt" ]; then
+            cat stats.txt >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 📝 Get current date
+        id: date
+        run: |
+          echo "date=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+          echo "short_date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      
+      - name: 🔍 Check for changes
+        id: changes
+        run: |
+          git add Gare.xls backups/ 2>/dev/null || true
+          
+          if git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changes detected"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Changes detected"
+          fi
+      
+      - name: 💾 Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true' || inputs.force_update == true
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Create commit message with stats
+          COMMIT_MSG="🔄 Aggiorna dati: ${{ steps.date.outputs.date }}"
+          
+          if [ -f "stats.txt" ]; then
+            COMMIT_MSG="${COMMIT_MSG}\n\n"
+            COMMIT_MSG="${COMMIT_MSG}📊 Statistiche:\n"
+            COMMIT_MSG="${COMMIT_MSG}- Righe: ${{ steps.validate.outputs.rows }}\n"
+            COMMIT_MSG="${COMMIT_MSG}- Colonne: ${{ steps.validate.outputs.columns }}\n"
+            COMMIT_MSG="${COMMIT_MSG}- Dimensione: ${{ steps.validate.outputs.file_size }} bytes"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git push
+          
+          echo "✅ Changes pushed to repository"
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      
+      - name: 📊 Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rm-volley-data-${{ steps.date.outputs.short_date }}-${{ github.run_number }}
+          path: |
+            Gare.xls
+            update_log.txt
+            backups/
+          retention-days: 30
+      
+      - name: 📝 Create detailed summary
+        if: always()
+        run: |
+          if [ "${{ steps.update.outputs.update_status }}" == "success" ]; then
+            echo "## ✅ Aggiornamento Completato con Successo" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Aggiornamento Fallito" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Informazioni" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valore |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📅 Data/Ora | ${{ steps.date.outputs.date }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔢 Run Number | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔀 Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.validate.outputs.validation }}" == "success" ]; then
+            echo "| 📏 Righe | ${{ steps.validate.outputs.rows }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📋 Colonne | ${{ steps.validate.outputs.columns }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| 💾 Dimensione | ${{ steps.validate.outputs.file_size }} bytes |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ env.BACKUP_FILE }}" != "none" ]; then
+            echo "### 💾 Backup" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Backup creato: \`${{ env.BACKUP_FILE }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ steps.changes.outputs.has_changes }}" == "true" ]; then
+            echo "### 🔗 Link Utili" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- 📄 [Visualizza Gare.xls](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/Gare.xls)" >> $GITHUB_STEP_SUMMARY
+            echo "- 📦 [Download Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔍 [Commit](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.commit_sha }})" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Nessuna modifica ai dati" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "update_log.txt" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Log Aggiornamento" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 20 update_log.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🐛 Create issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ Aggiornamento dati fallito - ${{ steps.date.outputs.date }}',
+              body: `## ❌ Errore durante l'aggiornamento automatico dei dati
+              
+              **Data/Ora:** ${{ steps.date.outputs.date }}
+              **Run ID:** #${{ github.run_number }}
+              **Workflow:** [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              
+              ### 🔍 Dettagli
+              
+              Controlla i log del workflow per maggiori informazioni.
+              
+              ### 🔗 Link
+              
+              - [Visualizza Log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+              - [Workflow File](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/.github/workflows/update-data.yml)
+              
+              ---
+              _Issue creata automaticamente da GitHub Actions_`,
+              labels: ['automated', 'data-update', 'bug']
+            });
+            
+            console.log(`Issue created: ${issue.data.html_url}`);

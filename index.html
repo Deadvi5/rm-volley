@@ -778,13 +778,20 @@
             teamsData = {};
             const rmTeams = new Set();
 
+            // Helper to identify RM teams (handles 'RMVOLLEY' and 'RM VOLLEY' variants)
+            function isRmTeam(name) {
+                if (!name) return false;
+                const normalized = String(name).toUpperCase().replace(/\s+/g, ' ');
+                return /RM\s*VOLLEY/.test(normalized) || /RMVOLLEY/.test(normalized);
+            }
+
             // Find all RM Volley teams
             allMatches.forEach(match => {
                 const home = match.SquadraCasa;
                 const away = match.SquadraOspite;
-                
-                if (home && home.includes('RMVOLLEY')) rmTeams.add(home);
-                if (away && away.includes('RMVOLLEY')) rmTeams.add(away);
+
+                if (isRmTeam(home)) rmTeams.add(home);
+                if (isRmTeam(away)) rmTeams.add(away);
             });
 
             // Initialize team data
@@ -805,8 +812,8 @@
                 const home = match.SquadraCasa;
                 const away = match.SquadraOspite;
                 const result = match.Risultato;
-                const isRmHome = home && home.includes('RMVOLLEY');
-                const isRmAway = away && away.includes('RMVOLLEY');
+                const isRmHome = isRmTeam(home);
+                const isRmAway = isRmTeam(away);
 
                 if (isRmHome) {
                     teamsData[home].totalMatches++;
@@ -846,6 +853,8 @@
 
             document.getElementById('totalMatches').textContent = allMatches.length;
             document.getElementById('winRate').textContent = overallWinRate + '%';
+            // Update total teams count in header
+            document.getElementById('totalTeams').textContent = Object.keys(teamsData).length;
 
             // Populate filters
             populateFilters();

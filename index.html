@@ -1767,22 +1767,28 @@
 
         // Render matches
         function renderMatches() {
-            const list = document.getElementById('matchesList');
+    const list = document.getElementById('matchesList');
 
-            if (filteredMatches.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🏐</div>
-                        <h3>Nessuna partita</h3>
-                        <p>Prova a modificare i filtri</p>
-                    </div>
-                `;
-                return;
-            }
+    if (filteredMatches.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🏐</div>
+                <h3>Nessuna partita</h3>
+                <p>Prova a modificare i filtri</p>
+            </div>
+        `;
+        return;
+    }
 
-            const sorted = [...filteredMatches].sort((a, b) => parseDate(b.Data) - parseDate(a.Data));
-            list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
-        }
+    const today = new Date();
+    const sorted = [...filteredMatches].sort((a, b) => {
+        const dateA = Math.abs(parseDate(a.Data) - today);
+        const dateB = Math.abs(parseDate(b.Data) - today);
+        return dateA - dateB;
+    });
+    
+    list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
+}
 
         // Create match card HTML
         function createMatchCardHTML(match) {

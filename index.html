@@ -1,713 +1,1237 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Volleyball Open Day 2025 - RMVolley Piacenza</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { min-height: 100%; }
-    body {
-      font-family: 'Montserrat', Arial, sans-serif;
-      background: linear-gradient(135deg, #162447 0%, #1f4068 100%);
-      color: #fff;
-      position: relative;
-      overflow-x: hidden;
-    }
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 80% 20%, #ff85b3 0%, transparent 50%),
-                  radial-gradient(circle at 10% 80%, #70a1ff 0%, transparent 60%);
-      opacity: 0.35;
-      animation: bgmove 10s ease-in-out infinite alternate;
-      pointer-events: none;
-      z-index: 0;
-    }
-    @keyframes bgmove {
-      from { background-position: 80% 20%, 10% 80%; }
-      to   { background-position: 75% 25%, 15% 85%; }
-    }
-    .subtitle {
-      font-size: 3.5rem;
-      font-weight: 900;
-      letter-spacing: 2.5px;
-      background: linear-gradient(270deg, #ff61a6, #70a1ff, #ff85b3);
-      background-size: 600% 600%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: gradientBG 8s ease infinite;
-      text-shadow: 2px 3px 16px #0007;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .hamburger-menu { position: absolute; top: 20px; left: 20px; z-index: 1000; }
-    .hamburger-btn {
-      width: 50px; height: 50px; background: rgba(255,255,255,0.15); border: none; border-radius: 50%;
-      cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center;
-      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-    }
-    .hamburger-btn:hover { background: rgba(255,97,166,0.3); transform: scale(1.1); }
-    .hamburger-btn.active { background: #ff61a6; transform: scale(1.1) rotate(90deg); }
-    .hamburger-line {
-      width: 24px; height: 3px; background: #fff; margin: 2px 0; border-radius: 2px;
-      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    .hamburger-btn.active .hamburger-line:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-    .hamburger-btn.active .hamburger-line:nth-child(2) { opacity: 0; }
-    .hamburger-btn.active .hamburger-line:nth-child(3) { transform: rotate(-45deg) translate(7px, -6px); }
-    .menu-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(22,36,71,0.95);
-      backdrop-filter: blur(10px); z-index: 999; display: flex; justify-content: center; align-items: center;
-      opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    .menu-overlay.active { opacity: 1; visibility: visible; }
-    .menu-content {
-      text-align: center; transform: translateY(30px) scale(0.9); opacity: 0;
-      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.1s;
-    }
-    .menu-overlay.active .menu-content { transform: translateY(0) scale(1); opacity: 1; }
-    .menu-item {
-      margin: 20px 0; padding: 20px 40px; background: linear-gradient(135deg, #ff61a6, #70a1ff);
-      border-radius: 25px; cursor: pointer; font-size: 1.3rem; font-weight: 700;
-      transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      position: relative; overflow: hidden;
-    }
-    .menu-item::before {
-      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: left 0.5s ease;
-    }
-    .menu-item:hover::before { left: 100%; }
-    .menu-item:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RM Volley - Dashboard</title>
+    
+    <!-- SheetJS library for reading Excel files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .image-modal {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.93);
-      z-index: 1001; display: flex; flex-direction: column; justify-content: center; align-items: center;
-      opacity: 0; visibility: hidden; transition: all 0.4s ease;
-      overflow-y: auto; /* enable scroll if content overflows */
-    }
-    .image-modal.active { opacity: 1; visibility: visible; }
-    .modal-content {
-      max-width: 96vw;
-      max-height: none;
-      margin-top: 40px;
-      margin-bottom: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-      transform: scale(0.8);
-      transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-    .image-modal.active .modal-content { transform: scale(1); }
-    .modal-image {
-      width: auto;
-      max-width: 100vw;
-      max-height: 80vh;
-      display: block;
-      margin: 0 auto;
-      border-radius: 15px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      background: #fff;
-    }
-    .close-btn {
-      position: absolute; top: -15px; right: -15px; width: 40px; height: 40px;
-      background: #ff61a6; border: none; border-radius: 50%; color: white; font-size: 1.5rem;
-      cursor: pointer; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      z-index: 3;
-    }
-    .close-btn:hover { background: #ff4d94; transform: rotate(90deg) scale(1.1); }
-    .modal-actions {
-      width: 100vw;
-      max-width: 600px;
-      display: flex; justify-content: center; gap: 20px; margin: 30px auto 30px; flex-wrap: wrap;
-      position: sticky;
-      bottom: 0;
-      background: rgba(15,15,15,0.8);
-      padding: 18px 0 8px;
-      z-index: 2;
-      border-radius: 20px 20px 0 0;
-    }
-    /* ------------- END MODAL CHANGES ------------- */
+        :root {
+            --primary: #0066FF;
+            --primary-dark: #0052CC;
+            --secondary: #00D4FF;
+            --success: #00C853;
+            --warning: #FFB300;
+            --danger: #FF3D00;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B6B6B;
+            --text-tertiary: #9E9E9E;
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8F9FA;
+            --bg-tertiary: #ECEFF1;
+            --border: #E0E0E0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
 
-    .modal-btn {
-      padding: 12px 30px; border: none; border-radius: 25px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-flex;
-      align-items: center; gap: 8px; color: white;
-    }
-    .download-btn {
-      background: linear-gradient(135deg, #70a1ff, #5470ff);
-      box-shadow: 0 5px 15px rgba(112,161,255,0.4);
-    }
-    .download-btn:hover {
-      transform: translateY(-3px); box-shadow: 0 8px 25px rgba(112,161,255,0.6);
-    }
-    .contact-btn {
-      background: linear-gradient(135deg, #ff61a6, #ff4d94);
-      box-shadow: 0 5px 15px rgba(255,97,166,0.4);
-    }
-    .contact-btn:hover {
-      transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255,97,166,0.6);
-    }
-    .contact-options {
-      display: none; flex-direction: column; gap: 10px; margin-top: 10px;
-    }
-    .contact-options.active { display: flex; }
-    .contact-option {
-      padding: 10px 20px; border: none; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; transition: all 0.3s ease; text-decoration: none; color: white;
-      display: inline-flex; align-items: center; gap: 8px;
-    }
-    .call-btn {
-      background: linear-gradient(135deg, #32cd32, #228b22);
-      box-shadow: 0 3px 10px rgba(50,205,50,0.4);
-    }
-    .call-btn:hover {
-      transform: translateY(-2px); box-shadow: 0 5px 15px rgba(50,205,50,0.6);
-    }
-    .email-btn {
-      background: linear-gradient(135deg, #ffa500, #ff8c00);
-      box-shadow: 0 3px 10px rgba(255,165,0,0.4);
-    }
-    .email-btn:hover {
-      transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,165,0,0.6);
-    }
-    .language-selector { position: absolute; top: 20px; right: 20px; z-index: 10; }
-    .lang-buttons { display: flex; gap: 8px; }
-    .lang-btn {
-      display: flex;
-      background: rgba(255,255,255,0.15);
-      border: none;
-      padding: 8px;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.2s;
-      position: relative;
-      align-items: center;
-      justify-content: center;
-    }
-    .lang-btn.active,
-    .lang-btn:hover { background: #ff61a6; transform: translateY(-2px) scale(1.1); }
-    .lang-btn .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
-    .lang-select-wrapper { display: none; background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 24px; }
-    .lang-select { border: none; font-size: 1rem; color: #fff; background: none; outline: none; }
-    @media (max-width: 1100px) { .lang-buttons { display: none; } .lang-select-wrapper { display: block; } }
-    .container { max-width: 800px; width: 90%; margin: 0 auto; text-align: center; padding: 60px 0 40px; position: relative; z-index: 1; }
-    .header { margin-bottom: 30px; }
-    .year { font-size: 3rem; font-weight: 900; letter-spacing: .09em; color: #70a1ff; text-shadow: 1px 2px 8px #1117, 0 1px 0 #fff3; }
-    .title { font-size: 3.5rem; font-weight: 900; letter-spacing: 2.5px; text-shadow: 2px 3px 16px #0007; }
-    .volleyball-container { margin: 40px 0; display: flex; justify-content: center; }
-    .logo-container {
-      width: 200px; height: 200px;
-      border-radius: 50%; border: 4px solid #ff85b3;
-      background: #fff7fb;
-      box-shadow: 0 10px 30px rgba(52,38,86,0.15), 0 4px 25px 6px #ff61a633;
-      position: relative; overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      perspective: 800px;
-      transition: 
-        transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-        filter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-      will-change: transform, box-shadow, filter;
-      backface-visibility: hidden;
-    }
-    .logo-container:active {
-      transform: rotateY(0deg) rotateX(0deg) scale(0.98);
-      filter: brightness(1.04);
-      box-shadow: 0 6px 18px 0 rgba(33, 150, 243, 0.18);
-    }
-    .logo-container:hover {
-      transform: rotateY(15deg) rotateX(10deg) scale(1.09);
-      box-shadow: 0 12px 36px 0 rgba(33, 150, 243, 0.32), 0 1.5px 8px 0 rgba(0,0,0,0.24);
-      filter: brightness(1.18) drop-shadow(0 0 18px #32c8fa);
-      outline: 2px solid #6ee0f7;
-      outline-offset: 6px;
-    }
-    .logo-img { max-width: 80%; z-index: 1; }
-    .info-section { background: rgba(255,255,255,0.14); border: 1.8px solid #ff61a688; border-radius: 20px; padding: 30px 20px; margin: 20px 0; box-shadow: 0 2px 26px #ff85b32a, 0 1px 0 #fff2; }
-    .main-text { font-size: 1.3rem; font-weight: 500; margin-bottom: 20px; }
-    .age-requirement { background: linear-gradient(90deg, #ff85b3 0%, #70a1ff 100%); padding: 12px 0; border-radius: 14px; font-size: 1.1rem; font-weight: bold; color: #fff; margin: 20px 0; box-shadow: 0 2px 10px #ff85b32e; }
-    .date-time { font-size: 2rem; font-weight: 900; color: #ff61a6; margin: 15px 0 5px; letter-spacing: 2px; text-shadow: 0 2px 8px #1116; }
-    .time { font-size: 1.4rem; font-weight: 700; color: #70a1ff; margin-bottom: 20px; }
-    .location { font-size: 1rem; line-height: 1.6; margin-bottom: 25px; }
-    .contact-section { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-    .contact-item a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 24px; background: linear-gradient(90deg,#ff85b3 0%,#70a1ff 100%); box-shadow:0 2px 18px #ff61a642; font-size:1rem; font-weight:700; text-decoration:none; color:#fff; transition: transform .2s, filter .2s; }
-    .contact-item a:hover { filter: brightness(1.1) drop-shadow(0 3px 12px #fff2); transform: translateY(-2px) scale(1.05); }
-    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-    .contact-item.mail a:hover, .contact-item.phone a:hover { animation: pulse 0.6s ease-in-out; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
-    .footer { text-align: center; padding: 20px; font-size: 0.85rem; color: #ccc; margin-top: 40px; position: relative; z-index: 1; }
-    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
-    .reveal.active { opacity: 1; transform: translateY(0); }
-    @media(max-width:600px) { 
-      .container { padding:80px 10px 40px; } 
-      .logo-container{width:150px;height:150px;} 
-      .year{font-size:2.5rem;} 
-      .title{font-size:2.2rem;} 
-      .subtitle{font-size:1.2rem;letter-spacing:5px;} 
-      .menu-item { font-size: 1.1rem; padding: 15px 30px; }
-      .modal-actions { flex-direction: column; align-items: center; }
-      .modal-content { max-width: 100vw; }
-      .modal-image { max-width: 100vw; }
-    }
-  </style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.25rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Filters */
+        .filters {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        /* Team Cards */
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .team-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.25rem;
+        }
+
+        .team-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .team-category {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .team-badge {
+            font-size: 2rem;
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .stat-box-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-box-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .win-rate-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .win-rate-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--primary));
+            border-radius: 999px;
+            transition: width 0.6s ease;
+        }
+
+        .win-rate-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .win-rate-label span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Matches Section */
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: var(--bg-primary);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Match Cards */
+        .matches-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .match-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+
+        .match-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .match-meta {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .match-date {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .match-day {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .match-month {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .match-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .match-championship {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .match-time {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .match-status {
+            padding: 0.375rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-played {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--success);
+        }
+
+        .status-upcoming {
+            background: rgba(0, 102, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .status-unofficial {
+            background: rgba(255, 179, 0, 0.1);
+            color: var(--warning);
+        }
+
+        .match-teams {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1.5rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .team {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .team.away {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
+        .team-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .team.rm .team-logo {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .team-details {
+            flex: 1;
+        }
+
+        .team-name-match {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .score {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .score-separator {
+            color: var(--text-tertiary);
+            margin: 0 0.5rem;
+        }
+
+        .winner .score-value {
+            color: var(--success);
+        }
+
+        .sets-detail {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+        }
+
+        .set-score {
+            padding: 0.375rem 0.75rem;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .match-venue {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                padding: 0 1rem;
+            }
+
+            .header-stats {
+                display: none;
+            }
+
+            .teams-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .match-teams {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .score {
+                order: -1;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Hamburger Menu -->
-  <div class="hamburger-menu">
-    <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu">
-      <div class="hamburger-line"></div>
-      <div class="hamburger-line"></div>
-      <div class="hamburger-line"></div>
-    </button>
-  </div>
-  <!-- Menu Overlay -->
-  <div class="menu-overlay" id="menu-overlay">
-    <div class="menu-content">
-      <div class="menu-item" data-image="1" id="menu-item-1">
-        <span id="menu-text-1">Invito Ufficiale 2012-2013</span>
-      </div>
-      <div class="menu-item" data-image="2" id="menu-item-2">
-        <span id="menu-text-2">Unisciti al Nostro Team</span>
-      </div>
-    </div>
-  </div>
-  <!-- Image Modal -->
-  <div class="image-modal" id="image-modal">
-    <div class="modal-content">
-      <img src="" alt="" class="modal-image" id="modal-image">
-      <button class="close-btn" id="close-modal" aria-label="Chiudi">&times;</button>
-    </div>
-    <div class="modal-actions">
-      <a href="#" class="modal-btn download-btn" id="download-btn">
-        <span>📥</span>
-        <span id="download-text">Scarica</span>
-      </a>
-      <button class="modal-btn contact-btn" id="contact-btn">
-        <span>📞</span>
-        <span id="contact-text">Contattaci</span>
-      </button>
-      <div class="contact-options" id="contact-options">
-        <a href="tel:+393336466990" class="contact-option call-btn">
-          <span>📱</span>
-          <span id="call-text">Chiama</span>
-        </a>
-        <a href="mailto:info@rmvolley.piacenza" class="contact-option email-btn">
-          <span>📧</span>
-          <span id="email-text">Email</span>
-        </a>
-      </div>
-    </div>
-  </div>
-  <!-- Language Selector -->
-<div class="language-selector reveal">
-  <div class="lang-buttons" role="radiogroup" aria-label="Seleziona lingua">
-    <button class="lang-btn active" data-lang="it" role="radio" aria-checked="true">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/it.svg" alt="Italiano" width="24" height="18" />
-      <span class="sr-only">Italiano</span>
-    </button>
-    <button class="lang-btn" data-lang="en" role="radio" aria-checked="false">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/gb.svg" alt="English" width="24" height="18" />
-      <span class="sr-only">English</span>
-    </button>
-    <button class="lang-btn" data-lang="fr" role="radio" aria-checked="false">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/fr.svg" alt="Français" width="24" height="18" />
-      <span class="sr-only">Français</span>
-    </button>
-    <button class="lang-btn" data-lang="es" role="radio" aria-checked="false">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/es.svg" alt="Español" width="24" height="18" />
-      <span class="sr-only">Español</span>
-    </button>
-    <button class="lang-btn" data-lang="ar" role="radio" aria-checked="false">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/sa.svg" alt="العربية" width="24" height="18" />
-      <span class="sr-only">العربية</span>
-    </button>
-    <button class="lang-btn" data-lang="zh" role="radio" aria-checked="false">
-      <img src="https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/cn.svg" alt="中文" width="24" height="18" />
-      <span class="sr-only">中文</span>
-    </button>
-  </div>
-  <div class="lang-select-wrapper">
-    <select class="lang-select" aria-label="Seleziona lingua">
-      <option value="it">Italiano</option>
-      <option value="en">English</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-      <option value="ar">العربية</option>
-      <option value="zh">中文</option>
-    </select>
-  </div>
-</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">RM</div>
+                <div class="logo-text">
+                    <h1>RM Volley</h1>
+                    <p>Dashboard Prestazioni</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalTeams">6</div>
+                    <div class="stat-label">Squadre</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalMatches">0</div>
+                    <div class="stat-label">Partite</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winRate">0%</div>
+                    <div class="stat-label">Vittorie</div>
+                </div>
+            </div>
+        </div>
+    </header>
 
-  <div class="container reveal">
-    <div class="header">
-      <div class="year">2025</div>
-      <div class="title reveal">VOLLEYBALL</div>
-      <div class="subtitle reveal" id="subtitle">OPEN DAY</div>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Caricamento dati...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" style="display: none;">
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">Squadra</label>
+                        <select id="filterTeam">
+                            <option value="">Tutte le squadre</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Campionato</label>
+                        <select id="filterChampionship">
+                            <option value="">Tutti i campionati</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Stato</label>
+                        <select id="filterStatus">
+                            <option value="">Tutti gli stati</option>
+                            <option value="gara omologata">Completate</option>
+                            <option value="risultato ufficioso">Non ufficiali</option>
+                            <option value="da disputare">Da disputare</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Cerca</label>
+                        <input type="text" id="searchInput" placeholder="Cerca squadra o impianto...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teams Overview -->
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Panoramica Squadre</h2>
+                        <p class="section-subtitle">Performance di tutte le squadre RM Volley</p>
+                    </div>
+                </div>
+                <div class="teams-grid" id="teamsGrid"></div>
+            </section>
+
+            <!-- Matches Section -->
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Calendario Partite</h2>
+                        <p class="section-subtitle" id="matchesSubtitle">Tutte le partite</p>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="toggle-btn active" data-view="all">Tutte</button>
+                        <button class="toggle-btn" data-view="played">Giocate</button>
+                        <button class="toggle-btn" data-view="upcoming">Prossime</button>
+                    </div>
+                </div>
+                <div class="matches-list" id="matchesList"></div>
+            </section>
+
+            <!-- Statistics -->
+            <section class="section">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Statistiche</h2>
+                        <p class="section-subtitle">Analisi delle performance</p>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Vittorie per Squadra</h3>
+                        <div class="chart-container">
+                            <canvas id="winsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">Percentuale Vittorie</h3>
+                        <div class="chart-container">
+                            <canvas id="winRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
-    <div class="volleyball-container reveal">
-      <div class="logo-container">
-        <img src="assets/rm-volley.logo.png" alt="Logo RM Volley Piacenza" class="logo-img">
-      </div>
-    </div>
-    <div class="info-section reveal">
-      <div class="main-text" id="main-text">
-        Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.
-      </div>
-      <div class="age-requirement" id="age-requirement">Solo per atlete nate nel 2012-2013</div>
-      <div class="date-time" id="date-time">GIOVEDÌ 19 GIUGNO 2025</div>
-      <div class="time" id="time">ORE 18:00</div>
-      <div class="location"><strong>PALESTRA ANNA FRANK</strong><br>VIA ALESSANDRO MANZONI<br>PIACENZA</div>
-      <div class="contact-section">
-        <div class="contact-item mail"><a href="mailto:info@rmvolley.piacenza" title="Scrivi una mail">📧 INFO@RMVOLLEY.PIACENZA</a></div>
-        <div class="contact-item phone"><a href="tel:+393336466990" title="Chiama ora">📱 333 646 6990</a></div>
-      </div>
-      <div class="calendar-section" style="margin-top:20px;">
-        <button id="add-to-calendar-btn" class="modal-btn download-btn" style="font-size:1.15rem;display:inline-flex;align-items:center;gap:10px;">
-          <span>📅</span>
-          <span id="calendar-btn-text">Aggiungi al calendario</span>
-        </button>
-    </div>
-    </div>
-  </div>
-  <footer class="footer reveal">
-    <p id="cookie-title">© 2025 RMVolley Piacenza. Tutti i diritti riservati.</p>
-    <p id="cookie-text">Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.</p>
-  </footer>
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Hamburger Menu Functionality
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const menuOverlay = document.getElementById('menu-overlay');
-    hamburgerBtn.addEventListener('click', () => {
-      hamburgerBtn.classList.toggle('active');
-      menuOverlay.classList.toggle('active');
-      document.body.style.overflow = menuOverlay.classList.contains('active') ? 'hidden' : '';
-    });
-    menuOverlay.addEventListener('click', (e) => {
-      if (e.target === menuOverlay) {
-        hamburgerBtn.classList.remove('active');
-        menuOverlay.classList.remove('active');
-        document.body.style.overflow = '';
-      }
-    });
-    window.addEventListener('keydown', (e) => {
-      if (e.key === "Escape" && menuOverlay.classList.contains('active')) {
-        hamburgerBtn.classList.remove('active');
-        menuOverlay.classList.remove('active');
-        document.body.style.overflow = '';
-      }
-    });
 
-    // Modale immagini: elementi DOM
-    const menuItem1 = document.getElementById('menu-item-1');
-    const menuItem2 = document.getElementById('menu-item-2');
-    const imageModal = document.getElementById('image-modal');
-    const modalImage = document.getElementById('modal-image');
-    const closeModalBtn = document.getElementById('close-modal');
-    const downloadBtn = document.getElementById('download-btn');
-    const contactBtn = document.getElementById('contact-btn');
-    const contactOptions = document.getElementById('contact-options');
+    <script>
+        // Global state
+        let allMatches = [];
+        let filteredMatches = [];
+        let teamsData = {};
+        let currentView = 'all';
 
-    function openImageModal(imageNum) {
-      modalImage.src = `assets/${imageNum}.png`;
-      modalImage.alt = `Immagine ${imageNum}`;
-      imageModal.classList.add('active');
-      contactOptions.classList.remove('active');
-      downloadBtn.href = `assets/${imageNum}.png`;
-      downloadBtn.setAttribute('download', `rmvolley-${imageNum}.png`);
-      document.body.style.overflow = 'hidden';
-    }
-    function closeImageModal() {
-      imageModal.classList.remove('active');
-      setTimeout(() => { modalImage.src = ''; }, 400); // Delay per transizione
-      document.body.style.overflow = '';
-    }
-    menuItem1.addEventListener('click', () => {
-      closeHamburgerMenu();
-      openImageModal(1);
-    });
-    menuItem2.addEventListener('click', () => {
-      closeHamburgerMenu();
-      openImageModal(2);
-    });
-    closeModalBtn.addEventListener('click', closeImageModal);
-    imageModal.addEventListener('click', (e) => {
-      if (e.target === imageModal) closeImageModal();
-    });
-    window.addEventListener('keydown', (e) => {
-      if (e.key === "Escape" && imageModal.classList.contains('active')) {
-        closeImageModal();
-      }
-    });
-
-    // Contact Us: mostra bottoni call/mail
-    contactBtn.addEventListener('click', () => {
-      contactOptions.classList.toggle('active');
-    });
-    function closeHamburgerMenu() {
-      hamburgerBtn.classList.remove('active');
-      menuOverlay.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-
-    // Traduzioni
-    const translations = {
-    it: { 
-      subtitle: "OPEN DAY", 
-      mainText: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.", 
-      ageRequirement: "Solo per atlete nate nel 2012-2013", 
-      dateTime: "GIOVEDÌ 19 GIUGNO 2025", 
-      time: "ORE 18:00", 
-      cookieText: "Cookie: questo sito non utilizza cookie o tecnologie di tracciamento.", 
-      cookieTitle: "© 2025 RMVolley Piacenza. Tutti i diritti riservati.",
-      menuItem1: "Invito Ufficiale 2012-2013",
-      menuItem2: "Unisciti al Nostro Team",
-      download: "Scarica",
-      contact: "Contattaci",
-      call: "Chiama",
-      email: "Email",
-      close: "Chiudi",
-      btn: "Aggiungi al calendario",
-      title: "VOLLEYBALL OPEN DAY",
-      description: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
-      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
-    },
-    en: { 
-      subtitle: "OPEN DAY", 
-      mainText: "RM Volley selections are open: show your skills to become part of our team.", 
-      ageRequirement: "Only for athletes born in 2012-2013", 
-      dateTime: "THURSDAY JUNE 19, 2025", 
-      time: "at 6 P.M.", 
-      cookieText: "Cookies: this site does not use cookies or tracking technologies.", 
-      cookieTitle: "© 2025 RMVolley Piacenza. All rights reserved.",
-      menuItem1: "2012-2013 Official Invite",
-      menuItem2: "Join Our Team",
-      download: "Download",
-      contact: "Contact Us",
-      call: "Call",
-      email: "Email",
-      close: "Close",
-      btn: "Add to calendar",
-      title: "VOLLEYBALL OPEN DAY",
-      description: "RM Volley selections are open: show your skills to become part of our team.",
-      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
-    },
-    fr: { 
-      subtitle: "JOURNÉE PORTES OUVERTES", 
-      mainText: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.", 
-      ageRequirement: "Seulement pour les athlètes nées en 2012-2013", 
-      dateTime: "JEUDI 19 JUIN 2025", 
-      time: "À 18h00", 
-      cookieText: "Cookies : ce site n'utilise pas de cookies ni de technologies de suivi.", 
-      cookieTitle: "© 2025 RMVolley Piacenza. Tous droits réservés.",
-      menuItem1: "Invitation Officielle 2012-2013",
-      menuItem2: "Rejoignez Notre Équipe",
-      download: "Télécharger",
-      contact: "Nous Contacter",
-      call: "Appeler",
-      email: "Email",
-      close: "Fermer",
-      btn: "Ajouter au calendrier",
-      title: "JOURNÉE PORTES OUVERTES VOLLEY",
-      description: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.",
-      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
-    },
-    es: { 
-      subtitle: "JORNADA DE PUERTAS ABIERTAS", 
-      mainText: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.", 
-      ageRequirement: "Solo para atletas nacidas en 2012-2013", 
-      dateTime: "JUEVES 19 DE JUNIO DE 2025", 
-      time: "A LAS 18:00", 
-      cookieText: "Cookies: este sitio no utiliza cookies ni tecnologías de seguimiento.", 
-      cookieTitle: "© 2025 RMVolley Piacenza. Todos los derechos reservados.",
-      menuItem1: "Invitación Oficial 2012-2013",
-      menuItem2: "Únete a Nuestro Equipo",
-      download: "Descargar",
-      contact: "Contáctanos",
-      call: "Llamar",
-      email: "Email",
-      close: "Cerrar",
-      btn: "Añadir al calendario",
-      title: "VOLLEYBALL OPEN DAY",
-      description: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.",
-      location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA"
-    },
-    ar: { 
-      subtitle: "اليوم المفتوح", 
-      mainText: "اختبارات RM Volleyball مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.", 
-      ageRequirement: "للعابِرات المولودات عام 2012-2013 فقط", 
-      dateTime: "الخميس 19 يونيو 2025", 
-      time: "الساعة 18:00", 
-      cookieText: "ملفات تعريف الارتباط: هذا الموقع لا يستخدم ملفات تعريف ارتباط أو تقنيات تتبع.", 
-      cookieTitle: "© 2025 RMVolley Piacenza. جميع الحقوق محفوظة.",
-      menuItem1: "دعوة رسمية 2012-2013",
-      menuItem2: "انضم إلى فريقنا",
-      download: "تحميل",
-      contact: "اتصل بنا",
-      call: "اتصال",
-      email: "البريد الإلكتروني",
-      close: "إغلاق",
-      btn: "أضف إلى التقويم",
-      title: "يوم كرة الطائرة المفتوح",
-      description: "اختبارات RM Volleyball مفتوحة: أظهر مهاراتك لتصبح جزءًا من فريقنا.",
-      location: "PALESTRA ANNA FRANK، VIA ALESSANDRO MANZONI، PIACENZA"
-    },
-    zh: { 
-      subtitle: "开放日", 
-      mainText: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。", 
-      ageRequirement: "仅限2012-2013年出生的运动员", 
-      dateTime: "2025年6月19日 星期四", 
-      time: "下午6点", 
-      cookieText: "Cookies：本网站不使用Cookies或跟踪技术。", 
-      cookieTitle: "© 2025 RMVolley Piacenza。版权所有。",
-      menuItem1: "2012-2013官方邀请",
-      menuItem2: "加入我们的团队",
-      download: "下载",
-      contact: "联系我们",
-      call: "电话",
-      email: "邮件",
-      close: "关闭",
-      btn: "添加到日历",
-      title: "排球开放日",
-      description: "RM排球选拔赛现已开启：展示你的实力，成为我们团队的一员。",
-      location: "PALESTRA ANNA FRANK，VIA ALESSANDRO MANZONI，PIACENZA"
-    }
-  };
-
-    const buttons = document.querySelectorAll('.lang-btn');
-    const select = document.querySelector('.lang-select');
-    function switchLang(lang) {
-      document.documentElement.lang = lang;
-      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      const t = translations[lang];
-      document.getElementById('subtitle').textContent = t.subtitle;
-      document.getElementById('main-text').textContent = t.mainText;
-      document.getElementById('age-requirement').textContent = t.ageRequirement;
-      document.getElementById('date-time').textContent = t.dateTime;
-      document.getElementById('time').textContent = t.time;
-      document.getElementById('cookie-text').textContent = t.cookieText;
-      document.getElementById('cookie-title').textContent = t.cookieTitle;
-      document.getElementById('menu-text-1').textContent = t.menuItem1;
-      document.getElementById('menu-text-2').textContent = t.menuItem2;
-      document.getElementById('download-text').textContent = t.download;
-      document.getElementById('contact-text').textContent = t.contact;
-      document.getElementById('call-text').textContent = t.call;
-      document.getElementById('email-text').textContent = t.email;
-      if (document.getElementById('calendar-btn-text') && translations[lang].btn)
-        document.getElementById('calendar-btn-text').textContent = translations[lang].btn;
-
-      closeModalBtn.setAttribute('aria-label', t.close);
-      buttons.forEach(btn => {
-        const isActive = btn.dataset.lang === lang;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-checked', isActive);
-      });
-      select.value = lang;
-    }
-    switchLang('it');
-    buttons.forEach(btn => btn.addEventListener('click', () => switchLang(btn.dataset.lang)));
-    select.addEventListener('change', e => switchLang(e.target.value));
-    // Scroll reveal effect
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-          observer.unobserve(entry.target);
+        // Load Excel file
+        async function loadExcelFile() {
+            try {
+                const response = await fetch('Gare.xls');
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const data = XLSX.utils.sheet_to_json(firstSheet);
+                
+                allMatches = data;
+                processData();
+                renderAll();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading Excel file:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div class="empty-icon">⚠️</div>
+                    <h3>Errore nel caricamento dei dati</h3>
+                    <p>Assicurati che il file Gare.xls sia nella stessa cartella del file HTML</p>
+                `;
+            }
         }
-      });
-    }, { threshold: 0.2 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-  });
-  // ---- AGGIUNGI AL CALENDARIO ----
-  const addToCalendarBtn = document.getElementById('add-to-calendar-btn');
-  if (addToCalendarBtn) {
-    addToCalendarBtn.addEventListener('click', function() {
-      // Recupera i dati dell’evento dalla pagina
-      const translations = {
-        it: {
-          title: "VOLLEYBALL OPEN DAY",
-          description: "Le selezioni di RM Volley sono aperte: mostra le tue capacità per poter entrare a fare parte della nostra squadra.",
-          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
-          btn: "Aggiungi al calendario"
-        },
-        en: {
-          title: "VOLLEYBALL OPEN DAY",
-          description: "RM Volley selections are open: show your skills to become part of our team.",
-          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
-          btn: "Add to calendar"
-        },
-        fr: {
-          title: "JOURNÉE PORTES OUVERTES VOLLEY",
-          description: "Les sélections de RM Volley sont ouvertes : montrez vos compétences pour rejoindre notre équipe.",
-          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
-          btn: "Ajouter au calendrier"
-        },
-        es: {
-          title: "VOLLEYBALL OPEN DAY",
-          description: "Las selecciones de RM Volleyball están abiertas: demuestra tus habilidades para formar parte de nuestro equipo.",
-          location: "PALESTRA ANNA FRANK, VIA ALESSANDRO MANZONI, PIACENZA",
-          btn: "Añadir al calendario"
+
+        // Process data and calculate statistics
+        function processData() {
+            teamsData = {};
+            const rmTeams = new Set();
+
+            // Find all RM Volley teams
+            allMatches.forEach(match => {
+                const home = match.SquadraCasa;
+                const away = match.SquadraOspite;
+                
+                if (home && home.includes('RMVOLLEY')) rmTeams.add(home);
+                if (away && away.includes('RMVOLLEY')) rmTeams.add(away);
+            });
+
+            // Initialize team data
+            rmTeams.forEach(team => {
+                teamsData[team] = {
+                    name: team,
+                    played: 0,
+                    wins: 0,
+                    losses: 0,
+                    totalMatches: 0,
+                    category: getCategory(team),
+                    matches: []
+                };
+            });
+
+            // Calculate statistics
+            allMatches.forEach(match => {
+                const home = match.SquadraCasa;
+                const away = match.SquadraOspite;
+                const result = match.Risultato;
+                const isRmHome = home && home.includes('RMVOLLEY');
+                const isRmAway = away && away.includes('RMVOLLEY');
+
+                if (isRmHome) {
+                    teamsData[home].totalMatches++;
+                    teamsData[home].matches.push(match);
+                    
+                    if (result && result.includes('-')) {
+                        const [homeSets, awaySets] = result.split('-').map(s => parseInt(s.trim()));
+                        teamsData[home].played++;
+                        if (homeSets > awaySets) {
+                            teamsData[home].wins++;
+                        } else {
+                            teamsData[home].losses++;
+                        }
+                    }
+                }
+
+                if (isRmAway) {
+                    teamsData[away].totalMatches++;
+                    teamsData[away].matches.push(match);
+                    
+                    if (result && result.includes('-')) {
+                        const [homeSets, awaySets] = result.split('-').map(s => parseInt(s.trim()));
+                        teamsData[away].played++;
+                        if (awaySets > homeSets) {
+                            teamsData[away].wins++;
+                        } else {
+                            teamsData[away].losses++;
+                        }
+                    }
+                }
+            });
+
+            // Update header stats
+            const totalPlayed = Object.values(teamsData).reduce((sum, team) => sum + team.played, 0);
+            const totalWins = Object.values(teamsData).reduce((sum, team) => sum + team.wins, 0);
+            const overallWinRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
+
+            document.getElementById('totalMatches').textContent = allMatches.length;
+            document.getElementById('winRate').textContent = overallWinRate + '%';
+
+            // Populate filters
+            populateFilters();
         }
-        // Puoi aggiungere altre lingue qui...
-      };
 
-      // Prendi lingua corrente della pagina
-      let lang = document.documentElement.lang || "it";
-      if (!translations[lang]) lang = "it";
-      const t = translations[lang];
+        // Get category from team name
+        function getCategory(teamName) {
+            const num = teamName.match(/#(\d+)/)?.[1];
+            const categories = {
+                '2': 'Seconda Divisione Femminile',
+                '13': 'Under 14 Femminile',
+                '14': 'Under 14 Femminile',
+                '15': 'Under 14 Femminile',
+                '16': 'Under 16 Femminile',
+                '18': 'Under 18 Femminile'
+            };
+            return categories[num] || 'Sconosciuto';
+        }
 
-      // Data e orari dell’evento
-      const start = new Date("2025-06-19T18:00:00+02:00");
-      const end = new Date("2025-06-19T20:00:00+02:00"); // esempio: evento di 2 ore
+        // Get team badge emoji
+        function getTeamBadge(wins, losses) {
+            if (wins === 0 && losses === 0) return '⏳';
+            const winRate = wins / (wins + losses);
+            if (winRate === 1) return '🔥';
+            if (winRate >= 0.8) return '⭐';
+            if (winRate >= 0.6) return '✅';
+            if (winRate >= 0.4) return '📊';
+            return '⚠️';
+        }
 
-      // Formatta data per iCalendar (UTC, formato: YYYYMMDDTHHMMSSZ)
-      function formatICSDate(date) {
-        return date.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
-      }
+        // Populate filter dropdowns
+        function populateFilters() {
+            const teams = [...new Set(Object.keys(teamsData))].sort();
+            const championships = [...new Set(allMatches.map(m => m.Campionato))].filter(Boolean).sort();
 
-      // Testo .ics
-      const icsContent = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//RMVolley Piacenza//Open Day//IT",
-        "BEGIN:VEVENT",
-        `UID:rmvolley-openday-2025@rmvolley.piacenza`,
-        `DTSTAMP:${formatICSDate(new Date())}`,
-        `DTSTART:${formatICSDate(start)}`,
-        `DTEND:${formatICSDate(end)}`,
-        `SUMMARY:${t.title}`,
-        `DESCRIPTION:${t.description}`,
-        `LOCATION:${t.location}`,
-        "END:VEVENT",
-        "END:VCALENDAR"
-      ].join("\r\n");
+            const teamSelect = document.getElementById('filterTeam');
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team;
+                option.textContent = team;
+                teamSelect.appendChild(option);
+            });
 
-      // Crea il blob e il download
-      const blob = new Blob([icsContent], { type: "text/calendar" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = "RMVolley-OpenDay-2025.ics";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 100);
+            const champSelect = document.getElementById('filterChampionship');
+            championships.forEach(champ => {
+                const option = document.createElement('option');
+                option.value = champ;
+                option.textContent = champ;
+                champSelect.appendChild(option);
+            });
+        }
 
-    });
-  }
-  </script>
+        // Render all components
+        function renderAll() {
+            applyFilters();
+            renderTeams();
+            renderMatches();
+            renderCharts();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const teamFilter = document.getElementById('filterTeam').value;
+            const champFilter = document.getElementById('filterChampionship').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredMatches = allMatches.filter(match => {
+                const matchTeam = teamFilter ? 
+                    (match.SquadraCasa === teamFilter || match.SquadraOspite === teamFilter) : true;
+                const matchChamp = champFilter ? match.Campionato === champFilter : true;
+                const matchStatus = statusFilter ? match.StatoDescrizione === statusFilter : true;
+                const matchSearch = searchTerm ? 
+                    (match.SquadraCasa?.toLowerCase().includes(searchTerm) || 
+                     match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
+                     match.Impianto?.toLowerCase().includes(searchTerm)) : true;
+
+                return matchTeam && matchChamp && matchStatus && matchSearch;
+            });
+
+            // Apply view filter
+            if (currentView === 'played') {
+                filteredMatches = filteredMatches.filter(m => 
+                    m.StatoDescrizione === 'gara omologata' || m.StatoDescrizione === 'risultato ufficioso'
+                );
+            } else if (currentView === 'upcoming') {
+                filteredMatches = filteredMatches.filter(m => m.StatoDescrizione === 'da disputare');
+            }
+
+            document.getElementById('matchesSubtitle').textContent = 
+                `${filteredMatches.length} partite trovate`;
+        }
+
+        // Render team cards
+        function renderTeams() {
+            const grid = document.getElementById('teamsGrid');
+            grid.innerHTML = '';
+
+            Object.values(teamsData).sort((a, b) => {
+                const rateA = a.played > 0 ? a.wins / a.played : 0;
+                const rateB = b.played > 0 ? b.wins / b.played : 0;
+                return rateB - rateA;
+            }).forEach(team => {
+                const winRate = team.played > 0 ? Math.round((team.wins / team.played) * 100) : 0;
+                const badge = getTeamBadge(team.wins, team.losses);
+                const toPlay = team.totalMatches - team.played;
+
+                const card = document.createElement('div');
+                card.className = 'team-card';
+                card.innerHTML = `
+                    <div class="team-header">
+                        <div>
+                            <div class="team-name">${team.name}</div>
+                            <div class="team-category">${team.category}</div>
+                        </div>
+                        <div class="team-badge">${badge}</div>
+                    </div>
+                    <div class="team-stats">
+                        <div class="stat-box">
+                            <div class="stat-box-value">${team.wins}</div>
+                            <div class="stat-box-label">Vittorie</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-value">${team.losses}</div>
+                            <div class="stat-box-label">Sconfitte</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-box-value">${toPlay}</div>
+                            <div class="stat-box-label">Da giocare</div>
+                        </div>
+                    </div>
+                    <div class="win-rate-bar">
+                        <div class="win-rate-fill" style="width: ${winRate}%"></div>
+                    </div>
+                    <div class="win-rate-label">
+                        <span>Tasso di vittoria</span>
+                        <span><strong>${winRate}%</strong></span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Render matches
+        function renderMatches() {
+            const list = document.getElementById('matchesList');
+            list.innerHTML = '';
+
+            if (filteredMatches.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏐</div>
+                        <h3>Nessuna partita trovata</h3>
+                        <p>Prova a modificare i filtri di ricerca</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by date (most recent first for played, soonest for upcoming)
+            const sorted = [...filteredMatches].sort((a, b) => {
+                const dateA = parseDate(a.Data);
+                const dateB = parseDate(b.Data);
+                if (currentView === 'upcoming') {
+                    return dateA - dateB;
+                }
+                return dateB - dateA;
+            });
+
+            sorted.forEach(match => {
+                const card = createMatchCard(match);
+                list.appendChild(card);
+            });
+        }
+
+        // Create match card
+        function createMatchCard(match) {
+            const card = document.createElement('div');
+            card.className = 'match-card';
+
+            const date = parseDate(match.Data);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('it-IT', { month: 'short' });
+
+            const isRmHome = match.SquadraCasa?.includes('RMVOLLEY');
+            const isRmAway = match.SquadraOspite?.includes('RMVOLLEY');
+
+            let statusClass = 'status-upcoming';
+            let statusText = match.StatoDescrizione || 'Da disputare';
+            
+            if (match.StatoDescrizione === 'gara omologata') {
+                statusClass = 'status-played';
+                statusText = 'Completata';
+            } else if (match.StatoDescrizione === 'risultato ufficioso') {
+                statusClass = 'status-unofficial';
+                statusText = 'Non ufficiale';
+            }
+
+            let scoreHtml = '<div class="score"><span class="score-value">VS</span></div>';
+            let setsHtml = '';
+
+            if (match.Risultato && match.Risultato.includes('-')) {
+                const [homeSets, awaySets] = match.Risultato.split('-').map(s => parseInt(s.trim()));
+                const homeWin = homeSets > awaySets;
+                const awayWin = awaySets > homeSets;
+
+                scoreHtml = `
+                    <div class="score ${homeWin ? 'winner' : ''}">
+                        <span class="score-value">${homeSets}</span>
+                        <span class="score-separator">-</span>
+                        <span class="score-value ${awayWin ? 'winner' : ''}">${awaySets}</span>
+                    </div>
+                `;
+
+                if (match.Parziali) {
+                    const sets = match.Parziali.split(' ').filter(s => s.trim());
+                    setsHtml = `
+                        <div class="sets-detail">
+                            ${sets.map(set => `<span class="set-score">${set}</span>`).join('')}
+                        </div>
+                    `;
+                }
+            }
+
+            card.innerHTML = `
+                <div class="match-header">
+                    <div class="match-meta">
+                        <div class="match-date">
+                            <div class="match-day">${day}</div>
+                            <div class="match-month">${month}</div>
+                        </div>
+                        <div class="match-info">
+                            <div class="match-championship">${match.Campionato || 'N/A'}</div>
+                            <div class="match-time">⏰ ${match.Ora || 'TBD'}</div>
+                        </div>
+                    </div>
+                    <div class="match-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="match-teams">
+                    <div class="team home ${isRmHome ? 'rm' : ''}">
+                        <div class="team-logo">${isRmHome ? 'RM' : getTeamInitials(match.SquadraCasa)}</div>
+                        <div class="team-details">
+                            <div class="team-name-match">${match.SquadraCasa || 'TBD'}</div>
+                        </div>
+                    </div>
+                    ${scoreHtml}
+                    <div class="team away ${isRmAway ? 'rm' : ''}">
+                        <div class="team-logo">${isRmAway ? 'RM' : getTeamInitials(match.SquadraOspite)}</div>
+                        <div class="team-details">
+                            <div class="team-name-match">${match.SquadraOspite || 'TBD'}</div>
+                        </div>
+                    </div>
+                </div>
+                ${setsHtml}
+                <div class="match-venue">
+                    📍 ${match.Impianto || 'Impianto TBD'}
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Get team initials
+        function getTeamInitials(teamName) {
+            if (!teamName) return '?';
+            const words = teamName.split(' ').filter(w => w.length > 2);
+            if (words.length >= 2) {
+                return words[0][0] + words[1][0];
+            }
+            return teamName.substring(0, 2).toUpperCase();
+        }
+
+        // Parse date string
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date();
+            const [day, month, year] = dateStr.split('/');
+            return new Date(year, month - 1, day);
+        }
+
+        // Render charts
+        function renderCharts() {
+            renderWinsChart();
+            renderWinRateChart();
+        }
+
+        // Render wins chart
+        function renderWinsChart() {
+            const ctx = document.getElementById('winsChart');
+            const teams = Object.values(teamsData).sort((a, b) => b.wins - a.wins);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: teams.map(t => t.name),
+                    datasets: [{
+                        label: 'Vittorie',
+                        data: teams.map(t => t.wins),
+                        backgroundColor: 'rgba(0, 102, 255, 0.8)',
+                        borderRadius: 8
+                    }, {
+                        label: 'Sconfitte',
+                        data: teams.map(t => t.losses),
+                        backgroundColor: 'rgba(255, 61, 0, 0.6)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render win rate chart
+        function renderWinRateChart() {
+            const ctx = document.getElementById('winRateChart');
+            const teams = Object.values(teamsData).filter(t => t.played > 0);
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: teams.map(t => t.name),
+                    datasets: [{
+                        data: teams.map(t => t.played > 0 ? Math.round((t.wins / t.played) * 100) : 0),
+                        backgroundColor: [
+                            'rgba(0, 102, 255, 0.8)',
+                            'rgba(0, 212, 255, 0.8)',
+                            'rgba(0, 200, 83, 0.8)',
+                            'rgba(255, 179, 0, 0.8)',
+                            'rgba(255, 61, 0, 0.8)',
+                            'rgba(156, 39, 176, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('filterTeam').addEventListener('change', renderAll);
+        document.getElementById('filterChampionship').addEventListener('change', renderAll);
+        document.getElementById('filterStatus').addEventListener('change', renderAll);
+        document.getElementById('searchInput').addEventListener('input', renderAll);
+
+        // View toggle buttons
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                renderAll();
+            });
+        });
+
+        // Initialize
+        loadExcelFile();
+    </script>
 </body>
 </html>

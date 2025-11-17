@@ -95,9 +95,11 @@
         }
 
         .header-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
             gap: 0.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 0.25rem;
         }
 
         .stat-item {
@@ -109,9 +111,10 @@
         }
 
         .stat-value {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             line-height: 1;
+            white-space: nowrap;
         }
 
         .stat-label {
@@ -989,6 +992,50 @@
         }
 
         /* Responsive - Tablet and Desktop */
+        /* Compact header for small screens */
+        @media (max-width: 639px) {
+            .header {
+                padding: 0.5rem 0;
+            }
+
+            .header-content {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0 0.75rem;
+            }
+
+            .logo-text {
+                display: none;
+            }
+
+            .logo-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .header-stats {
+                gap: 0.5rem;
+            }
+
+            .header-stats .stat-item {
+                padding: 0.375rem 0.5rem;
+                min-width: 64px;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.625rem;
+            }
+
+            .nav-tabs {
+                top: 72px;
+            }
+        }
         @media (min-width: 640px) {
             .header-content {
                 padding: 0 1.5rem;
@@ -1013,7 +1060,13 @@
             }
 
             .header-stats {
+                display: grid;
                 grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
             }
 
             .quick-stats {

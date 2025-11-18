@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RM Volley - Dashboard Pro</title>
-    
+
     <!-- SheetJS library for reading Excel files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <!-- Chart.js for data visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
+
     <style>
         * {
             margin: 0;
@@ -199,7 +200,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Quick Stats Grid */
@@ -312,7 +315,7 @@
 
         .team-badge {
             font-size: 2rem;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
 
         .team-stats-row {
@@ -422,6 +425,7 @@
             from {
                 transform: translateY(100%);
             }
+
             to {
                 transform: translateY(0);
             }
@@ -591,7 +595,8 @@
             letter-spacing: 0.5px;
         }
 
-        select, input {
+        select,
+        input {
             padding: 0.75rem 1rem;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
@@ -601,7 +606,8 @@
             transition: all 0.2s;
         }
 
-        select:focus, input:focus {
+        select:focus,
+        input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
@@ -1036,6 +1042,7 @@
                 top: 72px;
             }
         }
+
         @media (min-width: 640px) {
             .header-content {
                 padding: 0 1.5rem;
@@ -1166,6 +1173,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Pull to refresh indicator -->
     <div class="pull-indicator" id="pullIndicator">↓ Rilascia per aggiornare</div>
@@ -1351,11 +1359,11 @@
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const data = XLSX.utils.sheet_to_json(firstSheet);
-                
+
                 allMatches = data;
                 processData();
                 renderAll();
-                
+
                 document.getElementById('loading').style.display = 'none';
                 document.querySelectorAll('.tab-content').forEach(tab => {
                     if (tab.id === 'overview-tab') {
@@ -1429,18 +1437,18 @@
                 if (isRmHome || isRmAway) {
                     const team = isRmHome ? home : away;
                     const isHome = isRmHome;
-                    
+
                     teamsData[team].totalMatches++;
-                    teamsData[team].matches.push({...match, isHome});
-                    
+                    teamsData[team].matches.push({ ...match, isHome });
+
                     if (result && result.includes('-')) {
                         const [homeSets, awaySets] = result.split('-').map(s => parseInt(s.trim()));
                         const won = isHome ? (homeSets > awaySets) : (awaySets > homeSets);
-                        
+
                         teamsData[team].played++;
                         teamsData[team].setsWon += isHome ? homeSets : awaySets;
                         teamsData[team].setsLost += isHome ? awaySets : homeSets;
-                        
+
                         // Calculate points from partials
                         if (match.Parziali) {
                             const sets = match.Parziali.split(' ').filter(s => s.trim());
@@ -1452,7 +1460,7 @@
                                 }
                             });
                         }
-                        
+
                         if (won) {
                             teamsData[team].wins++;
                             if (isHome) teamsData[team].homeWins++;
@@ -1466,7 +1474,7 @@
                             teamsData[team].currentStreak = Math.min(0, teamsData[team].currentStreak) - 1;
                             teamsData[team].recentForm.push('L');
                         }
-                        
+
                         teamsData[team].longestWinStreak = Math.max(
                             teamsData[team].longestWinStreak,
                             Math.max(0, teamsData[team].currentStreak)
@@ -1561,19 +1569,20 @@
             renderDetailedInsights();
         }
 
-        // Render quick stats
+        // Render quick stats - FIXED
         function renderQuickStats() {
             const container = document.getElementById('quickStats');
             const totalPlayed = Object.values(teamsData).reduce((sum, t) => sum + t.played, 0);
             const totalWins = Object.values(teamsData).reduce((sum, t) => sum + t.wins, 0);
             const totalSetsWon = Object.values(teamsData).reduce((sum, t) => sum + t.setsWon, 0);
             const totalSetsLost = Object.values(teamsData).reduce((sum, t) => sum + t.setsLost, 0);
-            const avgPointsPerSet = totalSetsWon > 0 ? 
-                Math.round(Object.values(teamsData).reduce((sum, t) => sum + t.pointsScored, 0) / totalSetsWon) : 0;
+            const totalSets = totalSetsWon + totalSetsLost; // FIXED: somma dei set totali
+            const totalPoints = Object.values(teamsData).reduce((sum, t) => sum + t.pointsScored, 0);
+            const avgPointsPerSet = totalSets > 0 ? Math.round(totalPoints / totalSets) : 0; // FIXED: diviso per set totali
 
             const bestTeam = Object.values(teamsData)
                 .filter(t => t.played > 0)
-                .sort((a, b) => (b.wins/b.played) - (a.wins/a.played))[0];
+                .sort((a, b) => (b.wins / b.played) - (a.wins / a.played))[0];
 
             container.innerHTML = `
                 <div class="quick-stat-card">
@@ -1593,7 +1602,7 @@
                 </div>
                 <div class="quick-stat-card">
                     <div class="quick-stat-icon">🏆</div>
-                    <div class="quick-stat-value">${bestTeam ? Math.round((bestTeam.wins/bestTeam.played)*100) : 0}%</div>
+                    <div class="quick-stat-value">${bestTeam ? Math.round((bestTeam.wins / bestTeam.played) * 100) : 0}%</div>
                     <div class="quick-stat-label">Miglior Win Rate</div>
                 </div>
             `;
@@ -1603,12 +1612,12 @@
         function renderInsights() {
             const container = document.getElementById('insightsGrid');
             const teams = Object.values(teamsData).filter(t => t.played > 0);
-            
+
             const bestHome = teams.sort((a, b) => b.homeWins - a.homeWins)[0];
             const bestAway = teams.sort((a, b) => b.awayWins - a.awayWins)[0];
             const longestStreak = teams.sort((a, b) => b.longestWinStreak - a.longestWinStreak)[0];
-            const bestSetRatio = teams.sort((a, b) => 
-                (b.setsWon/(b.setsWon+b.setsLost)) - (a.setsWon/(a.setsWon+a.setsLost))
+            const bestSetRatio = teams.sort((a, b) =>
+                (b.setsWon / (b.setsWon + b.setsLost)) - (a.setsWon / (a.setsWon + a.setsLost))
             )[0];
 
             container.innerHTML = `
@@ -1633,7 +1642,7 @@
                 <div class="insight-card" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);">
                     <div class="insight-icon">📈</div>
                     <div class="insight-title">Miglior Rapporto Set</div>
-                    <div class="insight-value">${bestSetRatio ? Math.round((bestSetRatio.setsWon/(bestSetRatio.setsWon+bestSetRatio.setsLost))*100) : 0}%</div>
+                    <div class="insight-value">${bestSetRatio ? Math.round((bestSetRatio.setsWon / (bestSetRatio.setsWon + bestSetRatio.setsLost)) * 100) : 0}%</div>
                     <div class="insight-description">${bestSetRatio?.name || 'N/A'}</div>
                 </div>
             `;
@@ -1644,13 +1653,13 @@
             const container = document.getElementById('leaderboardList');
             const teams = Object.values(teamsData)
                 .filter(t => t.played > 0)
-                .sort((a, b) => (b.wins/b.played) - (a.wins/a.played))
+                .sort((a, b) => (b.wins / b.played) - (a.wins / a.played))
                 .slice(0, 5);
 
             container.innerHTML = teams.map((team, index) => {
                 const winRate = Math.round((team.wins / team.played) * 100);
                 const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
-                
+
                 return `
                     <div class="leaderboard-item" onclick="showTeamDetail('${team.name}')">
                         <div class="leaderboard-rank ${rankClass}">${index + 1}</div>
@@ -1688,7 +1697,7 @@
                 const winRate = team.played > 0 ? Math.round((team.wins / team.played) * 100) : 0;
                 const badge = getTeamBadge(team);
                 const toPlay = team.totalMatches - team.played;
-                const setRatio = team.setsWon + team.setsLost > 0 ? 
+                const setRatio = team.setsWon + team.setsLost > 0 ?
                     (team.setsWon / (team.setsWon + team.setsLost) * 100).toFixed(0) : 0;
 
                 return `
@@ -1719,9 +1728,9 @@
                             </div>
                         </div>
                         <div class="performance-indicators">
-                            ${team.recentForm.map(f => 
-                                `<span class="indicator"><span class="indicator-icon">${f === 'W' ? '✅' : '❌'}</span></span>`
-                            ).join('')}
+                            ${team.recentForm.map(f =>
+                    `<span class="indicator"><span class="indicator-icon">${f === 'W' ? '✅' : '❌'}</span></span>`
+                ).join('')}
                             ${team.currentStreak !== 0 ? `
                                 <span class="indicator">
                                     <span class="indicator-icon">${team.currentStreak > 0 ? '🔥' : '❄️'}</span>
@@ -1749,46 +1758,46 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
             filteredMatches = allMatches.filter(match => {
-                const matchTeam = teamFilter ? 
+                const matchTeam = teamFilter ?
                     (match.SquadraCasa === teamFilter || match.SquadraOspite === teamFilter) : true;
                 const matchChamp = champFilter ? match.Campionato === champFilter : true;
                 const matchStatus = statusFilter ? match.StatoDescrizione === statusFilter : true;
-                const matchSearch = searchTerm ? 
-                    (match.SquadraCasa?.toLowerCase().includes(searchTerm) || 
-                     match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
-                     match.Impianto?.toLowerCase().includes(searchTerm)) : true;
+                const matchSearch = searchTerm ?
+                    (match.SquadraCasa?.toLowerCase().includes(searchTerm) ||
+                        match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
+                        match.Impianto?.toLowerCase().includes(searchTerm)) : true;
 
                 return matchTeam && matchChamp && matchStatus && matchSearch;
             });
 
-            document.getElementById('matchesSubtitle').textContent = 
+            document.getElementById('matchesSubtitle').textContent =
                 `${filteredMatches.length} partite trovate`;
         }
 
         // Render matches
         function renderMatches() {
-    const list = document.getElementById('matchesList');
+            const list = document.getElementById('matchesList');
 
-    if (filteredMatches.length === 0) {
-        list.innerHTML = `
+            if (filteredMatches.length === 0) {
+                list.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">🏐</div>
                 <h3>Nessuna partita</h3>
                 <p>Prova a modificare i filtri</p>
             </div>
         `;
-        return;
-    }
+                return;
+            }
 
-    const today = new Date();
-    const sorted = [...filteredMatches].sort((a, b) => {
-        const dateA = Math.abs(parseDate(a.Data) - today);
-        const dateB = Math.abs(parseDate(b.Data) - today);
-        return dateA - dateB;
-    });
-    
-    list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
-}
+            const today = new Date();
+            const sorted = [...filteredMatches].sort((a, b) => {
+                const dateA = Math.abs(parseDate(a.Data) - today);
+                const dateB = Math.abs(parseDate(b.Data) - today);
+                return dateA - dateB;
+            });
+
+            list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
+        }
 
         // Create match card HTML
         function createMatchCardHTML(match) {
@@ -1801,7 +1810,7 @@
 
             let statusClass = 'status-upcoming';
             let statusText = 'Da giocare';
-            
+
             if (match.StatoDescrizione === 'gara omologata') {
                 statusClass = 'status-played';
                 statusText = 'Completata';
@@ -2043,14 +2052,15 @@
             });
         }
 
-        // Render detailed insights
+        // Render detailed insights - FIXED
         function renderDetailedInsights() {
             const container = document.getElementById('detailedInsights');
             const teams = Object.values(teamsData).filter(t => t.played > 0);
 
             const totalPoints = teams.reduce((sum, t) => sum + t.pointsScored, 0);
-            const totalSets = teams.reduce((sum, t) => sum + t.setsWon + t.setsLost, 0);
-            const avgPointsPerMatch = totalPoints / teams.reduce((sum, t) => sum + t.played, 0);
+            const totalSets = teams.reduce((sum, t) => sum + t.setsWon + t.setsLost, 0); // FIXED
+            const totalPlayed = teams.reduce((sum, t) => sum + t.played, 0);
+            const avgPointsPerMatch = totalPlayed > 0 ? (totalPoints / totalPlayed).toFixed(1) : 0;
 
             container.innerHTML = `
                 <div class="chart-card" style="margin-bottom: 1rem;">
@@ -2066,11 +2076,11 @@
                                 <div class="stat-detail-label">Set Totali</div>
                             </div>
                             <div class="stat-detail-card">
-                                <div class="stat-detail-value">${avgPointsPerMatch.toFixed(1)}</div>
+                                <div class="stat-detail-value">${avgPointsPerMatch}</div>
                                 <div class="stat-detail-label">Punti/Partita</div>
                             </div>
                             <div class="stat-detail-card">
-                                <div class="stat-detail-value">${(totalSets / teams.reduce((sum, t) => sum + t.played, 0)).toFixed(1)}</div>
+                                <div class="stat-detail-value">${totalPlayed > 0 ? (totalSets / totalPlayed).toFixed(1) : 0}</div>
                                 <div class="stat-detail-label">Set/Partita</div>
                             </div>
                         </div>
@@ -2078,11 +2088,12 @@
                 </div>
 
                 ${teams.map(team => {
-                    const winRate = Math.round((team.wins / team.played) * 100);
-                    const setRate = Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100);
-                    const avgPoints = team.setsWon > 0 ? (team.pointsScored / team.setsWon).toFixed(1) : 0;
+                const winRate = Math.round((team.wins / team.played) * 100);
+                const setRate = Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100);
+                const totalTeamSets = team.setsWon + team.setsLost;
+                const avgPoints = totalTeamSets > 0 ? (team.pointsScored / totalTeamSets).toFixed(1) : 0; // FIXED
 
-                    return `
+                return `
                         <div class="chart-card" style="margin-bottom: 1rem;">
                             <h3 class="chart-title">${team.name}</h3>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
@@ -2121,11 +2132,11 @@
                             </div>
                         </div>
                     `;
-                }).join('')}
+            }).join('')}
             `;
         }
 
-        // Show team detail modal
+        // Show team detail modal - FIXED
         function showTeamDetail(teamName) {
             const team = teamsData[teamName];
             if (!team) return;
@@ -2135,9 +2146,10 @@
             document.getElementById('modalTeamName').textContent = team.name;
 
             const winRate = team.played > 0 ? Math.round((team.wins / team.played) * 100) : 0;
-            const setRate = team.setsWon + team.setsLost > 0 ? 
+            const setRate = team.setsWon + team.setsLost > 0 ?
                 Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100) : 0;
-            const avgPoints = team.setsWon > 0 ? (team.pointsScored / team.setsWon).toFixed(1) : 0;
+            const totalTeamSets = team.setsWon + team.setsLost;
+            const avgPoints = totalTeamSets > 0 ? (team.pointsScored / totalTeamSets).toFixed(1) : 0; // FIXED
 
             modalBody.innerHTML = `
                 <div class="detail-section">
@@ -2190,22 +2202,22 @@
                     <h3 class="detail-section-title">📅 Ultime Partite</h3>
                     <div class="match-timeline">
                         ${team.matches.slice(0, 10).map(match => {
-                            const date = parseDate(match.Data);
-                            const dateStr = date.toLocaleDateString('it-IT');
-                            const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
-                            const result = match.Risultato || 'Da disputare';
-                            
-                            let dotClass = '';
-                            let resultText = result;
-                            
-                            if (result.includes('-')) {
-                                const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
-                                const won = match.isHome ? (s1 > s2) : (s2 > s1);
-                                dotClass = won ? 'win' : 'loss';
-                                resultText = won ? `✅ ${result}` : `❌ ${result}`;
-                            }
+                const date = parseDate(match.Data);
+                const dateStr = date.toLocaleDateString('it-IT');
+                const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
+                const result = match.Risultato || 'Da disputare';
 
-                            return `
+                let dotClass = '';
+                let resultText = result;
+
+                if (result.includes('-')) {
+                    const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
+                    const won = match.isHome ? (s1 > s2) : (s2 > s1);
+                    dotClass = won ? 'win' : 'loss';
+                    resultText = won ? `✅ ${result}` : `❌ ${result}`;
+                }
+
+                return `
                                 <div class="timeline-item">
                                     <div class="timeline-dot ${dotClass}"></div>
                                     <div class="timeline-content">
@@ -2215,7 +2227,7 @@
                                     </div>
                                 </div>
                             `;
-                        }).join('')}
+            }).join('')}
                     </div>
                 </div>
             `;
@@ -2232,11 +2244,11 @@
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
-                
+
                 // Update active tab
                 document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
+
                 // Show corresponding content (toggle both class and inline display)
                 document.querySelectorAll('.tab-content').forEach(content => {
                     const shouldShow = content.id === (tabName + '-tab');
@@ -2286,10 +2298,10 @@
 
         document.addEventListener('touchmove', (e) => {
             if (!pulling) return;
-            
+
             const currentY = e.touches[0].pageY;
             const diff = currentY - startY;
-            
+
             if (diff > 80) {
                 document.getElementById('pullIndicator').classList.add('visible');
             }
@@ -2297,7 +2309,7 @@
 
         document.addEventListener('touchend', (e) => {
             if (!pulling) return;
-            
+
             const indicator = document.getElementById('pullIndicator');
             if (indicator.classList.contains('visible')) {
                 indicator.textContent = '🔄 Aggiornamento...';
@@ -2305,7 +2317,7 @@
                     location.reload();
                 }, 500);
             }
-            
+
             pulling = false;
             indicator.classList.remove('visible');
         });
@@ -2314,4 +2326,5 @@
         loadExcelFile();
     </script>
 </body>
+
 </html>

@@ -32,6 +32,9 @@ async function loadExcelFile() {
                 tab.style.display = 'block';
             }
         });
+
+        // Check for matches today and show notification if first visit
+        checkAndNotifyTodayMatches();
     } catch (error) {
         console.error('Error loading Excel file:', error);
         document.getElementById('loading').innerHTML = `
@@ -557,7 +560,13 @@ function createMatchCardHTML(match) {
             </div>
             ${setsHtml}
             <div class="match-venue">
-                📍 ${match.Impianto || 'Impianto TBD'}
+                <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto || '')}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   style="color: inherit; text-decoration: none; display: block;"
+                   onclick="event.stopPropagation();">
+                    📍 ${match.Impianto || 'Impianto TBD'}
+                </a>
             </div>
         </div>
     `;
@@ -1084,9 +1093,90 @@ function initializeEventListeners() {
             navTabs.classList.remove('hidden');
         }
 
+
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     }, false);
 }
+
+// ==================== Notifications ====================
+
+/**
+ * Request notification permission from the user
+ */
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+    }
+
+    if (Notification.permission === 'granted') {
+        return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+
+    return false;
+}
+
+/**
+ * Check for matches today and show notification if it's the first visit
+ */
+async function checkAndNotifyTodayMatches() {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Check localStorage to see if we've already notified today
+    const lastNotificationDate = localStorage.getItem('lastMatchNotificationDate');
+
+    if (lastNotificationDate === todayStr) {
+        // Already notified today, skip
+        return;
+    }
+
+    // Find matches scheduled for today
+    const todaysMatches = allMatches.filter(match => {
+        if (!match.Data) return false;
+        const matchDate = parseDate(match.Data);
+        return matchDate.toDateString() === today.toDateString() &&
+            match.StatoDescrizione === 'da disputare';
+    });
+
+    // If there are matches today, show notification
+    if (todaysMatches.length > 0) {
+        const hasPermission = await requestNotificationPermission();
+
+        if (hasPermission) {
+            // Create notification
+            const matchText = todaysMatches.length === 1
+                ? `1 partita in programma oggi`
+                : `${todaysMatches.length} partite in programma oggi`;
+
+            const teams = todaysMatches.map(m => {
+                const isRmHome = m.SquadraCasa?.includes('RMVOLLEY') || m.SquadraCasa?.includes('RM VOLLEY');
+                const rmTeam = isRmHome ? m.SquadraCasa : m.SquadraOspite;
+                const opponent = isRmHome ? m.SquadraOspite : m.SquadraCasa;
+                const location = isRmHome ? 'vs' : '@';
+                return `${rmTeam} ${location} ${opponent}`;
+            }).join('\n');
+
+            new Notification('🏐 RM Volley - Partite Oggi!', {
+                body: `${matchText}\n${todaysMatches[0].Ora || 'Orario TBD'}`,
+                icon: '/media/icon-192x192.png',
+                badge: '/media/icon-192x192.png',
+                tag: 'daily-match-notification',
+                requireInteraction: false
+            });
+
+            // Update localStorage to mark that we've notified today
+            localStorage.setItem('lastMatchNotificationDate', todayStr);
+        }
+    }
+}
+
 
 // ==================== Initialization ====================
 

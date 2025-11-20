@@ -209,7 +209,6 @@ function updateHeaderStats() {
  */
 function populateFilters() {
     const teams = [...new Set(Object.keys(teamsData))].sort();
-    const championships = [...new Set(allMatches.map(m => m.Campionato))].filter(Boolean).sort();
 
     const teamSelect = document.getElementById('filterTeam');
     teamSelect.innerHTML = '<option value="">Tutte le squadre</option>';
@@ -218,15 +217,6 @@ function populateFilters() {
         option.value = team;
         option.textContent = team;
         teamSelect.appendChild(option);
-    });
-
-    const champSelect = document.getElementById('filterChampionship');
-    champSelect.innerHTML = '<option value="">Tutti i campionati</option>';
-    championships.forEach(champ => {
-        const option = document.createElement('option');
-        option.value = champ;
-        option.textContent = champ;
-        champSelect.appendChild(option);
     });
 }
 
@@ -443,21 +433,19 @@ function renderTeams() {
  */
 function applyFilters() {
     const teamFilter = document.getElementById('filterTeam').value;
-    const champFilter = document.getElementById('filterChampionship').value;
     const statusFilter = document.getElementById('filterStatus').value;
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
     filteredMatches = allMatches.filter(match => {
         const matchTeam = teamFilter ?
             (match.SquadraCasa === teamFilter || match.SquadraOspite === teamFilter) : true;
-        const matchChamp = champFilter ? match.Campionato === champFilter : true;
         const matchStatus = statusFilter ? match.StatoDescrizione === statusFilter : true;
         const matchSearch = searchTerm ?
             (match.SquadraCasa?.toLowerCase().includes(searchTerm) ||
                 match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
                 match.Impianto?.toLowerCase().includes(searchTerm)) : true;
 
-        return matchTeam && matchChamp && matchStatus && matchSearch;
+        return matchTeam && matchStatus && matchSearch;
     });
 
     document.getElementById('matchesSubtitle').textContent =
@@ -1033,10 +1021,6 @@ function initializeEventListeners() {
         applyFilters();
         renderMatches();
     });
-    document.getElementById('filterChampionship').addEventListener('change', () => {
-        applyFilters();
-        renderMatches();
-    });
     document.getElementById('filterStatus').addEventListener('change', () => {
         applyFilters();
         renderMatches();
@@ -1046,42 +1030,62 @@ function initializeEventListeners() {
         renderMatches();
     });
 
-    // Pull to refresh
+    // Pull to refresh functionality
     let startY = 0;
-    let pulling = false;
+    let isPulling = false;
 
     document.addEventListener('touchstart', (e) => {
         if (window.scrollY === 0) {
             startY = e.touches[0].pageY;
-            pulling = true;
+            isPulling = false;
         }
     });
 
     document.addEventListener('touchmove', (e) => {
-        if (!pulling) return;
+        if (window.scrollY === 0 && startY > 0) {
+            const currentY = e.touches[0].pageY;
+            const pullDistance = currentY - startY;
 
-        const currentY = e.touches[0].pageY;
-        const diff = currentY - startY;
-
-        if (diff > 80) {
-            document.getElementById('pullIndicator').classList.add('visible');
+            if (pullDistance > 0 && pullDistance < 100) {
+                isPulling = true;
+                const indicator = document.getElementById('pullIndicator');
+                indicator.style.opacity = Math.min(pullDistance / 100, 1);
+                indicator.style.transform = `translateY(${Math.min(pullDistance, 80)}px)`;
+            }
         }
     });
 
-    document.addEventListener('touchend', (e) => {
-        if (!pulling) return;
-
+    document.addEventListener('touchend', () => {
         const indicator = document.getElementById('pullIndicator');
-        if (indicator.classList.contains('visible')) {
-            indicator.innerHTML = '<div class="pull-indicator-icon">🔄</div><span>Aggiornamento...</span>';
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+        if (isPulling) {
+            indicator.style.opacity = '0';
+            indicator.style.transform = 'translateY(-100%)';
+            location.reload();
+        }
+        isPulling = false;
+        startY = 0;
+    });
+
+    // Scroll behavior for hiding nav tabs on mobile
+    let lastScrollTop = 0;
+    const navTabs = document.querySelector('.nav-tabs');
+
+    window.addEventListener('scroll', () => {
+        // Only apply on mobile
+        if (window.innerWidth > 639) return;
+
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+        if (scrollTop > lastScrollTop && scrollTop > 100) {
+            // Scrolling down
+            navTabs.classList.add('hidden');
+        } else {
+            // Scrolling up
+            navTabs.classList.remove('hidden');
         }
 
-        pulling = false;
-        indicator.classList.remove('visible');
-    });
+        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+    }, false);
 }
 
 // ==================== Initialization ====================

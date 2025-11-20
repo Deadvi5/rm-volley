@@ -210,6 +210,13 @@ body {
     font-weight: 600;
 }
 
+/* Header scroll behavior */
+.header.scrolled .nav-tabs {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* Compact header for mobile */
 @media (max-width: 639px) {
     .header-content {
@@ -217,21 +224,22 @@ body {
     }
 
     .logo {
-        margin-bottom: var(--space-2);
+        margin-bottom: 0;
+        gap: var(--space-2);
     }
 
     .logo-icon {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
     }
 
     .logo-icon svg {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
     }
 
     .logo-text h1 {
-        font-size: 1rem;
+        font-size: 0.875rem;
     }
 
     .logo-text p {
@@ -239,16 +247,23 @@ body {
         /* Hide "Dashboard Pro" on mobile */
     }
 
+    /* Make header stats a single compact line */
+    .header-stats {
+        gap: var(--space-1);
+        margin-top: var(--space-2);
+    }
+
     .stat-item {
-        padding: var(--space-1) var(--space-1);
+        padding: var(--space-1);
     }
 
     .stat-value {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
     }
 
     .stat-label {
-        font-size: 0.55rem;
+        font-size: 0.5rem;
+        margin-top: 0;
     }
 }
 
@@ -266,6 +281,7 @@ body {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-base), opacity var(--transition-base);
 }
 
 .nav-tabs::-webkit-scrollbar {
@@ -348,12 +364,24 @@ body {
 
 @media (max-width: 639px) {
     .nav-tabs {
-        padding: var(--space-3);
-        top: 75px;
+        padding: var(--space-2);
+        gap: var(--space-1);
+        top: 60px;
+    }
+
+    /* Hide navigation tabs on scroll down (mobile only) */
+    .nav-tabs.hidden {
+        transform: translateY(-100%);
+        opacity: 0;
     }
 
     .nav-tab {
-        padding: var(--space-2) var(--space-4);
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.8125rem;
+    }
+
+    .nav-tab-icon {
+        font-size: 1rem;
     }
 }
 
@@ -362,6 +390,12 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: var(--space-6) var(--space-4);
+}
+
+@media (max-width: 639px) {
+    .container {
+        padding: var(--space-3) var(--space-3);
+    }
 }
 
 @media (min-width: 1024px) {
@@ -494,6 +528,30 @@ body {
 @media (min-width: 640px) {
     .quick-stats {
         grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 639px) {
+    .quick-stats {
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+    }
+
+    .quick-stat-card {
+        padding: var(--space-3);
+    }
+
+    .quick-stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-2);
+    }
+
+    .quick-stat-value {
+        font-size: 1.5rem;
+    }
+
+    .quick-stat-label {
+        font-size: 0.75rem;
     }
 }
 
@@ -675,6 +733,33 @@ body {
     }
 }
 
+@media (max-width: 639px) {
+    .team-card {
+        padding: var(--space-4);
+    }
+
+    .team-name {
+        font-size: 1.125rem;
+    }
+
+    .team-stats-row {
+        gap: var(--space-1);
+        margin-bottom: var(--space-3);
+    }
+
+    .stat-box {
+        padding: var(--space-2);
+    }
+
+    .stat-box-value {
+        font-size: 1.125rem;
+    }
+
+    .stat-box-label {
+        font-size: 0.625rem;
+    }
+}
+
 @media (min-width: 1024px) {
     .teams-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -696,6 +781,13 @@ body {
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-base);
     border: 1px solid var(--border-light);
+}
+
+@media (max-width: 639px) {
+    .match-card {
+        padding: var(--space-3);
+        border-radius: var(--radius-md);
+    }
 }
 
 .match-card:hover {
@@ -953,6 +1045,24 @@ body {
 .filter-select:hover,
 .filter-input:hover {
     border-color: var(--primary-light);
+}
+
+@media (max-width: 639px) {
+    .filters {
+        padding: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+
+    .filter-select,
+    .filter-input {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.875rem;
+    }
 }
 
 @media (min-width: 640px) {

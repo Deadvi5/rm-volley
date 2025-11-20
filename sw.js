@@ -1,5 +1,7 @@
-// Service Worker for RM Volley Dashboard
-const CACHE_NAME = 'rm-volley-v1';
+// RM Volley Dashboard - Service Worker
+// Cache management for offline capability
+
+const CACHE_NAME = 'rm-volley-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -31,24 +33,24 @@ self.addEventListener('fetch', event => {
         if (response) {
           return response;
         }
-        
+
         // Clone the request
         const fetchRequest = event.request.clone();
-        
+
         return fetch(fetchRequest).then(response => {
           // Check if valid response
           if (!response || response.status !== 200 || response.type !== 'basic') {
             return response;
           }
-          
+
           // Clone the response
           const responseToCache = response.clone();
-          
+
           caches.open(CACHE_NAME)
             .then(cache => {
               cache.put(event.request, responseToCache);
             });
-          
+
           return response;
         });
       })

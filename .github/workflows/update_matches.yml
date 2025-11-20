@@ -10,8 +10,8 @@ on:
         type: boolean
   
   schedule:
-    # Run weekly: every Sunday at 08:00 UTC (09:00 CET)
-    - cron: '0 8 * * 0'
+    # Run daily at 08:00 UTC (09:00 CET)
+    - cron: '0 8 * * *'
 
 jobs:
   update-data:

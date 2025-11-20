@@ -7,6 +7,28 @@
     <meta name="theme-color" content="#0066FF">
     <title>RM Volley - Dashboard Pro</title>
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RM Volley">
+
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="media/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="media/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="media/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="media/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="media/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="media/icon-72x72.png">
+    <link rel="apple-touch-icon" href="media/icon-192x192.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="media/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="media/icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="media/icon-72x72.png">
+
     <!-- Preconnect to CDNs for better performance -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -33,10 +55,7 @@
         <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 2v20M2 12h20"/>
-                    </svg>
+                    <img src="media/rmlogo.png" alt="RM Volley Logo">
                 </div>
                 <div class="logo-text">
                     <h1>RM Volley</h1>
@@ -162,7 +181,8 @@
                     </div>
                     <div class="filter-group">
                         <label class="filter-label" for="searchInput">Cerca</label>
-                        <input type="text" id="searchInput" class="filter-input" placeholder="Cerca squadra, impianto...">
+                        <input type="text" id="searchInput" class="filter-input"
+                            placeholder="Cerca squadra, impianto...">
                     </div>
                 </div>
             </div>
@@ -223,7 +243,7 @@
                 <h2 id="modalTeamName" class="modal-title">Team Details</h2>
                 <button class="modal-close" onclick="closeTeamModal()" aria-label="Chiudi">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12"/>
+                        <path d="M18 6L6 18M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -233,6 +253,21 @@
 
     <!-- JavaScript -->
     <script src="app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -2,7 +2,8 @@
   "name": "RM Volley Dashboard Pro",
   "short_name": "RM Volley",
   "description": "Dashboard professionale per la gestione delle squadre e partite RM Volley",
-  "start_url": "/",
+  "start_url": "/rm-volley/",
+  "scope": "/rm-volley/",
   "display": "standalone",
   "background_color": "#0066FF",
   "theme_color": "#0066FF",
@@ -57,6 +58,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["sports", "productivity"],
+  "categories": [
+    "sports",
+    "productivity"
+  ],
   "lang": "it"
 }

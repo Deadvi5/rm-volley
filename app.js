@@ -201,10 +201,22 @@ function updateHeaderStats() {
     const totalWins = Object.values(teamsData).reduce((sum, team) => sum + team.wins, 0);
     const overallWinRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
 
+    // Update desktop header stats
     document.getElementById('totalTeams').textContent = Object.keys(teamsData).length;
     document.getElementById('totalMatches').textContent = allMatches.length;
     document.getElementById('totalWins').textContent = totalWins;
     document.getElementById('winRate').textContent = overallWinRate + '%';
+
+    // Update mobile stats (iOS card)
+    const totalTeamsMobile = document.getElementById('totalTeamsMobile');
+    const totalMatchesMobile = document.getElementById('totalMatchesMobile');
+    const totalWinsMobile = document.getElementById('totalWinsMobile');
+    const winRateMobile = document.getElementById('winRateMobile');
+
+    if (totalTeamsMobile) totalTeamsMobile.textContent = Object.keys(teamsData).length;
+    if (totalMatchesMobile) totalMatchesMobile.textContent = allMatches.length;
+    if (totalWinsMobile) totalWinsMobile.textContent = totalWins;
+    if (winRateMobile) winRateMobile.textContent = overallWinRate + '%';
 }
 
 /**
@@ -1001,27 +1013,54 @@ function closeTeamModal() {
  * Initialize event listeners
  */
 function initializeEventListeners() {
-    // Tab navigation
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabName = tab.dataset.tab;
+    // Tab navigation - support both desktop (.nav-tab) and iOS (.ios-tab)
+    const tabSelectors = ['.nav-tab', '.ios-tab'];
 
-            // Update active tab
-            document.querySelectorAll('.nav-tab').forEach(t => {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
+    tabSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+
+                // Update active tab for both navigation types
+                tabSelectors.forEach(sel => {
+                    document.querySelectorAll(sel).forEach(t => {
+                        if (t.dataset.tab === tabName) {
+                            t.classList.add('active');
+                            t.setAttribute('aria-selected', 'true');
+                        } else {
+                            t.classList.remove('active');
+                            t.setAttribute('aria-selected', 'false');
+                        }
+                    });
+                });
+
+                // Show corresponding content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    const shouldShow = content.id === (tabName + '-tab');
+                    content.classList.toggle('active', shouldShow);
+                    content.style.display = shouldShow ? 'block' : 'none';
+                });
+
+                // Update iOS large title
+                const largeTitle = document.getElementById('largeTitle');
+                if (largeTitle) {
+                    const titleMap = {
+                        'overview': 'Panoramica',
+                        'teams': 'Squadre',
+                        'matches': 'Partite',
+                        'stats': 'Statistiche',
+                        'insights': 'Insights'
+                    };
+                    largeTitle.textContent = titleMap[tabName] || 'RM Volley';
+                }
+
+                currentTab = tabName;
+
+                // Reset scroll to top when changing tabs on mobile
+                if (window.innerWidth <= 768) {
+                    window.scrollTo(0, 0);
+                }
             });
-            tab.classList.add('active');
-            tab.setAttribute('aria-selected', 'true');
-
-            // Show corresponding content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                const shouldShow = content.id === (tabName + '-tab');
-                content.classList.toggle('active', shouldShow);
-                content.style.display = shouldShow ? 'block' : 'none';
-            });
-
-            currentTab = tabName;
         });
     });
 
@@ -1075,24 +1114,33 @@ function initializeEventListeners() {
         startY = 0;
     });
 
-    // Scroll behavior for hiding nav tabs on mobile
+    // iOS Large Title scroll behavior
     let lastScrollTop = 0;
     const navTabs = document.querySelector('.nav-tabs');
+    const iosNavbar = document.querySelector('.ios-navbar');
 
     window.addEventListener('scroll', () => {
-        // Only apply on mobile
-        if (window.innerWidth > 639) return;
-
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-        if (scrollTop > lastScrollTop && scrollTop > 100) {
-            // Scrolling down
-            navTabs.classList.add('hidden');
-        } else {
-            // Scrolling up
-            navTabs.classList.remove('hidden');
+        // iOS large title collapse behavior
+        if (iosNavbar && window.innerWidth <= 768) {
+            if (scrollTop > 50) {
+                iosNavbar.classList.add('scrolled');
+            } else {
+                iosNavbar.classList.remove('scrolled');
+            }
         }
 
+        // Old navigation hiding behavior (for desktop if needed)
+        if (navTabs && window.innerWidth <= 639) {
+            if (scrollTop > lastScrollTop && scrollTop > 100) {
+                // Scrolling down
+                navTabs.classList.add('hidden');
+            } else {
+                // Scrolling up
+                navTabs.classList.remove('hidden');
+            }
+        }
 
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     }, false);

@@ -50,7 +50,7 @@
         <span>Rilascia per aggiornare</span>
     </div>
 
-    <!-- Header -->
+    <!-- Desktop Header (shown on desktop only) -->
     <header class="header">
         <div class="header-content">
             <div class="logo">
@@ -83,7 +83,7 @@
         </div>
     </header>
 
-    <!-- Navigation Tabs -->
+    <!-- Desktop Navigation Tabs (shown on desktop only) -->
     <nav class="nav-tabs" role="navigation">
         <button class="nav-tab active" data-tab="overview" aria-selected="true">
             <span class="nav-tab-icon">📊</span>
@@ -106,6 +106,35 @@
             <span class="nav-tab-text">Insights</span>
         </button>
     </nav>
+
+    <!-- iOS-Style Navigation Bar (mobile only) -->
+    <header class="ios-navbar">
+        <div class="ios-navbar-content">
+            <div class="ios-large-title" id="largeTitle">Panoramica</div>
+        </div>
+    </header>
+
+    <!-- Stats Header Card (mobile only - iOS grouped style) -->
+    <div class="stats-header-card">
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalTeamsMobile">0</div>
+                <div class="stat-label">Squadre</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalMatchesMobile">0</div>
+                <div class="stat-label">Partite</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalWinsMobile">0</div>
+                <div class="stat-label">Vittorie</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="winRateMobile">0%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Main Container -->
     <main class="container">
@@ -244,6 +273,30 @@
             <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
+
+    <!-- iOS Bottom Tab Bar -->
+    <nav class="ios-tab-bar" role="navigation">
+        <button class="ios-tab active" data-tab="overview" aria-selected="true">
+            <span class="ios-tab-icon">📊</span>
+            <span class="ios-tab-label">Panoramica</span>
+        </button>
+        <button class="ios-tab" data-tab="teams" aria-selected="false">
+            <span class="ios-tab-icon">👥</span>
+            <span class="ios-tab-label">Squadre</span>
+        </button>
+        <button class="ios-tab" data-tab="matches" aria-selected="false">
+            <span class="ios-tab-icon">🏐</span>
+            <span class="ios-tab-label">Partite</span>
+        </button>
+        <button class="ios-tab" data-tab="stats" aria-selected="false">
+            <span class="ios-tab-icon">📈</span>
+            <span class="ios-tab-label">Statistiche</span>
+        </button>
+        <button class="ios-tab" data-tab="insights" aria-selected="false">
+            <span class="ios-tab-icon">💡</span>
+            <span class="ios-tab-label">Insights</span>
+        </button>
+    </nav>
 
     <!-- JavaScript -->
     <script src="app.js"></script>

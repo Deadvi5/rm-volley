@@ -365,10 +365,13 @@ function renderLeaderboard() {
 /**
  * Render recent matches
  */
+/**
+ * Render recent matches
+ */
 function renderRecentMatches() {
     const container = document.getElementById('recentMatchesList');
     const recent = [...allMatches]
-        .filter(m => m.Risultato && m.Risultato.includes('-'))
+        .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
         .sort((a, b) => parseDate(b.Data) - parseDate(a.Data))
         .slice(0, 5);
 
@@ -484,11 +487,17 @@ function renderMatches() {
         return;
     }
 
-    const today = new Date();
+    // Sort based on status filter
+    const statusFilter = document.getElementById('filterStatus').value;
+
     const sorted = [...filteredMatches].sort((a, b) => {
-        const dateA = Math.abs(parseDate(a.Data) - today);
-        const dateB = Math.abs(parseDate(b.Data) - today);
-        return dateA - dateB;
+        if (statusFilter === 'da disputare') {
+            // Ascending for future matches (upcoming first)
+            return parseDate(a.Data) - parseDate(b.Data);
+        } else {
+            // Descending for everything else (most recent first)
+            return parseDate(b.Data) - parseDate(a.Data);
+        }
     });
 
     list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
@@ -964,23 +973,27 @@ function showTeamDetail(teamName) {
         <div class="detail-section">
             <h3 class="detail-section-title">📅 Ultime Partite</h3>
             <div class="match-timeline">
-                ${team.matches.slice(0, 10).map(match => {
-        const date = parseDate(match.Data);
-        const dateStr = date.toLocaleDateString('it-IT');
-        const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
-        const result = match.Risultato || 'Da disputare';
+                ${team.matches
+            .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
+            .sort((a, b) => parseDate(b.Data) - parseDate(a.Data))
+            .slice(0, 10)
+            .map(match => {
+                const date = parseDate(match.Data);
+                const dateStr = date.toLocaleDateString('it-IT');
+                const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
+                const result = match.Risultato || 'Da disputare';
 
-        let dotClass = '';
-        let resultText = result;
+                let dotClass = '';
+                let resultText = result;
 
-        if (result.includes('-')) {
-            const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
-            const won = match.isHome ? (s1 > s2) : (s2 > s1);
-            dotClass = won ? 'win' : 'loss';
-            resultText = won ? `✅ ${result}` : `❌ ${result}`;
-        }
+                if (result.includes('-')) {
+                    const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
+                    const won = match.isHome ? (s1 > s2) : (s2 > s1);
+                    dotClass = won ? 'win' : 'loss';
+                    resultText = won ? `✅ ${result}` : `❌ ${result}`;
+                }
 
-        return `
+                return `
                         <div class="timeline-item">
                             <div class="timeline-dot ${dotClass}"></div>
                             <div class="timeline-content">
@@ -990,7 +1003,7 @@ function showTeamDetail(teamName) {
                             </div>
                         </div>
                     `;
-    }).join('')}
+            }).join('')}
             </div>
         </div>
     `;

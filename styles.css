@@ -1874,7 +1874,7 @@ body {
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 0.5px solid var(--border-light);
-    padding-bottom: var(--safe-area-bottom);
+    padding-bottom: calc(var(--safe-area-bottom) + 10px);
     display: flex;
     justify-content: space-around;
     align-items: stretch;

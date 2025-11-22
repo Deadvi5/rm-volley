@@ -45,7 +45,9 @@ def check_and_setup_environment():
         'requests': 'requests',
         'pandas': 'pandas',
         'openpyxl': 'openpyxl',
-        'xlrd': 'xlrd'
+        'xlrd': 'xlrd',
+        'lxml': 'lxml',
+        'html5lib': 'html5lib'
     }
     
     # Se siamo già nel venv, verifica solo le dipendenze
@@ -97,6 +99,7 @@ check_and_setup_environment()
 import requests
 import pandas as pd
 from datetime import datetime
+import json
 
 # URLs dei file Excel FIPAV
 URLS = [
@@ -104,7 +107,21 @@ URLS = [
     'https://crer.portalefipav.net/esporta-risultati.aspx?ComitatoId=35&StId=2297&DataDa=&StatoGara=&CId=&SId=3953&PId=29422'
 ]
 
+LEAGUES = {
+    'Serie D Femminile': 'https://crer.portalefipav.net/classifica.aspx?CId=84906',
+    'Seconda Div. F Gir. C': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85893',
+    'Seconda Div. F Gir. E': 'https://www.fipavpiacenza.it/classifica.aspx?CId=87068',
+    'Under 18 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85960',
+    'Under 16 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85962',
+    'Under 16 F Gir. B': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85963',
+    'Under 14 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85965',
+    'Under 14 F Gir. C': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85968',
+    'Under 14 F Gir. D': 'https://www.fipavpiacenza.it/classifica.aspx?CId=86960',
+    'Under 14 F Gir. E': 'https://www.fipavpiacenza.it/classifica.aspx?CId=86961'
+}
+
 OUTPUT_FILE = 'Gare.xls'
+CLASSIFICA_FILE = 'classifica.json'
 
 def download_excel(url, filename):
     """Scarica un file Excel dall'URL specificato"""
@@ -213,6 +230,58 @@ def merge_excel_files(files, output_file):
         traceback.print_exc()
         return False
 
+def update_classifica():
+    """Scarica e aggiorna le classifiche"""
+    print(f"\n🏆 Aggiornamento classifiche...")
+    
+    all_standings = {}
+    
+    for league_name, url in LEAGUES.items():
+        print(f"  ⏳ Scaricamento {league_name}...")
+        try:
+            # Leggi le tabelle dalla pagina
+            dfs = pd.read_html(url)
+            
+            if not dfs:
+                print(f"    ❌ Nessuna tabella trovata per {league_name}")
+                continue
+                
+            # La classifica è solitamente la prima tabella o quella con colonne specifiche
+            classifica_df = None
+            for df in dfs:
+                # Normalizza i nomi delle colonne
+                cols = [str(c).lower() for c in df.columns]
+                if any('squadra' in c for c in cols) and any('punti' in c for c in cols):
+                    classifica_df = df
+                    break
+            
+            if classifica_df is None:
+                classifica_df = dfs[0]
+                
+            # Pulisci i dati
+            classifica_df = classifica_df.dropna(axis=1, how='all')
+            
+            # Converti in lista di dizionari
+            records = classifica_df.to_dict('records')
+            all_standings[league_name] = records
+            print(f"    ✅ OK: {len(records)} squadre")
+            
+        except Exception as e:
+            print(f"    ❌ Errore: {e}")
+    
+    try:
+        # Salva in JSON
+        with open(CLASSIFICA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(all_standings, f, ensure_ascii=False, indent=2)
+            
+        print(f"\n✅ Tutte le classifiche salvate in: {CLASSIFICA_FILE}")
+        print(f"   📊 Campionati: {len(all_standings)}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Errore salvataggio JSON: {e}")
+        return False
+
 def cleanup_temp_files(files):
     """Rimuove i file temporanei"""
     for file in files:
@@ -250,7 +319,7 @@ def main():
     
     # Unione dei file
     if merge_excel_files(temp_files, OUTPUT_FILE):
-        print(f"\n🎉 Aggiornamento completato con successo!")
+        print(f"\n🎉 Aggiornamento partite completato con successo!")
         print(f"   File pronto: {OUTPUT_FILE}")
         
         # Backup del file precedente
@@ -267,6 +336,9 @@ def main():
     else:
         print("\n❌ Errore durante l'unione dei file")
         return 1
+    
+    # Aggiornamento classifica
+    update_classifica()
     
     # Pulizia file temporanei
     cleanup_temp_files(temp_files)

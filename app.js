@@ -8,6 +8,7 @@ let filteredMatches = [];
 let teamsData = {};
 let currentTab = 'overview';
 let chartInstances = {};
+let standingsData = {}; // Store all standings data
 
 // ==================== Data Loading ====================
 
@@ -25,6 +26,7 @@ async function loadExcelFile() {
         allMatches = data;
         processData();
         renderAll();
+        loadStandings();
 
         document.getElementById('loading').style.display = 'none';
         document.querySelectorAll('.tab-content').forEach(tab => {
@@ -43,6 +45,48 @@ async function loadExcelFile() {
             <p style="font-size: 0.875rem; margin-top: 0.5rem;">Assicurati che Gare.xls sia disponibile</p>
         `;
     }
+}
+
+/**
+ * Load Standings JSON
+ */
+async function loadStandings() {
+    try {
+        const response = await fetch('classifica.json');
+        if (!response.ok) throw new Error('Classifica not found');
+        standingsData = await response.json();
+
+        // Initialize selector and render first league
+        populateLeagueSelector();
+
+        // Default to first league or Serie D
+        const leagues = Object.keys(standingsData);
+        if (leagues.length > 0) {
+            const defaultLeague = leagues.find(l => l.includes('Serie D')) || leagues[0];
+            document.getElementById('leagueSelect').value = defaultLeague;
+            renderStandings(defaultLeague);
+        }
+
+        // Add event listener
+        document.getElementById('leagueSelect').addEventListener('change', (e) => {
+            renderStandings(e.target.value);
+        });
+
+    } catch (error) {
+        console.error('Error loading standings:', error);
+    }
+}
+
+function populateLeagueSelector() {
+    const select = document.getElementById('leagueSelect');
+    select.innerHTML = '';
+
+    Object.keys(standingsData).forEach(league => {
+        const option = document.createElement('option');
+        option.value = league;
+        option.textContent = league;
+        select.appendChild(option);
+    });
 }
 
 // ==================== Data Processing ====================
@@ -376,6 +420,59 @@ function renderRecentMatches() {
         .slice(0, 5);
 
     container.innerHTML = recent.map(match => createMatchCardHTML(match)).join('');
+}
+
+/**
+ * Render Standings Table
+ */
+function renderStandings(leagueName) {
+    const tbody = document.getElementById('standingsBody');
+    const lastUpdate = document.getElementById('standingsLastUpdate');
+    const data = standingsData[leagueName];
+
+    if (lastUpdate) {
+        const now = new Date();
+        lastUpdate.textContent = `Aggiornato: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <div class="empty-state-small">
+                        <span>⚠️</span> Dati classifica non disponibili
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = data.map((team, index) => {
+        const rankClass = index === 0 ? 'rank-1' :
+            index === 1 ? 'rank-2' :
+                index === 2 ? 'rank-3' : '';
+
+        const isRm = team.Squadra && (team.Squadra.toUpperCase().includes('RM VOLLEY') || team.Squadra.toUpperCase().includes('RMVOLLEY'));
+        const rowClass = isRm ? 'highlight-row' : '';
+
+        return `
+            <tr class="${rowClass}">
+                <td class="text-center">
+                    <div class="rank-badge ${rankClass}">${team['Pos.']}</div>
+                </td>
+                <td class="team-cell">
+                    <div class="team-name-standings">${team.Squadra}</div>
+                </td>
+                <td class="text-center font-bold">${team.Punti}</td>
+                <td class="text-center">${team.PG}</td>
+                <td class="text-center">${team.PV}</td>
+                <td class="text-center">${team.PP}</td>
+                <td class="text-center mobile-hide">${team.SF}</td>
+                <td class="text-center mobile-hide">${team.SS}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 /**

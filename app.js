@@ -35,8 +35,7 @@ async function loadExcelFile() {
             }
         });
 
-        // Check for matches today and show notification if first visit
-        checkAndNotifyTodayMatches();
+
     } catch (error) {
         console.error('Error loading Excel file:', error);
         document.getElementById('loading').innerHTML = `
@@ -285,6 +284,7 @@ function populateFilters() {
  * Render all dashboard components
  */
 function renderAll() {
+    renderTodaysMatches();
     renderQuickStats();
     renderInsights();
     renderLeaderboard();
@@ -420,6 +420,110 @@ function renderRecentMatches() {
         .slice(0, 5);
 
     container.innerHTML = recent.map(match => createMatchCardHTML(match)).join('');
+}
+
+/**
+ * Render today's matches section
+ */
+function renderTodaysMatches() {
+    const section = document.getElementById('todaysMatchesSection');
+    const container = document.getElementById('todaysMatchesList');
+
+    // Get today's date
+    const today = new Date();
+
+    // Find matches scheduled for today
+    const todaysMatches = allMatches.filter(match => {
+        if (!match.Data) return false;
+        const matchDate = parseDate(match.Data);
+        return matchDate.toDateString() === today.toDateString();
+    });
+
+    // Hide section if no matches today
+    if (todaysMatches.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+
+    // Sort by time
+    const sorted = todaysMatches.sort((a, b) => {
+        const timeA = a.Ora || '23:59';
+        const timeB = b.Ora || '23:59';
+        return timeA.localeCompare(timeB);
+    });
+
+    container.innerHTML = sorted.map(match => createTodayMatchCardHTML(match)).join('');
+}
+
+function createTodayMatchCardHTML(match) {
+    const now = new Date();
+    const matchDate = parseDate(match.Data);
+
+    // Parse time (assuming format HH:MM)
+    const timeParts = (match.Ora || '00:00').split(':');
+    const matchTime = new Date(matchDate);
+    matchTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+
+    // Calculate time differences in milliseconds
+    const tenMinutesBefore = new Date(matchTime.getTime() - 10 * 60 * 1000);
+    const twoHoursAfter = new Date(matchTime.getTime() + 2 * 60 * 60 * 1000);
+
+    // Determine if match is live
+    const isLive = now >= tenMinutesBefore && now <= twoHoursAfter;
+    const isCompleted = match.StatoDescrizione === 'gara omologata' || match.StatoDescrizione === 'risultato ufficioso';
+
+    const isRmHome = match.SquadraCasa?.includes('RMVOLLEY') || match.SquadraCasa?.includes('RM VOLLEY');
+    const isRmAway = match.SquadraOspite?.includes('RMVOLLEY') || match.SquadraOspite?.includes('RM VOLLEY');
+
+    let homeScore = '';
+    let awayScore = '';
+    let homeWinner = false;
+    let awayWinner = false;
+
+    if (match.Risultato && match.Risultato.includes('-')) {
+        const [homeSets, awaySets] = match.Risultato.split('-').map(s => parseInt(s.trim()));
+        homeScore = homeSets;
+        awayScore = awaySets;
+        homeWinner = homeSets > awaySets;
+        awayWinner = awaySets > homeSets;
+    }
+
+    // Compact horizontal design
+    return `
+        <div class="today-match-card ${isLive && !isCompleted ? 'today-match-live' : ''}">
+            <div class="today-match-header">
+                <div class="today-match-time">
+                    <span class="time-icon">🕐</span>
+                    <span class="time-text">${match.Ora || 'TBD'}</span>
+                </div>
+                ${isLive && !isCompleted ? '<div class="today-live-badge"><span class="today-live-dot"></span>LIVE</div>' : ''}
+            </div>
+            <div class="today-match-body">
+                <div class="today-team-box ${isRmHome ? 'today-rm-team' : ''}">
+                    <div class="today-team-name">${match.SquadraCasa || 'TBD'}</div>
+                    ${homeScore !== '' ? `<div class="today-team-score ${homeWinner ? 'score-winner' : ''}">${homeScore}</div>` : ''}
+                </div>
+                <div class="today-match-vs">
+                    <div class="vs-circle">VS</div>
+                </div>
+                <div class="today-team-box ${isRmAway ? 'today-rm-team' : ''}">
+                    <div class="today-team-name">${match.SquadraOspite || 'TBD'}</div>
+                    ${awayScore !== '' ? `<div class="today-team-score ${awayWinner ? 'score-winner' : ''}">${awayScore}</div>` : ''}
+                </div>
+            </div>
+            <div class="today-match-footer">
+                <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto || '')}" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   class="today-venue-link">
+                    <span class="today-venue-icon">📍</span>
+                    <span class="today-venue-text">${match.Impianto || 'TBD'}</span>
+                </a>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -1256,84 +1360,7 @@ function initializeEventListeners() {
     }, false);
 }
 
-// ==================== Notifications ====================
 
-/**
- * Request notification permission from the user
- */
-async function requestNotificationPermission() {
-    if (!('Notification' in window)) {
-        console.log('This browser does not support notifications');
-        return false;
-    }
-
-    if (Notification.permission === 'granted') {
-        return true;
-    }
-
-    if (Notification.permission !== 'denied') {
-        const permission = await Notification.requestPermission();
-        return permission === 'granted';
-    }
-
-    return false;
-}
-
-/**
- * Check for matches today and show notification if it's the first visit
- */
-async function checkAndNotifyTodayMatches() {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-
-    // Check localStorage to see if we've already notified today
-    const lastNotificationDate = localStorage.getItem('lastMatchNotificationDate');
-
-    if (lastNotificationDate === todayStr) {
-        // Already notified today, skip
-        return;
-    }
-
-    // Find matches scheduled for today
-    const todaysMatches = allMatches.filter(match => {
-        if (!match.Data) return false;
-        const matchDate = parseDate(match.Data);
-        return matchDate.toDateString() === today.toDateString() &&
-            match.StatoDescrizione === 'da disputare';
-    });
-
-    // If there are matches today, show notification
-    if (todaysMatches.length > 0) {
-        const hasPermission = await requestNotificationPermission();
-
-        if (hasPermission) {
-            // Create notification
-            const matchText = todaysMatches.length === 1
-                ? `1 partita in programma oggi`
-                : `${todaysMatches.length} partite in programma oggi`;
-
-            const teams = todaysMatches.map(m => {
-                const isRmHome = m.SquadraCasa?.includes('RMVOLLEY') || m.SquadraCasa?.includes('RM VOLLEY');
-                const rmTeam = isRmHome ? m.SquadraCasa : m.SquadraOspite;
-                const opponent = isRmHome ? m.SquadraOspite : m.SquadraCasa;
-                const location = isRmHome ? 'vs' : '@';
-                return `${rmTeam} ${location} ${opponent}`;
-            }).join('\n');
-
-            new Notification('🏐 RM Volley - Partite Oggi!', {
-                body: `${matchText}\n${todaysMatches[0].Ora || 'Orario TBD'}`,
-                icon: '/media/icon-192x192.png',
-                badge: '/media/icon-192x192.png',
-                tag: 'daily-match-notification',
-                requireInteraction: false
-            });
-
-            // Update localStorage to mark that we've notified today
-            localStorage.setItem('lastMatchNotificationDate', todayStr);
-        }
-    }
-}
 
 
 // ==================== Initialization ====================

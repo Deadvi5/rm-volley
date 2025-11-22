@@ -101,10 +101,6 @@
             <span class="nav-tab-icon">📈</span>
             <span class="nav-tab-text">Statistiche</span>
         </button>
-        <button class="nav-tab" data-tab="insights" aria-selected="false">
-            <span class="nav-tab-icon">💡</span>
-            <span class="nav-tab-text">Insights</span>
-        </button>
         <button class="nav-tab" data-tab="standings" aria-selected="false">
             <span class="nav-tab-icon">🏆</span>
             <span class="nav-tab-text">Classifica</span>
@@ -203,7 +199,7 @@
                             <option value="">Tutti gli stati</option>
                             <option value="gara omologata">Completate</option>
                             <option value="risultato ufficioso">Non ufficiali</option>
-                            <option value="da disputare">Da disputare</option>
+                            <option value="da disputare" selected>Da disputare</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -226,8 +222,12 @@
             <div class="matches-list" id="matchesList"></div>
         </div>
 
-        <!-- Stats Tab -->
+        <!-- Stats Tab (with Insights) -->
         <div id="stats-tab" class="tab-content">
+            <!-- Detailed Insights Section -->
+            <div id="detailedInsights"></div>
+
+            <!-- Charts Grid -->
             <div class="charts-grid">
                 <div class="chart-card">
                     <h3 class="chart-title">Vittorie per Squadra</h3>
@@ -254,11 +254,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Insights Tab -->
-        <div id="insights-tab" class="tab-content">
-            <div id="detailedInsights"></div>
         </div>
 
         <!-- Standings Tab -->
@@ -334,10 +329,6 @@
         <button class="ios-tab" data-tab="stats" aria-selected="false">
             <span class="ios-tab-icon">📈</span>
             <span class="ios-tab-label">Statistiche</span>
-        </button>
-        <button class="ios-tab" data-tab="insights" aria-selected="false">
-            <span class="ios-tab-icon">💡</span>
-            <span class="ios-tab-label">Insights</span>
         </button>
         <button class="ios-tab" data-tab="standings" aria-selected="false">
             <span class="ios-tab-icon">🏆</span>

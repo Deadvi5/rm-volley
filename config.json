@@ -33,5 +33,20 @@
     "output": {
         "matchesFile": "Gare.xls",
         "standingsFile": "classifica.json"
-    }
+    },
+    "admins": [
+        {
+            "email": "direttore@rmvolley.it",
+            "passwordHash": "a2f3c431f30bf11b5405b8185f5de1e04345369e283746df9b9676995dccb44f",
+            "name": "Admin"
+        }
+    ],
+    "sessionTimeout": 28800000,
+    "playerRoles": [
+        "Palleggiatrice",
+        "Schiacciatrice",
+        "Centrale",
+        "Opposta",
+        "Libero"
+    ]
 }

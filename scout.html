@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Scouting - RM Volley</title>
+
+    <!-- SheetJS library for reading Excel files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="scout.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header scout-header">
+        <div class="logo-section">
+            <img src="media/rmlogo.png" alt="RM Volley" class="header-logo" onerror="this.style.display='none'">
+            <h1 class="app-title">Player Scouting</h1>
+        </div>
+        <div class="header-actions">
+            <button id="backBtn" class="action-btn">← Back to Dashboard</button>
+            <button id="logoutBtn" class="action-btn logout-btn">🚪 Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="scout-container">
+        <!-- Match Selection Section -->
+        <section class="scout-section" id="matchSelectionSection">
+            <h2 class="section-title">📅 Seleziona Partita</h2>
+            <div class="match-selector">
+                <select id="matchSelect" class="scout-select">
+                    <option value="">Scegli una partita...</option>
+                </select>
+                <div id="selectedMatchInfo" class="match-info" style="display: none;"></div>
+            </div>
+        </section>
+
+        <!-- Player Setup Section -->
+        <section class="scout-section" id="playerSetupSection" style="display: none;">
+            <h2 class="section-title">👤 Aggiungi Giocatore</h2>
+            <div class="player-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome Giocatore</label>
+                        <input type="text" id="playerName" placeholder="Inserisci nome" class="scout-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Numero</label>
+                        <input type="number" id="playerNumber" placeholder="#" class="scout-input" min="1" max="99">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Squadra</label>
+                        <select id="playerTeam" class="scout-select">
+                            <option value="">Seleziona squadra</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ruolo</label>
+                        <select id="playerPosition" class="scout-select">
+                            <option value="">Seleziona ruolo</option>
+                            <!-- Populated from config.json -->
+                        </select>
+                    </div>
+                </div>
+                <button id="addPlayerBtn" class="primary-btn">➕ Aggiungi Giocatore</button>
+            </div>
+        </section>
+
+        <!-- Active Players Section -->
+        <section class="scout-section" id="activePlayersSection" style="display: none;">
+            <h2 class="section-title">🎯 Giocatori Monitorati</h2>
+            <div id="playersList" class="players-list"></div>
+        </section>
+
+        <!-- Stat Tracking Section -->
+        <section class="scout-section" id="statTrackingSection" style="display: none;">
+            <div class="tracking-header">
+                <h2 class="section-title">📊 Registra Statistiche</h2>
+                <div class="tracking-controls">
+                    <button id="undoBtn" class="control-btn" disabled>↶ Annulla</button>
+                    <button id="saveSessionBtn" class="control-btn primary">💾 Salva Sessione</button>
+                </div>
+            </div>
+
+            <div id="currentPlayerInfo" class="current-player-banner"></div>
+
+            <!-- Stat Categories -->
+            <div class="stat-categories">
+                <!-- Serves -->
+                <div class="stat-category">
+                    <h3 class="category-title">🏐 Battute</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn ace" data-category="serves" data-type="ace">
+                            <span class="stat-label">Ace</span>
+                            <span class="stat-count" id="serves-ace">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="serves" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="serves-error">0</span>
+                        </button>
+                        <button class="stat-btn neutral" data-category="serves" data-type="inPlay">
+                            <span class="stat-label">In Play</span>
+                            <span class="stat-count" id="serves-inPlay">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Attacks -->
+                <div class="stat-category">
+                    <h3 class="category-title">⚡ Attacchi</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn ace" data-category="attacks" data-type="kill">
+                            <span class="stat-label">Kill</span>
+                            <span class="stat-count" id="attacks-kill">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="attacks" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="attacks-error">0</span>
+                        </button>
+                        <button class="stat-btn neutral" data-category="attacks" data-type="blocked">
+                            <span class="stat-label">Blocked</span>
+                            <span class="stat-count" id="attacks-blocked">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Blocks -->
+                <div class="stat-category">
+                    <h3 class="category-title">🚫 Muri</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn ace" data-category="blocks" data-type="solo">
+                            <span class="stat-label">Solo</span>
+                            <span class="stat-count" id="blocks-solo">0</span>
+                        </button>
+                        <button class="stat-btn good" data-category="blocks" data-type="assist">
+                            <span class="stat-label">Assist</span>
+                            <span class="stat-count" id="blocks-assist">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="blocks" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="blocks-error">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Digs -->
+                <div class="stat-category">
+                    <h3 class="category-title">🛡️ Difese</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn good" data-category="digs" data-type="successful">
+                            <span class="stat-label">Successful</span>
+                            <span class="stat-count" id="digs-successful">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="digs" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="digs-error">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sets -->
+                <div class="stat-category">
+                    <h3 class="category-title">🤲 Alzate</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn good" data-category="sets" data-type="assist">
+                            <span class="stat-label">Assist</span>
+                            <span class="stat-count" id="sets-assist">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="sets" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="sets-error">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Receptions -->
+                <div class="stat-category">
+                    <h3 class="category-title">📥 Ricezioni</h3>
+                    <div class="stat-buttons">
+                        <button class="stat-btn ace" data-category="receptions" data-type="perfect">
+                            <span class="stat-label">Perfect</span>
+                            <span class="stat-count" id="receptions-perfect">0</span>
+                        </button>
+                        <button class="stat-btn good" data-category="receptions" data-type="good">
+                            <span class="stat-label">Good</span>
+                            <span class="stat-count" id="receptions-good">0</span>
+                        </button>
+                        <button class="stat-btn error" data-category="receptions" data-type="error">
+                            <span class="stat-label">Error</span>
+                            <span class="stat-count" id="receptions-error">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Session Summary Section -->
+        <section class="scout-section" id="sessionSummarySection" style="display: none;">
+            <div class="summary-header">
+                <h2 class="section-title">📋 Riepilogo Sessione</h2>
+                <button id="exportBtn" class="control-btn">📤 Esporta Dati</button>
+            </div>
+            <div id="summaryContent" class="summary-content"></div>
+        </section>
+    </div>
+
+    <!-- Authentication Check -->
+    <script type="module">
+        import { isAuthenticated, getCurrentUser, signOut } from './auth-simple.js';
+
+        // Check authentication before loading app
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        } else {
+            // User is authenticated, show user info
+            const user = getCurrentUser();
+            console.log('✅ Authenticated as:', user.email);
+
+            // Setup logout button
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                signOut();
+                window.location.href = 'login.html';
+            });
+
+            // Update back button
+            document.getElementById('backBtn').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+        }
+    </script>
+
+    <script type="module" src="scout.js"></script>
+</body>
+
+</html>

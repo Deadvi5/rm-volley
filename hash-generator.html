@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Hash Generator - RM Volley</title>
+    <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">🔐</div>
+                <h1>Password Hash Generator</h1>
+                <p>Generate SHA-256 hashes for admin passwords</p>
+            </div>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="text" id="password" placeholder="Enter password to hash" class="form-input">
+                </div>
+
+                <button id="generateBtn" class="primary-button">
+                    <span>Generate Hash</span>
+                </button>
+
+                <div id="resultSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="hash">SHA-256 Hash</label>
+                        <textarea id="hash" readonly class="form-input"
+                            style="font-family: monospace; font-size: 13px; min-height: 80px;"></textarea>
+                    </div>
+
+                    <button id="copyBtn" class="primary-button" style="background: #10b981;">
+                        <span>📋 Copy to Clipboard</span>
+                    </button>
+                </div>
+
+                <div id="successMessage" class="loading-message"
+                    style="display: none; background: #d1fae5; border-color: #10b981; color: #047857;">
+                    <span>✅ Hash copied to clipboard!</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1rem; background: #f5f7fa; border-radius: 8px; font-size: 0.85rem;">
+                <h3 style="margin-bottom: 0.5rem; font-size: 0.95rem;">Instructions:</h3>
+                <ol style="margin-left: 1.25rem; line-height: 1.6;">
+                    <li>Enter the password you want to use</li>
+                    <li>Click "Generate Hash"</li>
+                    <li>Copy the generated hash</li>
+                    <li>Add to <code>config.json</code>:</li>
+                </ol>
+                <pre
+                    style="background: #e5e7eb; padding: 0.75rem; border-radius: 6px; overflow-x: auto; margin-top: 0.75rem; font-size: 0.8rem;">{
+  "admins": [
+    {
+      "email": "user@example.com",
+      "passwordHash": "PASTE_HASH_HERE",
+      "name": "Admin Name"
+    }
+  ]
+}</pre>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <p><strong>Security Note:</strong> Never share the plaintext password. Only add the hash to config.json.</p>
+            <a href="index.html"
+                style="color: white; margin-top: 0.5rem; display: inline-block; text-decoration: underline;">← Back to
+                Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        const passwordInput = document.getElementById('password');
+        const hashOutput = document.getElementById('hash');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const resultSection = document.getElementById('resultSection');
+        const successMessage = document.getElementById('successMessage');
+
+        async function hashPassword(password) {
+            const msgUint8 = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            const password = passwordInput.value;
+
+            if (!password) {
+                alert('Please enter a password');
+                return;
+            }
+
+            const hash = await hashPassword(password);
+            hashOutput.value = hash;
+            resultSection.style.display = 'block';
+            successMessage.style.display = 'none';
+        });
+
+        copyBtn.addEventListener('click', () => {
+            hashOutput.select();
+            navigator.clipboard.writeText(hashOutput.value);
+
+            successMessage.style.display = 'flex';
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+        });
+
+        // Auto-generate on Enter key
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateBtn.click();
+            }
+        });
+    </script>
+</body>
+
+</html>

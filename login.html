@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - RM Volley Scouting</title>
+    <link rel="stylesheet" href="auth.css">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">🏐</div>
+                <h1>RM Volley Scouting</h1>
+                <p>Accedi per utilizzare le funzionalità di scouting</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="tua-email@example.com"
+                        autocomplete="email" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="La tua password"
+                        autocomplete="current-password" class="form-input">
+                </div>
+
+                <button type="submit" class="auth-button primary-button">
+                    <span>Accedi</span>
+                </button>
+            </form>
+
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+            <div id="loadingMessage" class="loading-message" style="display: none;">
+                <div class="spinner"></div>
+                <span>Accesso in corso...</span>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <p>Solo gli amministratori autorizzati possono accedere alla sezione scouting.</p>
+            <a href="index.html"
+                style="color: white; margin-top: 0.5rem; display: inline-block; text-decoration: underline;">← Torna
+                alla dashboard</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { signIn } from './auth-simple.js';
+
+        const form = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMessage');
+        const loadingMsg = document.getElementById('loadingMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            showLoading();
+
+            const result = await signIn(email, password);
+
+            hideLoading();
+
+            if (result.success) {
+                // Redirect to scout page
+                window.location.href = 'scout.html';
+            } else {
+                showError(result.error);
+            }
+        });
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+
+        function showLoading() {
+            loadingMsg.style.display = 'flex';
+            form.querySelector('button').disabled = true;
+            errorMsg.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingMsg.style.display = 'none';
+            form.querySelector('button').disabled = false;
+        }
+    </script>
+</body>
+
+</html>

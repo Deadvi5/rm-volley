@@ -105,6 +105,10 @@
             <span class="nav-tab-icon">🏆</span>
             <span class="nav-tab-text">Classifica</span>
         </button>
+        <button class="nav-tab" id="scoutTabBtn" data-tab="scout" aria-selected="false">
+            <span class="nav-tab-icon">🎯</span>
+            <span class="nav-tab-text">Scouting</span>
+        </button>
     </nav>
 
     <!-- iOS-Style Navigation Bar (mobile only) -->
@@ -345,10 +349,29 @@
             <span class="ios-tab-icon">🏆</span>
             <span class="ios-tab-label">Classifica</span>
         </button>
+        <button class="ios-tab" id="scoutTabBtnMobile" data-tab="scout" aria-selected="false">
+            <span class="ios-tab-icon">🎯</span>
+            <span class="ios-tab-label">Scouting</span>
+        </button>
     </nav>
 
     <!-- JavaScript -->
     <script src="app.js"></script>
+
+    <!-- Scouting Link Handler -->
+    <script>
+        // Handle scouting tab clicks - redirect to scout page
+        document.addEventListener('DOMContentLoaded', () => {
+            const scoutBtns = [document.getElementById('scoutTabBtn'), document.getElementById('scoutTabBtnMobile')];
+            scoutBtns.forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        window.location.href = 'scout.html';
+                    });
+                }
+            });
+        });
+    </script>
 
     <!-- Service Worker Registration -->
     <script>

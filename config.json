@@ -1,0 +1,37 @@
+{
+    "team": {
+        "name": "RM Volley",
+        "matchPatterns": [
+            "RM VOLLEY",
+            "RMVOLLEY"
+        ]
+    },
+    "categories": {
+        "2": "Seconda Div. F",
+        "13": "Under 14 F",
+        "14": "Under 14 F",
+        "15": "Under 14 F",
+        "16": "Under 16 F",
+        "18": "Under 18 F"
+    },
+    "leagues": {
+        "Serie D Femminile": "https://crer.portalefipav.net/classifica.aspx?CId=84906",
+        "Seconda Div. F Gir. C": "https://www.fipavpiacenza.it/classifica.aspx?CId=85893",
+        "Seconda Div. F Gir. E": "https://www.fipavpiacenza.it/classifica.aspx?CId=87068",
+        "Under 18 F Gir. A": "https://www.fipavpiacenza.it/classifica.aspx?CId=85960",
+        "Under 16 F Gir. A": "https://www.fipavpiacenza.it/classifica.aspx?CId=85962",
+        "Under 16 F Gir. B": "https://www.fipavpiacenza.it/classifica.aspx?CId=85963",
+        "Under 14 F Gir. A": "https://www.fipavpiacenza.it/classifica.aspx?CId=85965",
+        "Under 14 F Gir. C": "https://www.fipavpiacenza.it/classifica.aspx?CId=85968",
+        "Under 14 F Gir. D": "https://www.fipavpiacenza.it/classifica.aspx?CId=86960",
+        "Under 14 F Gir. E": "https://www.fipavpiacenza.it/classifica.aspx?CId=86961"
+    },
+    "dataSources": [
+        "https://www.fipavpiacenza.it/esporta-risultati.aspx?ComitatoId=74&StId=2336&DataDa=&StatoGara=&CId=&SId=3953&PId=9653",
+        "https://crer.portalefipav.net/esporta-risultati.aspx?ComitatoId=35&StId=2297&DataDa=&StatoGara=&CId=&SId=3953&PId=29422"
+    ],
+    "output": {
+        "matchesFile": "Gare.xls",
+        "standingsFile": "classifica.json"
+    }
+}

@@ -101,27 +101,55 @@ import pandas as pd
 from datetime import datetime
 import json
 
-# URLs dei file Excel FIPAV
-URLS = [
-    'https://www.fipavpiacenza.it/esporta-risultati.aspx?ComitatoId=74&StId=2336&DataDa=&StatoGara=&CId=&SId=3953&PId=9653',
-    'https://crer.portalefipav.net/esporta-risultati.aspx?ComitatoId=35&StId=2297&DataDa=&StatoGara=&CId=&SId=3953&PId=29422'
-]
+# Configuration file path
+CONFIG_FILE = 'config.json'
 
-LEAGUES = {
-    'Serie D Femminile': 'https://crer.portalefipav.net/classifica.aspx?CId=84906',
-    'Seconda Div. F Gir. C': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85893',
-    'Seconda Div. F Gir. E': 'https://www.fipavpiacenza.it/classifica.aspx?CId=87068',
-    'Under 18 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85960',
-    'Under 16 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85962',
-    'Under 16 F Gir. B': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85963',
-    'Under 14 F Gir. A': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85965',
-    'Under 14 F Gir. C': 'https://www.fipavpiacenza.it/classifica.aspx?CId=85968',
-    'Under 14 F Gir. D': 'https://www.fipavpiacenza.it/classifica.aspx?CId=86960',
-    'Under 14 F Gir. E': 'https://www.fipavpiacenza.it/classifica.aspx?CId=86961'
-}
+# Global config (loaded from file)
+config = None
 
-OUTPUT_FILE = 'Gare.xls'
-CLASSIFICA_FILE = 'classifica.json'
+def load_config():
+    """Load configuration from config.json"""
+    global config
+    
+    config_path = Path(__file__).parent / CONFIG_FILE
+    
+    if not config_path.exists():
+        print(f"❌ Errore: File di configurazione non trovato: {CONFIG_FILE}")
+        print("\nCrea un file config.json con la seguente struttura:")
+        print(json.dumps({
+            "team": {"name": "RM Volley", "matchPatterns": ["RM VOLLEY", "RMVOLLEY"]},
+            "categories": {"2": "Seconda Div. F", "18": "Under 18 F"},
+            "leagues": {"Serie D Femminile": "https://..."},
+            "dataSources": ["https://..."],
+            "output": {"matchesFile": "Gare.xls", "standingsFile": "classifica.json"}
+        }, indent=2))
+        sys.exit(1)
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        # Validate required fields
+        required_fields = ['team', 'categories', 'leagues', 'dataSources', 'output']
+        for field in required_fields:
+            if field not in config:
+                print(f"❌ Errore: Campo mancante in config.json: {field}")
+                sys.exit(1)
+        
+        print(f"✅ Configurazione caricata da {CONFIG_FILE}")
+        print(f"   Team: {config['team']['name']}")
+        print(f"   Campionati: {len(config['leagues'])}")
+        print(f"   Sorgenti dati: {len(config['dataSources'])}")
+        print()
+        
+        return config
+        
+    except json.JSONDecodeError as e:
+        print(f"❌ Errore nel parsing di {CONFIG_FILE}: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Errore nel caricamento della configurazione: {e}")
+        sys.exit(1)
 
 def download_excel(url, filename):
     """Scarica un file Excel dall'URL specificato"""
@@ -235,8 +263,10 @@ def update_classifica():
     print(f"\n🏆 Aggiornamento classifiche...")
     
     all_standings = {}
+    leagues = config['leagues']
+    standings_file = config['output']['standingsFile']
     
-    for league_name, url in LEAGUES.items():
+    for league_name, url in leagues.items():
         print(f"  ⏳ Scaricamento {league_name}...")
         try:
             # Leggi le tabelle dalla pagina
@@ -271,10 +301,10 @@ def update_classifica():
     
     try:
         # Salva in JSON
-        with open(CLASSIFICA_FILE, 'w', encoding='utf-8') as f:
+        with open(standings_file, 'w', encoding='utf-8') as f:
             json.dump(all_standings, f, ensure_ascii=False, indent=2)
             
-        print(f"\n✅ Tutte le classifiche salvate in: {CLASSIFICA_FILE}")
+        print(f"\n✅ Tutte le classifiche salvate in: {standings_file}")
         print(f"   📊 Campionati: {len(all_standings)}")
         return True
         
@@ -293,20 +323,26 @@ def cleanup_temp_files(files):
 
 def main():
     """Funzione principale"""
+    # Load configuration
+    global config
+    config = load_config()
+    
     print("=" * 60)
-    print("  RM Volley - Aggiornamento Dati Partite")
+    print(f"  {config['team']['name']} - Aggiornamento Dati Partite")
     print("=" * 60)
     print(f"  Data/Ora: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
     print("=" * 60)
     print()
     
     # File temporanei
-    temp_files = [f'Gare_temp_{i+1}.xls' for i in range(len(URLS))]
+    urls = config['dataSources']
+    output_file = config['output']['matchesFile']
+    temp_files = [f'Gare_temp_{i+1}.xls' for i in range(len(urls))]
     
     # Download dei file
     success_count = 0
-    for i, url in enumerate(URLS):
-        print(f"\n[{i+1}/{len(URLS)}] Download file...")
+    for i, url in enumerate(urls):
+        print(f"\n[{i+1}/{len(urls)}] Download file...")
         if download_excel(url, temp_files[i]):
             success_count += 1
     
@@ -315,21 +351,21 @@ def main():
         print("   Verifica la connessione internet e gli URL")
         return 1
     
-    print(f"\n✓ Scaricati {success_count}/{len(URLS)} file")
+    print(f"\n✓ Scaricati {success_count}/{len(urls)} file")
     
     # Unione dei file
-    if merge_excel_files(temp_files, OUTPUT_FILE):
+    if merge_excel_files(temp_files, output_file):
         print(f"\n🎉 Aggiornamento partite completato con successo!")
-        print(f"   File pronto: {OUTPUT_FILE}")
+        print(f"   File pronto: {output_file}")
         
         # Backup del file precedente
-        if os.path.exists(OUTPUT_FILE):
+        if os.path.exists(output_file):
             backup_name = f"Gare_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xls"
             try:
                 import shutil
                 # Non fare backup se è appena stato creato
-                if os.path.exists(f"{OUTPUT_FILE}.old"):
-                    shutil.copy2(f"{OUTPUT_FILE}.old", backup_name)
+                if os.path.exists(f"{output_file}.old"):
+                    shutil.copy2(f"{output_file}.old", backup_name)
                     print(f"   💾 Backup creato: {backup_name}")
             except:
                 pass

@@ -66,6 +66,34 @@ Edit `styles.css` line 56:
 --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
 ```
 
+## ⚙️ Configuration
+
+All settings are managed in `config.json` for easy customization without modifying code.
+
+### What You Can Configure
+
+- **Team name and patterns**: Change which teams are tracked
+- **Categories**: Define age groups and divisions  
+- **Leagues**: Add or remove leagues to display standings
+- **Data sources**: Configure FIPAV export URLs
+
+For detailed instructions, see [CONFIG.md](CONFIG.md).
+
+### Example config.json
+
+```json
+{
+  "team": {
+    "name": "Your Team Name",
+    "matchPatterns": ["YOUR TEAM", "YOURTEAM"]
+  },
+  "categories": {
+    "18": "Under 18 F"
+  }
+}
+```
+
+
 ## Mobile Testing
 
 Test on actual devices or use browser DevTools:
@@ -114,8 +142,43 @@ Test on actual devices or use browser DevTools:
 ## Support
 
 Refer to:
-- `IMPROVEMENTS.md` - Detailed feature documentation
-- `COMPARISON.md` - Before/after comparison
+- `IMPROVEMENTS.md`Per ulteriori dettagli e personalizzazione, consulta la [documentazione completa](README.md).
+
+## ⚙️ Configuration
+
+All settings for team names, categories, leagues, and data sources are managed in `config.json`. This makes it easy to customize the dashboard for different teams or organizations without modifying the code.
+
+### Quick Configuration
+
+Edit `config.json` to customize:
+- **Team name and patterns**: Change which teams are tracked
+- **Categories**: Define age groups and divisions
+- **Leagues**: Add or remove leagues to display standings
+- **Data sources**: Configure FIPAV export URLs
+
+For detailed configuration instructions, see [CONFIG.md](CONFIG.md).
+
+### Example Configuration
+
+```json
+{
+  "team": {
+    "name": "Your Team Name",
+    "matchPatterns": ["YOUR TEAM", "YOURTEAM"]
+  },
+  "categories": {
+    "18": "Under 18 F"
+  },
+  "leagues": {
+    "Serie D": "https://fipav.example/classifica.aspx?CId=12345"
+  },
+  "dataSources": [
+    "https://fipav.example/esporta-risultati.aspx?..."
+  ]
+}
+```
+
+## ✨ Features/after comparison
 - Browser console - Error messages and debugging
 
 ## File Sizes

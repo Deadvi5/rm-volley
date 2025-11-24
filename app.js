@@ -9,14 +9,41 @@ let teamsData = {};
 let currentTab = 'overview';
 let chartInstances = {};
 let standingsData = {}; // Store all standings data
+let config = null; // Configuration from config.json
 
 // ==================== Data Loading ====================
+
+/**
+ * Load configuration from config.json
+ */
+async function loadConfig() {
+    try {
+        const response = await fetch('config.json');
+        if (!response.ok) {
+            throw new Error('Config file not found');
+        }
+        config = await response.json();
+        console.log('✅ Configuration loaded:', config);
+        return config;
+    } catch (error) {
+        console.error('❌ Error loading config.json:', error);
+        document.getElementById('loading').innerHTML = `
+            <div class="empty-icon">⚠️</div>
+            <h3>Errore Configurazione</h3>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem;">File config.json non trovato o non valido</p>
+        `;
+        throw error;
+    }
+}
 
 /**
  * Load Excel file and initialize dashboard
  */
 async function loadExcelFile() {
     try {
+        // Load config first
+        await loadConfig();
+
         const response = await fetch('Gare.xls');
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -97,11 +124,15 @@ function processData() {
     teamsData = {};
     const rmTeams = new Set();
 
-    // Helper to identify RM teams
+    // Helper to identify teams based on config patterns
     function isRmTeam(name) {
-        if (!name) return false;
+        if (!name || !config) return false;
         const normalized = String(name).toUpperCase().replace(/\s+/g, ' ');
-        return /RM\s*VOLLEY/.test(normalized) || /RMVOLLEY/.test(normalized);
+        // Check against all configured patterns
+        return config.team.matchPatterns.some(pattern => {
+            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
+            return normalized.includes(patternNormalized);
+        });
     }
 
     // Find all RM Volley teams
@@ -209,16 +240,9 @@ function processData() {
  * Get category from team name
  */
 function getCategory(teamName) {
+    if (!config) return 'Sconosciuto';
     const num = teamName.match(/#(\d+)/)?.[1];
-    const categories = {
-        '2': 'Seconda Div. F',
-        '13': 'Under 14 F',
-        '14': 'Under 14 F',
-        '15': 'Under 14 F',
-        '16': 'Under 16 F',
-        '18': 'Under 18 F'
-    };
-    return categories[num] || 'Sconosciuto';
+    return config.categories[num] || 'Sconosciuto';
 }
 
 /**
@@ -474,8 +498,18 @@ function createTodayMatchCardHTML(match) {
     const isLive = now >= tenMinutesBefore && now <= twoHoursAfter;
     const isCompleted = match.StatoDescrizione === 'gara omologata' || match.StatoDescrizione === 'risultato ufficioso';
 
-    const isRmHome = match.SquadraCasa?.includes('RMVOLLEY') || match.SquadraCasa?.includes('RM VOLLEY');
-    const isRmAway = match.SquadraOspite?.includes('RMVOLLEY') || match.SquadraOspite?.includes('RM VOLLEY');
+    // Helper function to check if team matches config patterns
+    const isTeamMatch = (teamName) => {
+        if (!teamName || !config) return false;
+        const normalized = String(teamName).toUpperCase().replace(/\s+/g, ' ');
+        return config.team.matchPatterns.some(pattern => {
+            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
+            return normalized.includes(patternNormalized);
+        });
+    };
+
+    const isRmHome = isTeamMatch(match.SquadraCasa);
+    const isRmAway = isTeamMatch(match.SquadraOspite);
 
     let homeScore = '';
     let awayScore = '';
@@ -557,7 +591,9 @@ function renderStandings(leagueName) {
             index === 1 ? 'rank-2' :
                 index === 2 ? 'rank-3' : '';
 
-        const isRm = team.Squadra && (team.Squadra.toUpperCase().includes('RM VOLLEY') || team.Squadra.toUpperCase().includes('RMVOLLEY'));
+        const isRm = team.Squadra && config && config.team.matchPatterns.some(pattern => {
+            return team.Squadra.toUpperCase().includes(pattern.toUpperCase());
+        });
         const rowClass = isRm ? 'highlight-row' : '';
 
         return `
@@ -712,8 +748,18 @@ function createMatchCardHTML(match) {
     const day = date.getDate();
     const month = date.toLocaleDateString('it-IT', { month: 'short' });
 
-    const isRmHome = match.SquadraCasa?.includes('RMVOLLEY') || match.SquadraCasa?.includes('RM VOLLEY');
-    const isRmAway = match.SquadraOspite?.includes('RMVOLLEY') || match.SquadraOspite?.includes('RM VOLLEY');
+    // Helper function to check if team matches config patterns
+    const isTeamMatch = (teamName) => {
+        if (!teamName || !config) return false;
+        const normalized = String(teamName).toUpperCase().replace(/\s+/g, ' ');
+        return config.team.matchPatterns.some(pattern => {
+            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
+            return normalized.includes(patternNormalized);
+        });
+    };
+
+    const isRmHome = isTeamMatch(match.SquadraCasa);
+    const isRmAway = isTeamMatch(match.SquadraOspite);
 
     let statusClass = 'status-upcoming';
     let statusText = 'Da giocare';

@@ -1281,6 +1281,9 @@ function initializeEventListeners() {
             tab.addEventListener('click', () => {
                 const tabName = tab.dataset.tab;
 
+                // Ignore login/logout tabs (handled separately)
+                if (tabName === 'login' || tabName === 'logout') return;
+
                 // Update active tab for both navigation types
                 tabSelectors.forEach(sel => {
                     document.querySelectorAll(sel).forEach(t => {

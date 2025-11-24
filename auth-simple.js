@@ -74,11 +74,12 @@ export async function signIn(email, password) {
             };
         }
 
-        // Create session
+        // Create session with role
         const sessionTimeout = config.sessionTimeout || 28800000; // 8 hours default
         const session = {
             email: admin.email,
             name: admin.name || admin.email,
+            role: admin.role || 'admin', // Include role in session
             loginTime: Date.now(),
             expiry: Date.now() + sessionTimeout
         };
@@ -87,7 +88,7 @@ export async function signIn(email, password) {
         localStorage.setItem('scout_session', JSON.stringify(session));
         currentSession = session;
 
-        console.log('✅ Login successful:', admin.email);
+        console.log('✅ Login successful:', admin.email, 'Role:', session.role);
         return { success: true, user: session };
 
     } catch (error) {

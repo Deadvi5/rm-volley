@@ -50,7 +50,18 @@
         <span>Rilascia per aggiornare</span>
     </div>
 
-    <!-- Desktop Header (shown on desktop only) -->
+    <!-- Mobile Header -->
+    <header class="header mobile-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="media/rmlogo.png" alt="RM Volley" class="header-logo" onerror="this.style.display='none'">
+                <h1 class="app-title"></h1>
+            </div>
+            <div class="mobile-actions">
+            </div>
+        </div>
+    </header>
+    <!-- Desktop Header -->
     <header class="header">
         <div class="header-content">
             <div class="logo">
@@ -62,6 +73,7 @@
                     <p>Dashboard Pro</p>
                 </div>
             </div>
+
             <div class="header-stats">
                 <div class="stat-item">
                     <div class="stat-value" id="totalTeams">0</div>
@@ -105,9 +117,21 @@
             <span class="nav-tab-icon">🏆</span>
             <span class="nav-tab-text">Classifica</span>
         </button>
-        <button class="nav-tab" id="scoutTabBtn" data-tab="scout" aria-selected="false">
+        <button class="nav-tab" id="loginTabBtn" data-tab="login" aria-selected="false">
+            <span class="nav-tab-icon">🔑</span>
+            <span class="nav-tab-text">Login</span>
+        </button>
+        <button class="nav-tab" id="logoutTabBtn" data-tab="logout" aria-selected="false" style="display: none;">
+            <span class="nav-tab-icon">🚪</span>
+            <span class="nav-tab-text">Logout</span>
+        </button>
+        <button class="nav-tab" id="scoutTabBtn" data-tab="scout" aria-selected="false" style="display: none;">
             <span class="nav-tab-icon">🎯</span>
             <span class="nav-tab-text">Scouting</span>
+        </button>
+        <button class="nav-tab" id="socialTabBtn" data-tab="social" aria-selected="false" style="display: none;">
+            <span class="nav-tab-icon">📱</span>
+            <span class="nav-tab-text">Social Media</span>
         </button>
     </nav>
 
@@ -349,9 +373,21 @@
             <span class="ios-tab-icon">🏆</span>
             <span class="ios-tab-label">Classifica</span>
         </button>
-        <button class="ios-tab" id="scoutTabBtnMobile" data-tab="scout" aria-selected="false">
+        <button class="ios-tab" id="loginTabBtnMobile" data-tab="login" aria-selected="false">
+            <span class="ios-tab-icon">🔑</span>
+            <span class="ios-tab-label">Login</span>
+        </button>
+        <button class="ios-tab" id="logoutTabBtnMobile" data-tab="logout" aria-selected="false" style="display: none;">
+            <span class="ios-tab-icon">🚪</span>
+            <span class="ios-tab-label">Logout</span>
+        </button>
+        <button class="ios-tab" id="scoutTabBtnMobile" data-tab="scout" aria-selected="false" style="display: none;">
             <span class="ios-tab-icon">🎯</span>
             <span class="ios-tab-label">Scouting</span>
+        </button>
+        <button class="ios-tab" id="socialTabBtnMobile" data-tab="social" aria-selected="false" style="display: none;">
+            <span class="ios-tab-icon">📱</span>
+            <span class="ios-tab-label">Social</span>
         </button>
     </nav>
 
@@ -370,8 +406,80 @@
                     });
                 }
             });
+
+            // Handle social media tab clicks
+            const socialBtns = [document.getElementById('socialTabBtn'), document.getElementById('socialTabBtnMobile')];
+            socialBtns.forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        window.location.href = 'social.html';
+                    });
+                }
+            });
         });
     </script>
+
+    <!-- Login/Logout handlers -->
+    <script type="module">
+        import { signOut } from './auth-simple.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginBtnMobile = document.getElementById('loginBtnMobile');
+            const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+
+            // Desktop login
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // Desktop logout
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    signOut();
+                    window.location.reload();
+                });
+            }
+
+            // Mobile login
+            if (loginBtnMobile) {
+                loginBtnMobile.addEventListener('click', () => {
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // Mobile logout
+            if (logoutBtnMobile) {
+                logoutBtnMobile.addEventListener('click', () => {
+                    signOut();
+                    window.location.reload();
+                });
+            }
+
+            // Tab Login/Logout handlers
+            const loginTabBtn = document.getElementById('loginTabBtn');
+            const logoutTabBtn = document.getElementById('logoutTabBtn');
+            const loginTabBtnMobile = document.getElementById('loginTabBtnMobile');
+            const logoutTabBtnMobile = document.getElementById('logoutTabBtnMobile');
+
+            const handleLogin = () => window.location.href = 'login.html';
+            const handleLogout = () => {
+                signOut();
+                window.location.reload();
+            };
+
+            if (loginTabBtn) loginTabBtn.addEventListener('click', handleLogin);
+            if (loginTabBtnMobile) loginTabBtnMobile.addEventListener('click', handleLogin);
+            if (logoutTabBtn) logoutTabBtn.addEventListener('click', handleLogout);
+            if (logoutTabBtnMobile) logoutTabBtnMobile.addEventListener('click', handleLogout);
+        });
+    </script>
+
+    <!-- Tab visibility for authenticated users -->
+    <script type="module" src="auth-tabs.js"></script>
 
     <!-- Service Worker Registration -->
     <script>

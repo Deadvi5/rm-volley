@@ -70,8 +70,12 @@
             hideLoading();
 
             if (result.success) {
-                // Redirect to scout page
-                window.location.href = 'scout.html';
+                // Redirect based on role
+                if (result.user.role === 'socialmediamanager') {
+                    window.location.href = 'social.html';
+                } else {
+                    window.location.href = 'scout.html';
+                }
             } else {
                 showError(result.error);
             }

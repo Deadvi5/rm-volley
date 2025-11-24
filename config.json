@@ -38,7 +38,14 @@
         {
             "email": "direttore@rmvolley.it",
             "passwordHash": "a2f3c431f30bf11b5405b8185f5de1e04345369e283746df9b9676995dccb44f",
-            "name": "Admin"
+            "name": "Admin",
+            "role": "admin"
+        },
+        {
+            "email": "social@rmvolley.it",
+            "passwordHash": "a22f39ac4cf1f6ed31a3eba45dbc32fc6f5bd6c3b026c425b25420feb9d52f3b",
+            "name": "Social Media Manager",
+            "role": "socialmediamanager"
         }
     ],
     "sessionTimeout": 28800000,

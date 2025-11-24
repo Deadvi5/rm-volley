@@ -137,6 +137,32 @@ body {
     backdrop-filter: blur(20px);
 }
 
+/* Mobile Header - Hidden on Desktop */
+.mobile-header {
+    display: none !important;
+}
+
+/* Explicitly hide on desktop to prevent any overrides */
+@media (min-width: 769px) {
+
+    header.mobile-header,
+    .mobile-header {
+        display: none !important;
+    }
+}
+
+/* Global constraint for header logo to prevent giga-image */
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+@media (max-width: 768px) {
+    .mobile-header {
+        display: block !important;
+    }
+}
+
 .header-content {
     max-width: 1400px;
     margin: 0 auto;
@@ -1923,7 +1949,7 @@ body {
 /* Hide old header and navigation on mobile */
 @media (max-width: 768px) {
 
-    .header,
+    .header:not(.scout-header),
     .nav-tabs {
         display: none !important;
     }

@@ -78,6 +78,7 @@
 /* Match Selection */
 .match-selector {
     max-width: 600px;
+    backdrop-filter: blur(20px);
 }
 
 .scout-select {
@@ -312,6 +313,65 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
+    touch-action: manipulation;
+    /* Improve touch response */
+}
+
+/* Mobile optimizations for scouting */
+@media (max-width: 768px) {
+    .stat-buttons {
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 columns on mobile */
+        gap: 0.5rem;
+    }
+
+    .stat-btn {
+        padding: 0.75rem 0.5rem;
+        /* Smaller padding */
+        min-height: 80px;
+        justify-content: center;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .stat-count {
+        font-size: 1.25rem;
+    }
+
+    /* Sticky controls at bottom */
+    .tracking-controls {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+
+    .tracking-controls .control-btn {
+        flex: 1;
+        padding: 1rem;
+        font-size: 1rem;
+    }
+
+    /* Add padding to bottom of container to account for sticky controls */
+    .scout-container {
+        padding-bottom: 100px;
+    }
+
+    /* Add padding to bottom of container to account for sticky controls */
+    .scout-container {
+        padding-bottom: 100px;
+    }
 }
 
 .stat-btn:active {

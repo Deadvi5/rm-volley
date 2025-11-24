@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Manager - RM Volley</title>
+
+    <!-- SheetJS library for reading Excel files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="scout.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header scout-header">
+        <div class="logo-section">
+            <img src="media/rmlogo.png" alt="RM Volley" class="header-logo" onerror="this.style.display='none'">
+            <h1 class="app-title">Social Media Manager</h1>
+        </div>
+        <div class="header-actions">
+            <button id="backBtn" class="action-btn">← Dashboard</button>
+            <button id="logoutBtn" class="action-btn logout-btn">🚪 Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="scout-container">
+        <!-- Week Selection -->
+        <section class="scout-section">
+            <h2 class="section-title">📅 Seleziona Periodo</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dal:</label>
+                    <input type="date" id="startDate" class="scout-input">
+                </div>
+                <div class="form-group">
+                    <label>Al:</label>
+                    <input type="date" id="endDate" class="scout-input">
+                </div>
+            </div>
+            <div class="form-row" style="margin-top: 1rem;">
+                <div class="form-group" style="width: 100%;">
+                    <button id="generateBtn" class="primary-btn" style="width: 100%;">✨ Genera Post</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generated Post -->
+        <section class="scout-section" id="resultSection" style="display: none;">
+            <div class="summary-header">
+                <h2 class="section-title">📱 Post Generato</h2>
+                <div>
+                    <button id="copyBtn" class="control-btn primary">📋 Copia Testo</button>
+                </div>
+            </div>
+            <div class="post-preview">
+                <pre id="postContent"
+                    style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.6; padding: 1.5rem; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;"></pre>
+            </div>
+        </section>
+
+        <!-- Stats Summary -->
+        <section class="scout-section" id="statsSection" style="display: none;">
+            <h2 class="section-title">📊 Riepilogo Settimana</h2>
+            <div class="stats-grid" id="weekStats"></div>
+        </section>
+    </div>
+
+    <!-- Authentication Check -->
+    <script type="module">
+        import { isAuthenticated, getCurrentUser, signOut } from './auth-simple.js';
+
+        // Check authentication
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        } else {
+            const user = getCurrentUser();
+            console.log('✅ Authenticated as:', user.email);
+
+            // Setup buttons
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                signOut();
+                window.location.href = 'login.html';
+            });
+
+            document.getElementById('backBtn').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+        }
+    </script>
+
+    <script type="module" src="social.js"></script>
+</body>
+
+</html>

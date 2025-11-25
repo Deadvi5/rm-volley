@@ -10,6 +10,7 @@ let currentTab = 'overview';
 let chartInstances = {};
 let standingsData = {}; // Store all standings data
 let config = null; // Configuration from config.json
+let firebaseDatabase = null; // Firebase database instance
 
 // ==================== Data Loading ====================
 
@@ -43,6 +44,19 @@ async function loadExcelFile() {
     try {
         // Load config first
         await loadConfig();
+
+        // Initialize Firebase for live match data
+        try {
+            const firebaseConfigModule = await import('./firebase-config.js');
+            const firebaseConfig = firebaseConfigModule.default;
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            firebaseDatabase = firebase.database();
+            console.log('✅ Firebase initialized for live match data');
+        } catch (error) {
+            console.warn('⚠️ Firebase not configured, live sets won\'t update:', error.message);
+        }
 
         const response = await fetch('Gare.xls');
         const arrayBuffer = await response.arrayBuffer();
@@ -449,7 +463,7 @@ function renderRecentMatches() {
 /**
  * Render today's matches section
  */
-function renderTodaysMatches() {
+async function renderTodaysMatches() {
     const section = document.getElementById('todaysMatchesSection');
     const container = document.getElementById('todaysMatchesList');
 
@@ -478,10 +492,14 @@ function renderTodaysMatches() {
         return timeA.localeCompare(timeB);
     });
 
-    container.innerHTML = sorted.map(match => createTodayMatchCardHTML(match)).join('');
+    // Create cards concurrently and wait for all to complete
+    const cardPromises = sorted.map(match => createTodayMatchCardHTML(match));
+    const cards = await Promise.all(cardPromises);
+    container.innerHTML = cards.join('');
 }
 
-function createTodayMatchCardHTML(match) {
+
+async function createTodayMatchCardHTML(match) {
     const now = new Date();
     const matchDate = parseDate(match.Data);
 
@@ -516,7 +534,36 @@ function createTodayMatchCardHTML(match) {
     let homeWinner = false;
     let awayWinner = false;
 
-    if (match.Risultato && match.Risultato.includes('-')) {
+    // For live matches, fetch set data from Firebase
+    if (isLive && !isCompleted && firebaseDatabase) {
+        try {
+            const matchKey = `${match.SquadraCasa}_vs_${match.SquadraOspite}_${match.Data}`
+                .replace(/\s+/g, '_')
+                .replace(/\//g, '-');
+
+            const setsSnapshot = await firebaseDatabase.ref(`live-matches/${matchKey}/sets`).once('value');
+            const setsData = setsSnapshot.val();
+
+            if (setsData) {
+                // Count set wins
+                let homeSets = 0;
+                let awaySets = 0;
+
+                Object.values(setsData).forEach(set => {
+                    if (set.home > set.away) homeSets++;
+                    else awaySets++;
+                });
+
+                homeScore = homeSets;
+                awayScore = awaySets;
+                homeWinner = homeSets > awaySets;
+                awayWinner = awaySets > homeSets;
+            }
+        } catch (error) {
+            console.warn('Could not fetch live sets:', error);
+        }
+    } else if (match.Risultato && match.Risultato.includes('-')) {
+        // For completed matches, use static result
         const [homeSets, awaySets] = match.Risultato.split('-').map(s => parseInt(s.trim()));
         homeScore = homeSets;
         awayScore = awaySets;
@@ -524,9 +571,14 @@ function createTodayMatchCardHTML(match) {
         awayWinner = awaySets > homeSets;
     }
 
+    // Generate onclick handler for live matches
+    const onClickHandler = (isLive && !isCompleted) ?
+        `onclick="openLiveMatch(${JSON.stringify(match).replace(/"/g, '&quot;')})"` : '';
+    const cursorStyle = (isLive && !isCompleted) ? 'style="cursor: pointer;"' : '';
+
     // Compact horizontal design
     return `
-        <div class="today-match-card ${isLive && !isCompleted ? 'today-match-live' : ''}">
+        <div class="today-match-card ${isLive && !isCompleted ? 'today-match-live' : ''}" ${onClickHandler} ${cursorStyle} data-match-id="${match.SquadraCasa}_vs_${match.SquadraOspite}">
             <div class="today-match-header">
                 <div class="today-match-time">
                     <span class="time-icon">🕐</span>
@@ -551,7 +603,8 @@ function createTodayMatchCardHTML(match) {
                 <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto || '')}" 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   class="today-venue-link">
+                   class="today-venue-link"
+                   onclick="event.stopPropagation();">
                     <span class="today-venue-icon">📍</span>
                     <span class="today-venue-text">${match.Impianto || 'TBD'}</span>
                 </a>
@@ -559,6 +612,7 @@ function createTodayMatchCardHTML(match) {
         </div>
     `;
 }
+
 
 /**
  * Render Standings Table
@@ -1411,6 +1465,18 @@ function initializeEventListeners() {
 
 
 
+
+
+
+// ==================== Live Match Navigation ====================
+
+/**
+ * Open live match page with match data
+ */
+window.openLiveMatch = function (match) {
+    const matchData = encodeURIComponent(JSON.stringify(match));
+    window.location.href = `live-match.html?match=${matchData}`;
+};
 
 // ==================== Initialization ====================
 

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Live Match - RM Volley</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="live-match.css">
+</head>
+
+<body class="live-match-body">
+    <!-- Header -->
+    <header class="live-header">
+        <button id="backBtn" class="back-btn">← Dashboard</button>
+        <div class="live-badge">🔴 LIVE</div>
+        <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+    </header>
+
+    <!-- Match Score Section -->
+    <section class="score-section">
+        <div class="match-info">
+            <div id="matchDate" class="match-date"></div>
+            <div id="matchLocation" class="match-location"></div>
+        </div>
+
+        <div class="teams-score">
+            <!-- Home Team -->
+            <div class="team-side">
+                <div id="homeTeam" class="team-name">Team A</div>
+                <div class="score-display">
+                    <div id="homeScore" class="score-number">0</div>
+                    <div class="score-controls">
+                        <button class="score-btn" onclick="updateScore('home', 1)">+</button>
+                        <button class="score-btn decrease" onclick="updateScore('home', -1)">−</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VS Divider -->
+            <div class="vs-divider">VS</div>
+
+            <!-- Away Team -->
+            <div class="team-side">
+                <div id="awayTeam" class="team-name">Team B</div>
+                <div class="score-display">
+                    <div id="awayScore" class="score-number">0</div>
+                    <div class="score-controls">
+                        <button class="score-btn" onclick="updateScore('away', 1)">+</button>
+                        <button class="score-btn decrease" onclick="updateScore('away', -1)">−</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Sets Display -->
+        <div id="completedSets" class="completed-sets" style="display: none;"></div>
+
+        <!-- End Set Section -->
+        <div class="end-set-section">
+            <button id="endSetBtn" class="end-set-btn" onclick="showEndSetModal()">🏁 End Current Set</button>
+        </div>
+    </section>
+
+    <!-- End Set Modal -->
+    <div id="endSetModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>🏁 End Current Set</h2>
+            <p>Enter the final score for this set:</p>
+            <div class="set-score-inputs">
+                <div class="set-score-input-group">
+                    <label id="homeTeamLabel">Home</label>
+                    <input type="number" id="homeSetScore" class="set-score-input" min="0" max="50" value="25" />
+                </div>
+                <div class="set-score-divider">-</div>
+                <div class="set-score-input-group">
+                    <label id="awayTeamLabel">Away</label>
+                    <input type="number" id="awaySetScore" class="set-score-input" min="0" max="50" value="23" />
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeEndSetModal()" class="secondary-btn">Cancel</button>
+                <button onclick="confirmEndSet()" class="primary-btn">✓ Confirm Set</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Section -->
+    <section class="chat-section">
+        <div class="chat-header">
+            <h2>💬 Live Chat</h2>
+            <div id="onlineCount" class="online-count"></div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatMessages" class="chat-messages"></div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Type a message..." class="chat-input" />
+            <button id="sendBtn" class="send-btn">Send</button>
+        </div>
+    </section>
+
+    <!-- Username Modal -->
+    <div id="usernameModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>👋 Welcome to Live Chat!</h2>
+            <p>Please enter your name to join the conversation:</p>
+            <input type="text" id="usernameInput" placeholder="Your name" class="username-input" maxlength="20" />
+            <button id="setUsernameBtn" class="primary-btn">Join Chat</button>
+        </div>
+    </div>
+
+    <!-- Back button (no auth required) -->
+    <script>
+        // Setup back button (works for everyone)
+        document.getElementById('backBtn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    </script>
+
+    <script type="module" src="live-match.js"></script>
+</body>
+
+</html>

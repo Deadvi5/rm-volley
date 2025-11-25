@@ -3,6 +3,13 @@
 // ====================================
 
 import { getCurrentUser } from './auth-simple.js';
+import {
+    initializeFirebase,
+    saveScoutSession,
+    getAllScoutSessions,
+    savePlayerToRoster,
+    getTeamRoster
+} from './scout-firebase.js';
 
 // Global state
 let config = null;
@@ -18,6 +25,9 @@ let currentSession = {
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // Initialize Firebase
+        initializeFirebase();
+
         // Load config
         const response = await fetch('config.json');
         config = await response.json();
@@ -28,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         populatePlayerRoles();
 
         // Try to restore session
-        restoreSession();
+        await restoreSession();
 
         console.log('✅ Scout application initialized');
     } catch (error) {
@@ -79,7 +89,7 @@ async function loadMatches() {
 
         // Get today's date in DD/MM/YYYY format
         const today = new Date();
-        const todayStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        const todayStr = `${String(today.getDate()).padStart(2, '0')} /${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()} `;
 
         // Separate today's matches from other matches
         const todayMatches = [];
@@ -105,7 +115,7 @@ async function loadMatches() {
             todayMatches.forEach(({ match, index }) => {
                 const option = document.createElement('option');
                 option.value = index;
-                option.textContent = `${match.Ora || 'TBD'} - ${match.SquadraCasa} vs ${match.SquadraOspite}`;
+                option.textContent = `${match.Ora || 'TBD'} - ${match.SquadraCasa} vs ${match.SquadraOspite} `;
                 option.dataset.match = JSON.stringify(match);
                 todayGroup.appendChild(option);
             });
@@ -119,7 +129,7 @@ async function loadMatches() {
             otherMatches.forEach(({ match, index }) => {
                 const option = document.createElement('option');
                 option.value = index;
-                option.textContent = `${match.Data || 'TBD'} - ${match.SquadraCasa} vs ${match.SquadraOspite}`;
+                option.textContent = `${match.Data || 'TBD'} - ${match.SquadraCasa} vs ${match.SquadraOspite} `;
                 option.dataset.match = JSON.stringify(match);
                 otherGroup.appendChild(option);
             });
@@ -133,7 +143,7 @@ async function loadMatches() {
 }
 
 // Handle match selection
-function handleMatchSelection(event) {
+async function handleMatchSelection(event) {
     const selectedOption = event.target.selectedOptions[0];
     if (!selectedOption.value) return;
 
@@ -160,26 +170,138 @@ function handleMatchSelection(event) {
         <option value="${currentSession.matchData.SquadraOspite}">${currentSession.matchData.SquadraOspite}</option>
     `;
 
+    // Load rosters for both teams
+    await loadTeamRosters(currentSession.matchData.SquadraCasa, currentSession.matchData.SquadraOspite);
+
     // Show player setup section
     document.getElementById('playerSetupSection').style.display = 'block';
 }
 
-// Add player to scout list
+// Load team rosters for the selected match
+async function loadTeamRosters(homeTeam, awayTeam) {
+    try {
+        // Load rosters for both teams
+        const [homeRoster, awayRoster] = await Promise.all([
+            getTeamRoster(homeTeam),
+            getTeamRoster(awayTeam)
+        ]);
+
+        // Display rosters
+        displayTeamRosters(homeTeam, homeRoster, awayTeam, awayRoster);
+    } catch (error) {
+        console.error('Error loading team rosters:', error);
+        // Don't show error to user, just log it
+    }
+}
+
+// Display team rosters for quick player selection
+function displayTeamRosters(homeTeam, homeRoster, awayTeam, awayRoster) {
+    let rosterHTML = '';
+
+    if (homeRoster.length > 0 || awayRoster.length > 0) {
+        rosterHTML = `
+            <div class="team-rosters-section" style="margin-top: 16px; padding: 16px; background: #f8f9fa; border-radius: 8px;">
+                <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #333;">Quick Add from Rosters</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        `;
+
+        // Home team roster
+        if (homeRoster.length > 0) {
+            rosterHTML += `
+                <div>
+                    <strong style="display: block; margin-bottom: 8px; color: #667eea;">${homeTeam}</strong>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${homeRoster.map(player => `
+                            <button onclick="quickAddPlayer('${escapeForHTML(player.name)}', '${player.number}', '${escapeForHTML(homeTeam)}', '${escapeForHTML(player.position)}')" 
+                                    class="quick-add-btn" 
+                                    style="text-align: left; padding: 8px 12px; background: white; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s;">
+                                #${player.number} ${escapeForHTML(player.name)} <span style="color: #666; font-size: 12px;">(${escapeForHTML(player.position)})</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Away team roster
+        if (awayRoster.length > 0) {
+            rosterHTML += `
+                <div>
+                    <strong style="display: block; margin-bottom: 8px; color: #764ba2;">${awayTeam}</strong>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${awayRoster.map(player => `
+                            <button onclick="quickAddPlayer('${escapeForHTML(player.name)}', '${player.number}', '${escapeForHTML(awayTeam)}', '${escapeForHTML(player.position)}')" 
+                                    class="quick-add-btn"
+                                    style="text-align: left; padding: 8px 12px; background: white; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s;">
+                                #${player.number} ${escapeForHTML(player.name)} <span style="color: #666; font-size: 12px;">(${escapeForHTML(player.position)})</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        rosterHTML += `
+                </div>
+            </div>
+        `;
+    }
+
+    // Insert roster section after player setup form
+    const setupSection = document.getElementById('playerSetupSection');
+    let rosterContainer = document.getElementById('teamRostersContainer');
+
+    if (!rosterContainer) {
+        rosterContainer = document.createElement('div');
+        rosterContainer.id = 'teamRostersContainer';
+        setupSection.appendChild(rosterContainer);
+    }
+
+    rosterContainer.innerHTML = rosterHTML;
+}
+
+// Quick add player from roster
+window.quickAddPlayer = function (name, number, team, position) {
+    // Set form values
+    document.getElementById('playerName').value = name;
+    document.getElementById('playerNumber').value = number;
+    document.getElementById('playerTeam').value = team;
+    document.getElementById('playerPosition').value = position;
+
+    // Trigger add player
+    addPlayer();
+};
+
+// Helper to escape HTML for attributes
+function escapeForHTML(text) {
+    return String(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Add player to tracking list
 function addPlayer() {
     const name = document.getElementById('playerName').value.trim();
-    const number = document.getElementById('playerNumber').value;
+    const number = document.getElementById('playerNumber').value.trim();
     const team = document.getElementById('playerTeam').value;
     const position = document.getElementById('playerPosition').value;
 
     if (!name || !number || !team || !position) {
-        alert('Compila tutti i campi del giocatore');
+        alert('Please fill in all player fields');
+        return;
+    }
+
+    // Check if player exists
+    const exists = currentSession.players.find(p =>
+        p.name === name && p.number === number && p.team === team
+    );
+    if (exists) {
+        alert('This player is already in the tracking list');
         return;
     }
 
     const player = {
         id: `player-${Date.now()}`,
         name,
-        number: parseInt(number),
+        number,
         team,
         position,
         stats: {
@@ -194,7 +316,17 @@ function addPlayer() {
 
     currentSession.players.push(player);
 
-    // Clear form
+    // Auto-save player to team roster in Firebase
+    savePlayerToRoster(team, {
+        id: player.id,
+        name: player.name,
+        number: player.number,
+        position: player.position
+    }).catch(err => {
+        console.warn('Could not save player to roster:', err);
+    });
+
+    // Clear inputs
     document.getElementById('playerName').value = '';
     document.getElementById('playerNumber').value = '';
     document.getElementById('playerPosition').value = '';
@@ -217,17 +349,17 @@ function addPlayer() {
 function renderPlayers() {
     const list = document.getElementById('playersList');
     list.innerHTML = currentSession.players.map(player => `
-        <div class="player-card ${player.id === currentSession.currentPlayerId ? 'active' : ''}" 
-             data-player-id="${player.id}" 
-             onclick="selectPlayer('${player.id}')">
-            <div class="player-card-header">
-                <div class="player-number">#${player.number}</div>
-                <button class="remove-player-btn" onclick="event.stopPropagation(); removePlayer('${player.id}')">✕</button>
+            <div class="player-card ${player.id === currentSession.currentPlayerId ? 'active' : ''}"
+                data-player-id="${player.id}"
+                onclick="selectPlayer('${player.id}')">
+                <div class="player-card-header">
+                    <div class="player-number">#${player.number}</div>
+                    <button class="remove-player-btn" onclick="event.stopPropagation(); removePlayer('${player.id}')">✕</button>
+                </div>
+                <div class="player-name">${player.name}</div>
+                <div class="player-details">${player.position} • ${player.team}</div>
             </div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-details">${player.position} • ${player.team}</div>
-        </div>
-    `).join('');
+            `).join('');
 }
 
 // Select player for tracking
@@ -383,7 +515,7 @@ function renderSummary() {
                     </div>
                 </div>
             </div>
-        `;
+            `;
     }).join('');
 }
 
@@ -394,7 +526,7 @@ function calculateReceptionEfficiency(receptions) {
     return Math.round(((receptions.perfect * 3 + receptions.good * 2) / (total * 3)) * 100);
 }
 
-// Save session to localStorage
+// Save session to Firebase and localStorage
 async function saveSession() {
     if (currentSession.players.length === 0) {
         alert('Nessun giocatore da salvare');
@@ -402,15 +534,27 @@ async function saveSession() {
     }
 
     try {
+        // Save to localStorage (backup)
         saveSessionToLocalStorage();
-        alert('✅ Sessione salvata con successo in memoria locale!\n\nSuggerimento: Usa Esporta per scaricare come CSV.');
+
+        // Save to Firebase (permanent storage)
+        const user = getCurrentUser();
+        const sessionData = {
+            ...currentSession,
+            scoutedBy: user ? user.email : 'unknown',
+            createdAt: currentSession.createdAt || Date.now()
+        };
+
+        await saveScoutSession(sessionData);
+
+        alert('✅ Sessione salvata con successo!\n\nDati salvati su Firebase e memoria locale.\n\nSuggerimento: Usa Esporta per scaricare come CSV.');
     } catch (error) {
         console.error('Error saving session:', error);
-        alert('Errore durante il salvataggio della sessione.');
+        alert('Errore durante il salvataggio della sessione su Firebase.\n\nDati salvati solo in memoria locale.');
     }
 }
 
-// Save session data to localStorage with 1-week expiry
+// Save session data to localStorage (backup) and Firebase (permanent)
 function saveSessionToLocalStorage() {
     try {
         const user = getCurrentUser();
@@ -418,34 +562,37 @@ function saveSessionToLocalStorage() {
             ...currentSession,
             scoutedBy: user ? user.email : 'unknown',
             lastSaved: Date.now(),
-            expiryDate: Date.now() + (7 * 24 * 60 * 60 * 1000) // 1 week
+            createdAt: currentSession.createdAt || Date.now()
         };
 
         localStorage.setItem('scout_current_session', JSON.stringify(sessionData));
-        console.log('Session auto-saved');
+
+        // Auto-save to Firebase (non-blocking)
+        saveScoutSession(sessionData).catch(err => {
+            console.warn('Auto-save to Firebase failed:', err);
+        });
+
+        console.log('Session auto-saved to localStorage and Firebase');
     } catch (error) {
         console.error('Error saving to localStorage:', error);
     }
 }
 
-// Restore session from localStorage
-function restoreSession() {
+// Restore session from localStorage (quick restore on page load)
+async function restoreSession() {
     try {
         const saved = localStorage.getItem('scout_current_session');
-        if (!saved) return;
-
-        const sessionData = JSON.parse(saved);
-
-        // Check if session expired (> 1 week old)
-        if (sessionData.expiryDate && sessionData.expiryDate < Date.now()) {
-            console.log('Session expired, clearing...');
-            localStorage.removeItem('scout_current_session');
+        if (!saved) {
+            console.log('No saved session found in localStorage');
             return;
         }
 
-        // Restore session
+        const sessionData = JSON.parse(saved);
+
+        // Restore session (no expiry check - data is kept permanently)
         if (sessionData.matchId && sessionData.players && sessionData.players.length > 0) {
             currentSession = sessionData;
+            currentSession.createdAt = sessionData.createdAt || Date.now();
 
             // Restore UI state
             const matchSelect = document.getElementById('matchSelect');
@@ -491,7 +638,7 @@ function restoreSession() {
 
                 renderSummary();
 
-                console.log('✅ Session restored successfully');
+                console.log('✅ Session restored from localStorage');
                 alert('Sessione precedente ripristinata!');
             }
         }
@@ -665,18 +812,6 @@ function exportToPDF() {
     });
 }
 
-// Clean up expired sessions periodically
-setInterval(() => {
-    try {
-        const saved = localStorage.getItem('scout_current_session');
-        if (saved) {
-            const sessionData = JSON.parse(saved);
-            if (sessionData.expiryDate && sessionData.expiryDate < Date.now()) {
-                console.log('Cleaning up expired session');
-                localStorage.removeItem('scout_current_session');
-            }
-        }
-    } catch (error) {
-        console.error('Error cleaning up sessions:', error);
-    }
-}, 60000); // Check every minute
+// Note: Sessions are now stored permanently in Firebase
+// localStorage is used as a backup for quick restore
+// No auto-cleanup of sessions

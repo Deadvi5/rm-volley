@@ -9,6 +9,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Player Scouting - RM Volley</title>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <!-- SheetJS library for reading Excel files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -24,6 +28,7 @@
             <h1 class="app-title">Player Scouting</h1>
         </div>
         <div class="header-actions">
+            <button id="playerStatsBtn" class="action-btn">📊 Player Stats</button>
             <button id="backBtn" class="action-btn">← Back to Dashboard</button>
             <button id="logoutBtn" class="action-btn logout-btn">🚪 Logout</button>
         </div>
@@ -234,6 +239,11 @@
             // Update back button
             document.getElementById('backBtn').addEventListener('click', () => {
                 window.location.href = 'index.html';
+            });
+
+            // Update player stats button
+            document.getElementById('playerStatsBtn').addEventListener('click', () => {
+                window.location.href = 'player-stats.html';
             });
         }
     </script>

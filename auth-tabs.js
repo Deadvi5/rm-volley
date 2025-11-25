@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scoutBtns.forEach(btn => {
                 if (btn) btn.style.display = 'flex';
             });
+
             console.log('✅ Showing scouting tab for admin');
         }
 

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Player Statistics - RM Volley</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="player-stats.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header stats-header">
+        <div class="logo-section">
+            <img src="media/rmlogo.png" alt="RM Volley" class="header-logo" onerror="this.style.display='none'">
+            <h1 class="app-title">📊 Player Statistics</h1>
+        </div>
+        <div class="header-actions">
+            <button id="backToScoutBtn" class="action-btn">← Back to Scouting</button>
+            <button id="backBtn" class="action-btn">🏠 Dashboard</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="stats-container">
+        <!-- Back Navigation -->
+        <div style="margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button onclick="window.location.href='scout.html'"
+                style="flex: 1; min-width: 150px; padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                ← Back to Scouting
+            </button>
+            <button onclick="window.location.href='index.html'"
+                style="flex: 1; min-width: 150px; padding: 12px 20px; background: #6b7280; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                🏠 Dashboard
+            </button>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <section class="stats-section">
+            <div class="search-controls">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search players by name...">
+                <select id="teamFilter" class="filter-select">
+                    <option value="">All Teams</option>
+                </select>
+                <select id="positionFilter" class="filter-select">
+                    <option value="">All Positions</option>
+                    <option value="Palleggiatrice">Palleggiatrice</option>
+                    <option value="Schiacciatrice">Schiacciatrice</option>
+                    <option value="Centrale">Centrale</option>
+                    <option value="Opposta">Opposta</option>
+                    <option value="Libero">Libero</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Caricamento statistiche...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📊</div>
+            <h2>Nessuna statistica disponibile</h2>
+            <p>Inizia a monitorare i giocatori per raccogliere dati sulle prestazioni.</p>
+            <button onclick="window.location.href='scout.html'" class="primary-btn">Vai allo Scouting</button>
+        </div>
+
+        <!-- Players List -->
+        <section class="stats-section" id="playersSection" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">Elenco Giocatori</h2>
+                <div class="stats-count" id="playerCount">0 giocatori</div>
+            </div>
+            <div id="playersList" class="players-grid"></div>
+        </section>
+
+        <!-- Player Detail Modal -->
+        <div id="playerDetailModal" class="modal" style="display: none;">
+            <div class="modal-content player-detail-content">
+                <div class="modal-header">
+                    <h2 id="playerDetailName">Player Name</h2>
+                    <button class="close-btn" onclick="closePlayerDetail()">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="playerDetailContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentication Check -->
+    <script type="module">
+        import { isAuthenticated, getCurrentUser } from './auth-simple.js';
+
+        // Check authentication before loading app
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        } else {
+            // User is authenticated
+            const user = getCurrentUser();
+            console.log('✅ Authenticated as:', user.email);
+
+            // Setup back to scouting button
+            document.getElementById('backToScoutBtn').addEventListener('click', () => {
+                window.location.href = 'scout.html';
+            });
+
+            // Setup back to dashboard button
+            document.getElementById('backBtn').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+        }
+    </script>
+
+    <script type="module" src="player-stats.js"></script>
+</body>
+
+</html>

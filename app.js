@@ -2,6 +2,9 @@
 // RM Volley Dashboard - JavaScript
 // ====================================
 
+// Import utility functions
+import { debounce, throttleRAF, processInChunks, deepEqual } from './utils.js';
+
 // Global state
 let allMatches = [];
 let filteredMatches = [];
@@ -11,6 +14,7 @@ let chartInstances = {};
 let standingsData = {}; // Store all standings data
 let config = null; // Configuration from config.json
 let firebaseDatabase = null; // Firebase database instance
+let lastChartData = null; // Cache for chart data to prevent unnecessary re-renders
 
 // ==================== Data Loading ====================
 
@@ -65,7 +69,7 @@ async function loadExcelFile() {
         const data = XLSX.utils.sheet_to_json(firstSheet);
 
         allMatches = data;
-        processData();
+        await processData(); // Now async to prevent UI blocking
         renderAll();
         loadStandings();
 
@@ -133,8 +137,9 @@ function populateLeagueSelector() {
 
 /**
  * Process raw match data and calculate team statistics
+ * Uses chunked processing to prevent UI blocking
  */
-function processData() {
+async function processData() {
     teamsData = {};
     const rmTeams = new Set();
 
@@ -183,62 +188,64 @@ function processData() {
         };
     });
 
-    // Calculate statistics
-    allMatches.forEach(match => {
-        const home = match.SquadraCasa;
-        const away = match.SquadraOspite;
-        const result = match.Risultato;
-        const isRmHome = isRmTeam(home);
-        const isRmAway = isRmTeam(away);
+    // Process matches in chunks to prevent UI blocking
+    await processInChunks(allMatches, (matchChunk) => {
+        matchChunk.forEach(match => {
+            const home = match.SquadraCasa;
+            const away = match.SquadraOspite;
+            const result = match.Risultato;
+            const isRmHome = isRmTeam(home);
+            const isRmAway = isRmTeam(away);
 
-        if (isRmHome || isRmAway) {
-            const team = isRmHome ? home : away;
-            const isHome = isRmHome;
+            if (isRmHome || isRmAway) {
+                const team = isRmHome ? home : away;
+                const isHome = isRmHome;
 
-            teamsData[team].totalMatches++;
-            teamsData[team].matches.push({ ...match, isHome });
+                teamsData[team].totalMatches++;
+                teamsData[team].matches.push({ ...match, isHome });
 
-            if (result && result.includes('-')) {
-                const [homeSets, awaySets] = result.split('-').map(s => parseInt(s.trim()));
-                const won = isHome ? (homeSets > awaySets) : (awaySets > homeSets);
+                if (result && result.includes('-')) {
+                    const [homeSets, awaySets] = result.split('-').map(s => parseInt(s.trim()));
+                    const won = isHome ? (homeSets > awaySets) : (awaySets > homeSets);
 
-                teamsData[team].played++;
-                teamsData[team].setsWon += isHome ? homeSets : awaySets;
-                teamsData[team].setsLost += isHome ? awaySets : homeSets;
+                    teamsData[team].played++;
+                    teamsData[team].setsWon += isHome ? homeSets : awaySets;
+                    teamsData[team].setsLost += isHome ? awaySets : homeSets;
 
-                // Calculate points from partials
-                if (match.Parziali) {
-                    const sets = match.Parziali.split(' ').filter(s => s.trim());
-                    sets.forEach(set => {
-                        const [p1, p2] = set.replace(/[()]/g, '').split('-').map(p => parseInt(p));
-                        if (!isNaN(p1) && !isNaN(p2)) {
-                            teamsData[team].pointsScored += isHome ? p1 : p2;
-                            teamsData[team].pointsConceded += isHome ? p2 : p1;
-                        }
-                    });
+                    // Calculate points from partials
+                    if (match.Parziali) {
+                        const sets = match.Parziali.split(' ').filter(s => s.trim());
+                        sets.forEach(set => {
+                            const [p1, p2] = set.replace(/[()]/g, '').split('-').map(p => parseInt(p));
+                            if (!isNaN(p1) && !isNaN(p2)) {
+                                teamsData[team].pointsScored += isHome ? p1 : p2;
+                                teamsData[team].pointsConceded += isHome ? p2 : p1;
+                            }
+                        });
+                    }
+
+                    if (won) {
+                        teamsData[team].wins++;
+                        if (isHome) teamsData[team].homeWins++;
+                        else teamsData[team].awayWins++;
+                        teamsData[team].currentStreak = Math.max(0, teamsData[team].currentStreak) + 1;
+                        teamsData[team].recentForm.push('W');
+                    } else {
+                        teamsData[team].losses++;
+                        if (isHome) teamsData[team].homeLosses++;
+                        else teamsData[team].awayLosses++;
+                        teamsData[team].currentStreak = Math.min(0, teamsData[team].currentStreak) - 1;
+                        teamsData[team].recentForm.push('L');
+                    }
+
+                    teamsData[team].longestWinStreak = Math.max(
+                        teamsData[team].longestWinStreak,
+                        Math.max(0, teamsData[team].currentStreak)
+                    );
                 }
-
-                if (won) {
-                    teamsData[team].wins++;
-                    if (isHome) teamsData[team].homeWins++;
-                    else teamsData[team].awayWins++;
-                    teamsData[team].currentStreak = Math.max(0, teamsData[team].currentStreak) + 1;
-                    teamsData[team].recentForm.push('W');
-                } else {
-                    teamsData[team].losses++;
-                    if (isHome) teamsData[team].homeLosses++;
-                    else teamsData[team].awayLosses++;
-                    teamsData[team].currentStreak = Math.min(0, teamsData[team].currentStreak) - 1;
-                    teamsData[team].recentForm.push('L');
-                }
-
-                teamsData[team].longestWinStreak = Math.max(
-                    teamsData[team].longestWinStreak,
-                    Math.max(0, teamsData[team].currentStreak)
-                );
             }
-        }
-    });
+        });
+    }, 50); // Process 50 matches at a time
 
     // Keep only last 5 form results
     Object.values(teamsData).forEach(team => {
@@ -320,18 +327,32 @@ function populateFilters() {
 
 /**
  * Render all dashboard components
+ * @param {Object} options - Rendering options to skip unchanged sections
  */
-function renderAll() {
-    renderTodaysMatches();
-    renderQuickStats();
-    renderInsights();
-    renderLeaderboard();
-    renderRecentMatches();
-    renderTeams();
-    applyFilters();
-    renderMatches();
-    renderCharts();
-    renderDetailedInsights();
+function renderAll(options = {}) {
+    const {
+        skipCharts = false,
+        skipMatches = false,
+        skipStats = false,
+        skipToday = false
+    } = options;
+
+    if (!skipToday) renderTodaysMatches();
+    if (!skipStats) {
+        renderQuickStats();
+        renderInsights();
+        renderLeaderboard();
+        renderRecentMatches();
+        renderTeams();
+    }
+    if (!skipMatches) {
+        applyFilters();
+        renderMatches();
+    }
+    if (!skipCharts) {
+        renderCharts();
+        renderDetailedInsights();
+    }
 }
 
 /**
@@ -432,7 +453,7 @@ function renderLeaderboard() {
         const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
 
         return `
-            <div class="leaderboard-item" onclick="showTeamDetail('${team.name}')">
+            <div class="leaderboard-item" data-team-name="${team.name}">
                 <div class="leaderboard-rank ${rankClass}">${index + 1}</div>
                 <div class="leaderboard-info">
                     <div class="leaderboard-name">${team.name}</div>
@@ -442,6 +463,15 @@ function renderLeaderboard() {
             </div>
         `;
     }).join('');
+
+    // Add event delegation for leaderboard items (replaces inline onclick)
+    container.addEventListener('click', (e) => {
+        const item = e.target.closest('.leaderboard-item');
+        if (item) {
+            const teamName = item.dataset.teamName;
+            showTeamDetail(teamName);
+        }
+    });
 }
 
 /**
@@ -917,13 +947,33 @@ function parseDate(dateStr) {
 
 /**
  * Render charts
+ * Uses caching to avoid unnecessary chart recreations
  */
 function renderCharts() {
+    const teams = Object.values(teamsData).filter(t => t.played > 0);
+
+    // Check if data changed using simple comparison
+    const currentData = teams.map(t => ({
+        name: t.name,
+        wins: t.wins,
+        losses: t.losses,
+        setsWon: t.setsWon,
+        setsLost: t.setsLost
+    }));
+
+    // Skip re-render if data hasn't changed
+    if (lastChartData && deepEqual(currentData, lastChartData)) {
+        console.log('📊 Chart data unchanged, skipping re-render');
+        return;
+    }
+
+    lastChartData = currentData;
+
     // Destroy existing charts
     Object.values(chartInstances).forEach(chart => chart.destroy());
     chartInstances = {};
 
-    const teams = Object.values(teamsData).filter(t => t.played > 0);
+    // Reuse teams variable from above for chart creation
 
     // Wins Chart
     const winsCtx = document.getElementById('winsChart');
@@ -1381,19 +1431,23 @@ function initializeEventListeners() {
         });
     });
 
-    // Filter event listeners
+    // Filter event listeners with selective rendering
     document.getElementById('filterTeam').addEventListener('change', () => {
         applyFilters();
-        renderMatches();
+        renderMatches(); // Only re-render matches, not everything
     });
     document.getElementById('filterStatus').addEventListener('change', () => {
         applyFilters();
-        renderMatches();
+        renderMatches(); // Only re-render matches, not everything
     });
-    document.getElementById('searchInput').addEventListener('input', () => {
-        applyFilters();
-        renderMatches();
-    });
+
+    // Debounced search input (300ms delay)
+    document.getElementById('searchInput').addEventListener('input',
+        debounce(() => {
+            applyFilters();
+            renderMatches(); // Only re-render matches, not everything
+        }, 300)
+    );
 
     // Pull to refresh functionality
     let startY = 0;
@@ -1431,12 +1485,12 @@ function initializeEventListeners() {
         startY = 0;
     });
 
-    // iOS Large Title scroll behavior
+    // iOS Large Title scroll behavior (throttled with requestAnimationFrame)
     let lastScrollTop = 0;
     const navTabs = document.querySelector('.nav-tabs');
     const iosNavbar = document.querySelector('.ios-navbar');
 
-    window.addEventListener('scroll', () => {
+    const handleScroll = () => {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
         // iOS large title collapse behavior
@@ -1460,7 +1514,9 @@ function initializeEventListeners() {
         }
 
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    }, false);
+    };
+
+    window.addEventListener('scroll', throttleRAF(handleScroll), false);
 }
 
 

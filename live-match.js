@@ -443,8 +443,27 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Clean up Firebase listeners
+function cleanupFirebaseListeners() {
+    if (scoresRef) {
+        scoresRef.off();
+        console.log('🧹 Cleaned up scores listener');
+    }
+    if (messagesRef) {
+        messagesRef.off();
+        console.log('🧹 Cleaned up messages listener');
+    }
+}
+
+// Export cleanup function for external use
+window.cleanupLiveMatch = cleanupFirebaseListeners;
+
 // Clean up on page unload
-window.addEventListener('beforeunload', () => {
-    if (scoresRef) scoresRef.off();
-    if (messagesRef) messagesRef.off();
+window.addEventListener('beforeunload', cleanupFirebaseListeners);
+
+// Also clean up on visibility change (when user navigates away)
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        cleanupFirebaseListeners();
+    }
 });

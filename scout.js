@@ -8,7 +8,8 @@ import {
     saveScoutSession,
     getAllScoutSessions,
     savePlayerToRoster,
-    getTeamRoster
+    getTeamRoster,
+    deletePlayerFromRoster
 } from './scout-firebase.js';
 
 // Global state
@@ -389,7 +390,16 @@ window.selectPlayer = function (playerId) {
 
 // Remove player
 window.removePlayer = function (playerId) {
-    if (confirm('Rimuovere questo giocatore?')) {
+    const player = currentSession.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    if (confirm(`Rimuovere ${player.name} dalla sessione e dal roster di squadra (Firebase)?`)) {
+        // Remove from Firebase roster
+        deletePlayerFromRoster(player.team, player.id).catch(err => {
+            console.error('Failed to delete player from roster:', err);
+            alert('Attenzione: Impossibile rimuovere dal roster online. Il giocatore è stato rimosso solo dalla sessione locale.');
+        });
+
         currentSession.players = currentSession.players.filter(p => p.id !== playerId);
         if (currentSession.currentPlayerId === playerId) {
             currentSession.currentPlayerId = null;

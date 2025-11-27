@@ -539,10 +539,14 @@ async function createTodayMatchCardHTML(match) {
     matchTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
 
     // Calculate time differences in milliseconds
+    const twelveHoursBefore = new Date(matchTime.getTime() - 12 * 60 * 60 * 1000);
     const tenMinutesBefore = new Date(matchTime.getTime() - 10 * 60 * 1000);
     const twoHoursAfter = new Date(matchTime.getTime() + 2 * 60 * 60 * 1000);
 
-    // Determine if match is live
+    // Determine if chat is available (12 hours before match)
+    const isChatAvailable = now >= twelveHoursBefore && now <= twoHoursAfter;
+
+    // Determine if match is live (10 minutes before match - for LIVE badge and score updates)
     const isLive = now >= tenMinutesBefore && now <= twoHoursAfter;
     const isCompleted = match.StatoDescrizione === 'gara omologata' || match.StatoDescrizione === 'risultato ufficioso';
 
@@ -569,7 +573,8 @@ async function createTodayMatchCardHTML(match) {
         try {
             const matchKey = `${match.SquadraCasa}_vs_${match.SquadraOspite}_${match.Data}`
                 .replace(/\s+/g, '_')
-                .replace(/\//g, '-');
+                .replace(/\//g, '-')
+                .replace(/[.#$\[\]]/g, '_'); // Remove Firebase-invalid characters
 
             const setsSnapshot = await firebaseDatabase.ref(`live-matches/${matchKey}/sets`).once('value');
             const setsData = setsSnapshot.val();
@@ -601,10 +606,10 @@ async function createTodayMatchCardHTML(match) {
         awayWinner = awaySets > homeSets;
     }
 
-    // Generate onclick handler for live matches
-    const onClickHandler = (isLive && !isCompleted) ?
+    // Generate onclick handler for chat availability (12 hours before)
+    const onClickHandler = (isChatAvailable && !isCompleted) ?
         `onclick="openLiveMatch(${JSON.stringify(match).replace(/"/g, '&quot;')})"` : '';
-    const cursorStyle = (isLive && !isCompleted) ? 'style="cursor: pointer;"' : '';
+    const cursorStyle = (isChatAvailable && !isCompleted) ? 'style="cursor: pointer;"' : '';
 
     // Compact horizontal design
     return `

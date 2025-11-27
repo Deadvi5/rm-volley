@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         currentMatch = JSON.parse(decodeURIComponent(matchData));
 
+        // Check if match is actually live (10 minutes before) vs just chat available (12 hours before)
+        checkMatchLiveStatus();
+
         // Setup Firebase references
         const matchKey = getMatchKey();
         messagesRef = database.ref(`live-matches/${matchKey}/messages`);
@@ -86,7 +89,54 @@ document.addEventListener('DOMContentLoaded', async () => {
 function getMatchKey() {
     return `${currentMatch.SquadraCasa}_vs_${currentMatch.SquadraOspite}_${currentMatch.Data}`
         .replace(/\s+/g, '_')
-        .replace(/\//g, '-');
+        .replace(/\//g, '-')
+        .replace(/[.#$\[\]]/g, '_'); // Remove Firebase-invalid characters
+}
+
+// Check if match is actually live (10 minutes before) vs just chat available
+function checkMatchLiveStatus() {
+    const now = new Date();
+
+    // Parse match date and time
+    const [day, month, year] = currentMatch.Data.split('/');
+    const matchDate = new Date(year, month - 1, day);
+
+    const timeParts = (currentMatch.Ora || '00:00').split(':');
+    const matchTime = new Date(matchDate);
+    matchTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+
+    // Calculate if match is actually live (10 minutes before)
+    const tenMinutesBefore = new Date(matchTime.getTime() - 10 * 60 * 1000);
+    const twoHoursAfter = new Date(matchTime.getTime() + 2 * 60 * 60 * 1000);
+    const isActuallyLive = now >= tenMinutesBefore && now <= twoHoursAfter;
+
+    // Disable score controls if not actually live
+    if (!isActuallyLive) {
+        // Hide/disable score controls
+        const scoreButtons = document.querySelectorAll('.score-btn');
+        scoreButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.3';
+            btn.style.cursor = 'not-allowed';
+        });
+
+        // Hide end set button
+        const endSetBtn = document.getElementById('endSetBtn');
+        if (endSetBtn) {
+            endSetBtn.style.display = 'none';
+        }
+
+        // Update header badge to show "Chat Available" instead of "LIVE"
+        const liveBadge = document.querySelector('.live-badge');
+        if (liveBadge) {
+            liveBadge.textContent = '💬 Chat Available';
+            liveBadge.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        }
+
+        console.log('📅 Chat available but match not yet live. Score controls disabled.');
+    } else {
+        console.log('🔴 Match is LIVE. All controls enabled.');
+    }
 }
 
 // Load match information

@@ -67,6 +67,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         cleanExpiredMessages();
         setInterval(cleanExpiredMessages, 60000); // Every minute
 
+        // Setup scroll tracking for smart auto-scroll
+        setupScrollTracking();
+
         console.log('✅ Live match initialized with Firebase');
     } catch (error) {
         console.error('Error initializing live match:', error);
@@ -154,22 +157,22 @@ function setupEventListeners() {
     const sendBtn = document.getElementById('sendBtn');
 
     sendBtn.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+
+    // Send on Enter, new line on Shift+Enter
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             sendMessage();
         }
     });
 
-    // Refresh button
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        // Firebase auto-refreshes, just visual feedback
-        const btn = document.getElementById('refreshBtn');
-        btn.style.transform = 'rotate(360deg)';
-        btn.style.transition = 'transform 0.6s';
-        setTimeout(() => {
-            btn.style.transform = '';
-        }, 600);
+    // Disable send button when input is empty
+    chatInput.addEventListener('input', () => {
+        sendBtn.disabled = !chatInput.value.trim();
     });
+
+    // Refresh button - actually reload messages
+    document.getElementById('refreshBtn').addEventListener('click', refreshMessages);
 }
 
 // Show username modal
@@ -250,9 +253,13 @@ function sendMessage() {
     }
 
     const input = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
     const text = input.value.trim();
 
     if (!text) return;
+
+    // Disable button while sending
+    sendBtn.disabled = true;
 
     // Create new message
     const message = {
@@ -267,10 +274,13 @@ function sendMessage() {
         .then(() => {
             // Clear input
             input.value = '';
+            // Focus back on input
+            input.focus();
         })
         .catch((error) => {
             console.error('Error sending message:', error);
             alert('Failed to send message. Please check your connection.');
+            sendBtn.disabled = false;
         });
 }
 
@@ -300,21 +310,27 @@ function listenToMessages() {
     });
 }
 
+// Track if user is scrolled to bottom
+let isUserAtBottom = true;
+let lastMessageCount = 0;
+
 // Render messages
 function renderMessages(messages) {
     const container = document.getElementById('chatMessages');
+    const wasAtBottom = isNearBottom(container);
 
     if (messages.length === 0) {
         container.innerHTML = '<div class="chat-empty">No messages yet. Be the first to comment!</div>';
         return;
     }
 
+    // Check if there are new messages
+    const hasNewMessages = messages.length > lastMessageCount;
+    lastMessageCount = messages.length;
+
     container.innerHTML = messages.map(msg => {
         const isOwn = msg.username === username;
-        const time = new Date(msg.timestamp).toLocaleTimeString('it-IT', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        const time = formatMessageTime(msg.timestamp);
 
         return `
             <div class="chat-message ${isOwn ? 'own' : ''}">
@@ -327,13 +343,146 @@ function renderMessages(messages) {
         `;
     }).join('');
 
-    // Scroll to bottom
-    container.scrollTop = container.scrollHeight;
+    // Smart scroll: only auto-scroll if user was at bottom or it's their own message
+    if (wasAtBottom || (hasNewMessages && messages[messages.length - 1]?.username === username)) {
+        scrollToBottom(container, true);
+    } else if (hasNewMessages && !wasAtBottom) {
+        showNewMessagesIndicator();
+    }
 
     // Update online count (approximate based on recent messages)
-    const recentMessages = messages.filter(m => m.timestamp > Date.now() - 5 * 60 * 1000); // Last 5 min
+    const recentMessages = messages.filter(m => m.timestamp > Date.now() - 5 * 60 * 1000);
     const uniqueUsers = new Set(recentMessages.map(m => m.username)).size;
-    document.getElementById('onlineCount').textContent = `${uniqueUsers} recent participant${uniqueUsers !== 1 ? 's' : ''}`;
+    document.getElementById('onlineCount').textContent = `${uniqueUsers} online`;
+}
+
+// Check if user is near bottom of chat
+function isNearBottom(container, threshold = 100) {
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+}
+
+// Scroll to bottom with optional smooth animation
+function scrollToBottom(container, smooth = false) {
+    if (smooth) {
+        container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth'
+        });
+    } else {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+// Format message timestamp
+function formatMessageTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        // Today - show time
+        return date.toLocaleTimeString('it-IT', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } else if (diffDays === 1) {
+        return 'Yesterday';
+    } else if (diffDays < 7) {
+        return date.toLocaleDateString('it-IT', { weekday: 'short' });
+    } else {
+        return date.toLocaleDateString('it-IT', { month: 'short', day: 'numeric' });
+    }
+}
+
+// Show new messages indicator
+function showNewMessagesIndicator() {
+    // Remove existing indicator if any
+    const existing = document.querySelector('.new-messages-indicator');
+    if (existing) existing.remove();
+
+    const indicator = document.createElement('div');
+    indicator.className = 'new-messages-indicator';
+    indicator.textContent = '↓ New messages';
+    indicator.onclick = () => {
+        const container = document.getElementById('chatMessages');
+        scrollToBottom(container, true);
+        indicator.remove();
+    };
+
+    document.querySelector('.chat-section').appendChild(indicator);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => indicator.remove(), 5000);
+}
+
+// Refresh messages manually
+function refreshMessages() {
+    if (!messagesRef) return;
+
+    const btn = document.getElementById('refreshBtn');
+    const container = document.getElementById('chatMessages');
+
+    // Visual feedback
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.transition = 'transform 0.6s';
+    btn.disabled = true;
+
+    // Show loading
+    const loading = document.createElement('div');
+    loading.className = 'chat-loading';
+    loading.textContent = 'Refreshing...';
+    container.prepend(loading);
+
+    // Reload messages from Firebase
+    messagesRef.once('value').then((snapshot) => {
+        const messages = [];
+        const now = Date.now();
+
+        snapshot.forEach((childSnapshot) => {
+            const msg = childSnapshot.val();
+            if (msg.expiresAt > now) {
+                messages.push({
+                    id: childSnapshot.key,
+                    ...msg
+                });
+            }
+        });
+
+        messages.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Remove loading
+        loading.remove();
+
+        // Render messages
+        renderMessages(messages);
+
+        console.log(`✅ Refreshed ${messages.length} messages`);
+    }).catch((error) => {
+        console.error('Error refreshing messages:', error);
+        loading.textContent = 'Failed to refresh';
+        setTimeout(() => loading.remove(), 2000);
+    }).finally(() => {
+        btn.disabled = false;
+        setTimeout(() => {
+            btn.style.transform = '';
+        }, 600);
+    });
+}
+
+// Track scroll position
+function setupScrollTracking() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+
+    container.addEventListener('scroll', () => {
+        isUserAtBottom = isNearBottom(container);
+
+        // Remove new messages indicator if user scrolls to bottom
+        if (isUserAtBottom) {
+            const indicator = document.querySelector('.new-messages-indicator');
+            if (indicator) indicator.remove();
+        }
+    });
 }
 
 // Clean expired messages

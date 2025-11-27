@@ -1,0 +1,48 @@
+/* Privacy Disclaimer Footer Styles */
+.privacy-footer {
+    background: rgba(0, 0, 0, 0.05);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.6);
+    margin-top: auto;
+}
+
+.privacy-footer p {
+    margin: 0.25rem 0;
+    line-height: 1.4;
+}
+
+.privacy-footer a {
+    color: #0066FF;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.privacy-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .privacy-footer {
+        background: rgba(255, 255, 255, 0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .privacy-footer a {
+        color: #4d9fff;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .privacy-footer {
+        padding: 0.75rem;
+        font-size: 0.7rem;
+        padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
+        /* Account for iOS tab bar */
+    }
+}

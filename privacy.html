@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - RM Volley</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="privacy-footer.css">
+    <style>
+        .privacy-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .privacy-container h1 {
+            color: #0066FF;
+            margin-bottom: 1rem;
+        }
+
+        .privacy-container h2 {
+            color: #333;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .privacy-container h3 {
+            color: #555;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .privacy-container p,
+        .privacy-container li {
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 0.75rem;
+        }
+
+        .privacy-container ul {
+            margin-left: 1.5rem;
+        }
+
+        .privacy-container .highlight {
+            background: #f0f7ff;
+            padding: 1rem;
+            border-left: 4px solid #0066FF;
+            margin: 1rem 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #0066FF;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .last-updated {
+            font-style: italic;
+            color: #999;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .privacy-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .privacy-container {
+                background: #1a1a1a;
+                color: #e0e0e0;
+            }
+
+            .privacy-container h1 {
+                color: #4d9fff;
+            }
+
+            .privacy-container h2,
+            .privacy-container h3 {
+                color: #e0e0e0;
+            }
+
+            .privacy-container p,
+            .privacy-container li {
+                color: #b0b0b0;
+            }
+
+            .privacy-container .highlight {
+                background: #2a2a2a;
+                border-left-color: #4d9fff;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="privacy-container">
+        <a href="index.html" class="back-link">← Torna alla Dashboard</a>
+
+        <h1>🔒 Informativa sulla Privacy</h1>
+        <p class="last-updated">Ultimo aggiornamento: 27 Novembre 2024</p>
+
+        <div class="highlight">
+            <strong>In sintesi:</strong> Questa applicazione raccoglie solo i dati strettamente necessari per il suo
+            funzionamento. Non utilizziamo cookie di tracciamento, non condividiamo dati con terze parti per scopi
+            pubblicitari, e tutti i dati sono archiviati localmente o su Firebase (Google).
+        </div>
+
+        <h2>1. Chi Siamo</h2>
+        <p>RM Volley Dashboard è un'applicazione web per la gestione e visualizzazione di dati relativi alle partite di
+            pallavolo. L'applicazione è fornita "così com'è" per uso personale e di squadra.</p>
+
+        <h2>2. Dati che Raccogliamo</h2>
+
+        <h3>2.1 Dati Archiviati Localmente (localStorage)</h3>
+        <p>I seguenti dati vengono archiviati nel browser dell'utente e non vengono mai inviati a server esterni:</p>
+        <ul>
+            <li><strong>Username Chat Live:</strong> Nome utente scelto per partecipare alla chat delle partite live
+                (chiave: <code>live_chat_username</code>)</li>
+            <li><strong>Sessione Scouting:</strong> Dati di autenticazione temporanei per gli amministratori autorizzati
+                (chiave: <code>scout_session</code>)</li>
+            <li><strong>Dati Sessione Scouting:</strong> Dati temporanei delle sessioni di scouting in corso (chiave:
+                <code>scout_current_session</code>)
+            </li>
+        </ul>
+
+        <h3>2.2 Dati Archiviati su Firebase (Google)</h3>
+        <p>Per le funzionalità in tempo reale, utilizziamo Firebase Realtime Database di Google. I seguenti dati vengono
+            archiviati:</p>
+        <ul>
+            <li><strong>Messaggi Chat Live:</strong> Username, testo del messaggio, timestamp. I messaggi vengono
+                automaticamente eliminati dopo 4 ore.</li>
+            <li><strong>Punteggi Live:</strong> Punteggi correnti delle partite in corso, aggiornati in tempo reale.
+            </li>
+            <li><strong>Set Completati:</strong> Risultati dei set completati durante le partite live.</li>
+            <li><strong>Dati Scouting:</strong> Statistiche dei giocatori raccolte dagli amministratori autorizzati.
+            </li>
+        </ul>
+
+        <h3>2.3 Cache del Browser (Service Worker)</h3>
+        <p>L'applicazione utilizza un Service Worker per funzionare offline. Vengono memorizzati nella cache del
+            browser:
+        </p>
+        <ul>
+            <li>File HTML, CSS e JavaScript dell'applicazione</li>
+            <li>Icone e risorse grafiche</li>
+            <li>File di configurazione</li>
+        </ul>
+
+        <h2>3. Cookie e Tecnologie di Tracciamento</h2>
+        <p><strong>Non utilizziamo cookie di tracciamento o analytics.</strong> L'applicazione non utilizza:</p>
+        <ul>
+            <li>Cookie di terze parti</li>
+            <li>Google Analytics o servizi simili</li>
+            <li>Pixel di tracciamento</li>
+            <li>Fingerprinting del browser</li>
+        </ul>
+
+        <h2>4. Base Giuridica del Trattamento (GDPR)</h2>
+        <p>Il trattamento dei dati si basa su:</p>
+        <ul>
+            <li><strong>Consenso:</strong> Utilizzando l'applicazione, l'utente acconsente al trattamento dei dati come
+                descritto in questa informativa.</li>
+            <li><strong>Interesse legittimo:</strong> Fornire le funzionalità richieste dall'applicazione (chat live,
+                scouting, visualizzazione dati).</li>
+        </ul>
+
+        <h2>5. Conservazione dei Dati</h2>
+        <ul>
+            <li><strong>Messaggi Chat Live:</strong> Eliminati automaticamente dopo 4 ore</li>
+            <li><strong>Dati localStorage:</strong> Conservati fino a quando l'utente non cancella i dati del browser o
+                effettua il logout</li>
+            <li><strong>Dati Scouting su Firebase:</strong> Conservati indefinitamente per scopi statistici e di analisi
+            </li>
+            <li><strong>Cache Service Worker:</strong> Gestita automaticamente dal browser, può essere cancellata
+                manualmente</li>
+        </ul>
+
+        <h2>6. Condivisione dei Dati</h2>
+        <p><strong>Non condividiamo i tuoi dati con terze parti</strong>, ad eccezione di:</p>
+        <ul>
+            <li><strong>Google Firebase:</strong> Fornitore di servizi cloud per l'archiviazione dei dati in tempo
+                reale.
+                Firebase è conforme al GDPR. <a href="https://firebase.google.com/support/privacy"
+                    target="_blank">Privacy Policy Firebase</a></li>
+        </ul>
+
+        <h2>7. I Tuoi Diritti (GDPR)</h2>
+        <p>In conformità con il GDPR, hai i seguenti diritti:</p>
+        <ul>
+            <li><strong>Diritto di accesso:</strong> Puoi richiedere una copia dei tuoi dati</li>
+            <li><strong>Diritto di rettifica:</strong> Puoi correggere dati inesatti</li>
+            <li><strong>Diritto alla cancellazione:</strong> Puoi richiedere la cancellazione dei tuoi dati</li>
+            <li><strong>Diritto di limitazione:</strong> Puoi limitare il trattamento dei tuoi dati</li>
+            <li><strong>Diritto alla portabilità:</strong> Puoi richiedere i tuoi dati in formato leggibile</li>
+            <li><strong>Diritto di opposizione:</strong> Puoi opporti al trattamento dei tuoi dati</li>
+        </ul>
+
+        <h2>8. Come Cancellare i Tuoi Dati</h2>
+
+        <h3>Dati Locali (localStorage)</h3>
+        <p>Per cancellare i dati archiviati localmente:</p>
+        <ul>
+            <li>Apri gli Strumenti per Sviluppatori del browser (F12)</li>
+            <li>Vai alla scheda "Application" o "Storage"</li>
+            <li>Seleziona "Local Storage" e cancella le voci relative a RM Volley</li>
+            <li>Oppure cancella tutti i dati del sito dalle impostazioni del browser</li>
+        </ul>
+
+        <h3>Username Chat Live</h3>
+        <p>Per cambiare o rimuovere il tuo username della chat live, cancella la voce <code>live_chat_username</code>
+            dal
+            localStorage come descritto sopra.</p>
+
+        <h3>Dati su Firebase</h3>
+        <p>I messaggi della chat vengono automaticamente eliminati dopo 4 ore. Per richiedere la cancellazione di altri
+            dati su Firebase, contatta l'amministratore dell'applicazione.</p>
+
+        <h2>9. Sicurezza</h2>
+        <p>Adottiamo misure di sicurezza appropriate per proteggere i tuoi dati:</p>
+        <ul>
+            <li>Connessioni HTTPS crittografate</li>
+            <li>Firebase Security Rules per limitare l'accesso ai dati</li>
+            <li>Hashing delle password (SHA-256) per gli amministratori</li>
+            <li>Sessioni con scadenza automatica</li>
+        </ul>
+
+        <h2>10. Modifiche a Questa Informativa</h2>
+        <p>Ci riserviamo il diritto di modificare questa informativa sulla privacy in qualsiasi momento. Le modifiche
+            saranno pubblicate su questa pagina con una nuova data di "Ultimo aggiornamento".</p>
+
+        <h2>11. Contatti</h2>
+        <p>Per domande o richieste relative alla privacy, contatta l'amministratore dell'applicazione.</p>
+
+        <div class="highlight">
+            <strong>📌 Nota Importante:</strong> Questa applicazione è progettata per minimizzare la raccolta di dati
+            personali. Raccogliamo solo ciò che è strettamente necessario per fornire le funzionalità richieste.
+        </div>
+    </div>
+
+    <!-- Privacy Disclaimer Footer -->
+    <footer class="privacy-footer">
+        <p><strong>🔒 Privacy:</strong> Questa applicazione raccoglie solo i dati necessari per il funzionamento.</p>
+        <p>Leggi la <a href="privacy.html">Privacy Policy completa</a> per maggiori dettagli.</p>
+    </footer>
+</body>
+
+</html>

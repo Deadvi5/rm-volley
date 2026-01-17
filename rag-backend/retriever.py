@@ -105,23 +105,27 @@ class VectorRetriever:
         """
         return self.retrieve(query, n_results, filter_metadata={"type": "standing"})
 
-    def retrieve_by_team(self, team_name: str, n_results: int = 10, only_played: bool = True) -> Dict[str, Any]:
+    def retrieve_by_team(self, team_name: str, n_results: int = 10, only_played: bool = True, only_future: bool = False) -> Dict[str, Any]:
         """
         Retrieve documents related to a specific team
 
         Args:
             team_name: Name of the team (e.g., "RM VOLLEY #18")
             n_results: Number of results
-            only_played: If True, filter out future matches
+            only_played: If True, return only past matches (with results)
+            only_future: If True, return only future matches (to be played)
 
         Returns:
-            Retrieved documents for the team, sorted by date (most recent first)
+            Retrieved documents for the team, sorted by date
+            - Past matches: most recent first
+            - Future matches: closest upcoming first
         """
         from datetime import datetime
 
-        # Retrieve more results to filter
-        query = f"partite recenti {team_name} risultati"
-        raw_results = self.retrieve(query, n_results * 3)
+        # Retrieve more results to filter - need enough to cover all team's matches
+        # Always get at least 50 results to ensure we find all relevant matches
+        query = f"partite {team_name}"
+        raw_results = self.retrieve(query, max(50, min(n_results * 10, 100)))
 
         # Filter and sort
         filtered_docs = []
@@ -146,35 +150,43 @@ class VectorRetriever:
             if team_name.replace(" ", "").upper() not in rm_team.replace(" ", "").upper():
                 continue
 
-            # Parse date and filter future matches if requested
-            if only_played:
-                date_str = meta.get("date", "")
-                try:
-                    # Try to parse Italian date format DD/MM/YYYY
-                    match_date = datetime.strptime(date_str, "%d/%m/%Y")
+            # Parse date
+            date_str = meta.get("date", "")
+            try:
+                match_date = datetime.strptime(date_str, "%d/%m/%Y")
+                meta["_parsed_date"] = match_date
+            except:
+                continue  # Skip if date can't be parsed
 
-                    # Skip future matches
-                    if match_date > today:
-                        continue
+            # Filter based on past/future
+            is_future = match_date > today
 
-                    # Add parsed date for sorting
-                    meta["_parsed_date"] = match_date
-                except:
-                    # If can't parse, skip it
-                    continue
+            if only_played and is_future:
+                continue  # Skip future matches when looking for past
+            if only_future and not is_future:
+                continue  # Skip past matches when looking for future
 
             filtered_docs.append(doc)
             filtered_metas.append(meta)
             filtered_dists.append(dist)
             filtered_ids.append(doc_id)
 
-        # Sort by date (most recent first)
+        # Sort by date
         if filtered_metas:
-            sorted_indices = sorted(
-                range(len(filtered_metas)),
-                key=lambda i: filtered_metas[i].get("_parsed_date", datetime.min),
-                reverse=True
-            )
+            if only_future:
+                # Future matches: closest upcoming first (ascending order)
+                sorted_indices = sorted(
+                    range(len(filtered_metas)),
+                    key=lambda i: filtered_metas[i].get("_parsed_date", datetime.max),
+                    reverse=False  # Ascending - closest first
+                )
+            else:
+                # Past matches: most recent first (descending order)
+                sorted_indices = sorted(
+                    range(len(filtered_metas)),
+                    key=lambda i: filtered_metas[i].get("_parsed_date", datetime.min),
+                    reverse=True  # Descending - most recent first
+                )
 
             filtered_docs = [filtered_docs[i] for i in sorted_indices[:n_results]]
             filtered_metas = [filtered_metas[i] for i in sorted_indices[:n_results]]

@@ -192,13 +192,20 @@ async def ask_question(request: QueryRequest):
             results = retriever.retrieve_by_team(
                 team_name=detected_team,
                 n_results=request.n_results,
-                only_played=True  # Filter out future matches
+                only_played=True,
+                only_future=False
             )
         elif detected_team and is_future_query:
+            # If asking for "la prossima" (singular), return only 1 result
+            # If asking for "le prossime" (plural), return more
+            is_singular = "prossima" in request.question.lower() and "prossime" not in request.question.lower()
+            n_future = 1 if is_singular else request.n_results
+
             results = retriever.retrieve_by_team(
                 team_name=detected_team,
-                n_results=request.n_results,
-                only_played=False  # Include future matches
+                n_results=n_future,
+                only_played=False,
+                only_future=True  # Only future matches, sorted closest first
             )
         else:
             results = retriever.retrieve(

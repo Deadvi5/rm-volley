@@ -241,18 +241,19 @@ Linee guida:
 - Rispondi sempre in italiano
 - Sii conciso ma informativo"""
 
-        prompt = f"""Contesto dal database:
+        prompt = f"""Contesto dal database (ORDINATO - il primo elemento è il più rilevante):
 {context}
 
 Domanda dell'utente: {query}
 
-ISTRUZIONI:
-1. Verifica che le informazioni nel contesto siano relative alla squadra richiesta dall'utente
-2. Se ti chiedono risultati passati, usa SOLO partite con risultato (es. "3-1")
-3. Se ti chiedono partite future, usa SOLO partite con stato "da giocare"
-4. NON confondere RM VOLLEY PIACENZA (Serie D) con RMVOLLEY#18 (Under 18) - sono squadre diverse!
+ISTRUZIONI CRITICHE:
+1. I risultati sono ORDINATI: il PRIMO risultato è quello più rilevante/recente
+2. Se ti chiedono "la prossima partita" → rispondi con la PRIMA partita nell'elenco (è la più vicina)
+3. Se ti chiedono "l'ultima partita" → rispondi con la PRIMA partita con risultato nell'elenco (è la più recente)
+4. NON saltare la prima partita per sceglierne un'altra più avanti nell'elenco
+5. NON confondere RM VOLLEY PIACENZA (Serie D) con RMVOLLEY#18 (Under 18)
 
-Rispondi alla domanda:"""
+Rispondi alla domanda usando la PRIMA informazione rilevante nel contesto:"""
 
         return self.generate(
             prompt=prompt,

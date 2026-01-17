@@ -109,7 +109,7 @@ async function sendQuestion(question) {
             },
             body: JSON.stringify({
                 question: question,
-                n_results: 5,
+                n_results: 10,
                 temperature: 0.5
             }),
             signal: AbortSignal.timeout(API_TIMEOUT)

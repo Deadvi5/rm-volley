@@ -10,6 +10,10 @@ from typing import Optional, List, Dict, Any
 import uvicorn
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from retriever import get_retriever
 from llm_client import get_llm_client
@@ -44,7 +48,7 @@ app.add_middleware(
 class QueryRequest(BaseModel):
     """Request model for RAG queries"""
     question: str = Field(..., description="User question about volleyball data")
-    n_results: int = Field(5, description="Number of context chunks to retrieve", ge=1, le=20)
+    n_results: int = Field(10, description="Number of context chunks to retrieve", ge=1, le=20)
     temperature: float = Field(0.5, description="LLM temperature", ge=0.0, le=1.0)
     filter_type: Optional[str] = Field(None, description="Filter by type: 'match' or 'standing'")
 
@@ -172,12 +176,29 @@ async def ask_question(request: QueryRequest):
         if request.filter_type:
             filter_metadata = {"type": request.filter_type}
 
-        # Use team-specific retrieval if a team was detected
-        if detected_team and ("recente" in request.question.lower() or "giocato" in request.question.lower() or "performance" in request.question.lower() or "risultat" in request.question.lower()):
+        # Detect if query is about past matches (results)
+        past_keywords = ["recente", "giocato", "giocata", "performance", "risultat",
+                        "ultima", "ieri", "scorsa", "contro", "com'è andata", "come è andata",
+                        "vinto", "perso", "pareggio", "punteggio", "score"]
+        is_past_query = any(kw in request.question.lower() for kw in past_keywords)
+
+        # Detect if query is about future matches
+        future_keywords = ["prossima", "prossime", "calendario", "quando gioca",
+                         "prossimo", "futura", "future", "da giocare"]
+        is_future_query = any(kw in request.question.lower() for kw in future_keywords)
+
+        # Use team-specific retrieval if a team was detected and query is about matches
+        if detected_team and is_past_query and not is_future_query:
             results = retriever.retrieve_by_team(
                 team_name=detected_team,
                 n_results=request.n_results,
                 only_played=True  # Filter out future matches
+            )
+        elif detected_team and is_future_query:
+            results = retriever.retrieve_by_team(
+                team_name=detected_team,
+                n_results=request.n_results,
+                only_played=False  # Include future matches
             )
         else:
             results = retriever.retrieve(

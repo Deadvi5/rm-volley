@@ -184,7 +184,9 @@ main() {
 
     # Step 4: Pull Ollama model
     print_step "Step 4/8: Downloading AI model..."
-    MODEL="llama3.2:3b"
+    # Estrae il valore dal file .env, rimuove eventuali virgolette e spazi
+    MODEL=$(grep '^OLLAMA_MODEL=' .env | cut -d '=' -f2- | sed 's/^"//;s/"$//;s/^\x27//;s/\x27$//')
+
 
     if ollama list | grep -q "$MODEL"; then
         print_success "Model $MODEL already installed"

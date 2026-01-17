@@ -6,6 +6,7 @@ Handles interaction with Ollama for text generation
 import requests
 import json
 from typing import Optional, Dict, Any, Generator
+from datetime import datetime
 import os
 
 
@@ -66,6 +67,10 @@ class OllamaClient:
             return False
         except:
             return False
+
+    def _get_today_date(self) -> str:
+        """Get today's date in Italian format"""
+        return datetime.now().strftime("%d/%m/%Y")
 
     def generate(self,
                  prompt: str,
@@ -202,42 +207,52 @@ class OllamaClient:
         Returns:
             Generated answer
         """
-        system_prompt = """Sei un assistente di statistiche di pallavolo per RM Volley, un'organizzazione sportiva locale con diverse squadre divise per fasce d'età.
+        system_prompt = f"""Sei un assistente di statistiche di pallavolo per RM Volley, un'organizzazione sportiva locale con diverse squadre divise per fasce d'età.
 
-IMPORTANTE - Nomenclatura delle squadre:
-- "RM VOLLEY #18" o "RM VOLLEY 18" si riferisce alla squadra UNDER 18 FEMMINILE (non al giocatore numero 18)
-- "RM VOLLEY #16" si riferisce alla squadra UNDER 16 FEMMINILE
-- "RM VOLLEY #14" o "RM VOLLEY 13/14/15" si riferisce alle squadre UNDER 14 FEMMINILE
-- "RM VOLLEY #2" si riferisce alla squadra SECONDA DIVISIONE FEMMINILE
-- "RM VOLLEY PIACENZA" può riferirsi alla squadra SERIE D FEMMINILE o alla SERIE D
+DATA ODIERNA: {self._get_today_date()}
+
+CRITICO - DISTINZIONE TEMPORALE:
+- Se lo stato della partita è "da giocare" o "da disputare" → la partita è nel FUTURO, NON è ancora stata giocata
+- Se la partita ha un risultato (es. "3-1", "3-0") → la partita è già stata giocata (PASSATO)
+- NON inventare risultati per partite future
+- Se ti chiedono "l'ultima partita" o "com'è andata", cerca SOLO partite GIÀ GIOCATE (con risultato)
+- Se ti chiedono "la prossima partita", cerca SOLO partite DA GIOCARE
+
+CRITICO - DISTINZIONE SQUADRE (NON CONFONDERLE MAI):
+- "RM VOLLEY PIACENZA" = squadra SERIE D FEMMINILE (adulte) - gioca nel campionato "DF Gir. A"
+- "RMVOLLEY#18" = squadra UNDER 18 FEMMINILE (giovanile) - gioca nel campionato "UNDER 18 FEMMINILE"
+- "RMVOLLEY#16" = squadra UNDER 16 FEMMINILE
+- "RMVOLLEY#14" o "RMVOLLEY#13/14/15" = squadre UNDER 14 FEMMINILE
+- "RMVOLLEY#2" = squadra SECONDA DIVISIONE FEMMINILE
+
+QUESTE SONO SQUADRE DIVERSE! Se l'utente chiede di "RM VOLLEY PIACENZA", NON rispondere con informazioni su "RMVOLLEY#18" e viceversa.
 
 Il tuo ruolo è rispondere a domande su:
-- Risultati delle partite e calendari
-- Prestazioni delle squadre e statistiche
+- Risultati delle partite (SOLO quelle già giocate)
+- Calendari e prossime partite (quelle da giocare)
 - Classifiche dei campionati
-- Statistiche dei giocatori
-- Dati storici e tendenze
-
-Se viene richiesta la classifica SERIE D:
-- mostra la classifica di tutte le squadre che giocano la serie D
-- le squadre di serie di sono quelle che giocano la DF GIR. A
-- mostra la classifica in forma tabellare
+- Statistiche delle squadre
 
 Linee guida:
 - Rispondi SOLO in base al contesto fornito
+- VERIFICA SEMPRE che la squadra nel contesto corrisponda a quella richiesta dall'utente
 - Sii specifico con numeri, date, nomi delle squadre e punteggi
-- Se il contesto non contiene abbastanza informazioni, dillo chiaramente
+- Se il contesto non contiene informazioni sulla squadra richiesta, dillo chiaramente
 - Rispondi sempre in italiano
-- Sii conciso ma informativo
-- Formatta numeri e statistiche in modo chiaro
-- Quando vedi "RM VOLLEY #18" nel contesto, si riferisce alla squadra Under 18, non a un giocatore"""
+- Sii conciso ma informativo"""
 
         prompt = f"""Contesto dal database:
 {context}
 
 Domanda dell'utente: {query}
 
-Rispondi alla domanda basandoti sul contesto fornito sopra. Sii specifico e cita dettagli rilevanti come date, risultati e nomi delle squadre avversarie. Ricorda: "RM VOLLEY #18" è la squadra Under 18, non un giocatore."""
+ISTRUZIONI:
+1. Verifica che le informazioni nel contesto siano relative alla squadra richiesta dall'utente
+2. Se ti chiedono risultati passati, usa SOLO partite con risultato (es. "3-1")
+3. Se ti chiedono partite future, usa SOLO partite con stato "da giocare"
+4. NON confondere RM VOLLEY PIACENZA (Serie D) con RMVOLLEY#18 (Under 18) - sono squadre diverse!
+
+Rispondi alla domanda:"""
 
         return self.generate(
             prompt=prompt,

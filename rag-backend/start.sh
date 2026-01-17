@@ -52,6 +52,14 @@ if ! command_exists ollama; then
     exit 1
 fi
 
+# Load model name from .env file
+if [ -f ".env" ]; then
+    OLLAMA_MODEL=$(grep -E "^OLLAMA_MODEL=" .env | cut -d'=' -f2 | tr -d ' ')
+fi
+OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}  # Default fallback
+
+print_info "Configured model: $OLLAMA_MODEL"
+
 # Start Ollama if not running
 print_info "Checking Ollama service..."
 if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
@@ -68,6 +76,21 @@ else
         fi
         sleep 1
     done
+fi
+
+# Check if the model is available, pull if not
+print_info "Checking if model '$OLLAMA_MODEL' is available..."
+if ollama list | grep -q "^${OLLAMA_MODEL%%:*}"; then
+    print_success "Model '$OLLAMA_MODEL' is available"
+else
+    print_info "Model '$OLLAMA_MODEL' not found. Pulling it now..."
+    print_info "This may take a few minutes depending on the model size..."
+    if ollama pull "$OLLAMA_MODEL"; then
+        print_success "Model '$OLLAMA_MODEL' downloaded successfully"
+    else
+        print_error "Failed to pull model '$OLLAMA_MODEL'. Please check the model name."
+        exit 1
+    fi
 fi
 
 # Activate virtual environment

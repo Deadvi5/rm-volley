@@ -135,12 +135,47 @@ jobs:
         run: |
           echo "date=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
           echo "short_date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
-      
+
+      - name: 🏆 Validate standings file
+        id: validate_standings
+        if: steps.update.outputs.update_status == 'success'
+        run: |
+          if [ -f "classifica.json" ]; then
+            echo "✅ classifica.json trovato"
+
+            # Extract stats from JSON
+            python << 'EOF'
+          import json
+          try:
+              with open('classifica.json', 'r', encoding='utf-8') as f:
+                  standings = json.load(f)
+
+              num_leagues = len(standings)
+              total_teams = sum(len(teams) for teams in standings.values())
+
+              print(f"Campionati: {num_leagues}")
+              print(f"Squadre totali: {total_teams}")
+
+              # Write to output
+              with open('standings_stats.txt', 'w') as f:
+                  f.write(f"leagues={num_leagues}\n")
+                  f.write(f"teams={total_teams}\n")
+          except Exception as e:
+              print(f"Warning: Could not extract standings stats: {e}")
+          EOF
+
+            if [ -f "standings_stats.txt" ]; then
+              cat standings_stats.txt >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "⚠️ classifica.json non trovato"
+          fi
+
       - name: 🔍 Check for changes
         id: changes
         run: |
-          git add Gare.xls backups/ 2>/dev/null || true
-          
+          git add Gare.xls classifica.json backups/ 2>/dev/null || true
+
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No changes detected"
@@ -154,21 +189,27 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
+
           # Create commit message with stats
           COMMIT_MSG="🔄 Aggiorna dati: ${{ steps.date.outputs.date }}"
-          
-          if [ -f "stats.txt" ]; then
+
+          if [ -f "stats.txt" ] || [ -f "standings_stats.txt" ]; then
             COMMIT_MSG="${COMMIT_MSG}\n\n"
             COMMIT_MSG="${COMMIT_MSG}📊 Statistiche:\n"
-            COMMIT_MSG="${COMMIT_MSG}- Righe: ${{ steps.validate.outputs.rows }}\n"
-            COMMIT_MSG="${COMMIT_MSG}- Colonne: ${{ steps.validate.outputs.columns }}\n"
-            COMMIT_MSG="${COMMIT_MSG}- Dimensione: ${{ steps.validate.outputs.file_size }} bytes"
+
+            if [ -f "stats.txt" ]; then
+              COMMIT_MSG="${COMMIT_MSG}- Partite: ${{ steps.validate.outputs.rows }} righe\n"
+              COMMIT_MSG="${COMMIT_MSG}- Dimensione Gare.xls: ${{ steps.validate.outputs.file_size }} bytes\n"
+            fi
+
+            if [ -f "standings_stats.txt" ]; then
+              COMMIT_MSG="${COMMIT_MSG}- Classifiche: ${{ steps.validate_standings.outputs.leagues }} campionati, ${{ steps.validate_standings.outputs.teams }} squadre"
+            fi
           fi
-          
+
           git commit -m "$COMMIT_MSG"
           git push
-          
+
           echo "✅ Changes pushed to repository"
           echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
       
@@ -179,6 +220,7 @@ jobs:
           name: rm-volley-data-${{ steps.date.outputs.short_date }}-${{ github.run_number }}
           path: |
             Gare.xls
+            classifica.json
             update_log.txt
             backups/
           retention-days: 30
@@ -202,11 +244,16 @@ jobs:
           echo "| 🔀 Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.validate.outputs.validation }}" == "success" ]; then
-            echo "| 📏 Righe | ${{ steps.validate.outputs.rows }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📏 Partite (righe) | ${{ steps.validate.outputs.rows }} |" >> $GITHUB_STEP_SUMMARY
             echo "| 📋 Colonne | ${{ steps.validate.outputs.columns }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| 💾 Dimensione | ${{ steps.validate.outputs.file_size }} bytes |" >> $GITHUB_STEP_SUMMARY
+            echo "| 💾 Dimensione Gare.xls | ${{ steps.validate.outputs.file_size }} bytes |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
+          if [ "${{ steps.validate_standings.outputs.leagues }}" != "" ]; then
+            echo "| 🏆 Campionati | ${{ steps.validate_standings.outputs.leagues }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| 👥 Squadre totali | ${{ steps.validate_standings.outputs.teams }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ env.BACKUP_FILE }}" != "none" ]; then
@@ -220,6 +267,7 @@ jobs:
             echo "### 🔗 Link Utili" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "- 📄 [Visualizza Gare.xls](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/Gare.xls)" >> $GITHUB_STEP_SUMMARY
+            echo "- 🏆 [Visualizza classifica.json](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/classifica.json)" >> $GITHUB_STEP_SUMMARY
             echo "- 📦 [Download Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
             echo "- 🔍 [Commit](${{ github.server_url }}/${{ github.repository }}/commit/${{ env.commit_sha }})" >> $GITHUB_STEP_SUMMARY
           else

@@ -1,0 +1,27 @@
+# FastAPI and server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Vector database and embeddings
+chromadb==0.4.22
+sentence-transformers==2.3.1
+
+# Data processing
+pandas==2.1.4
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Firebase (optional - for player stats)
+firebase-admin==6.3.0
+
+# LLM integration
+langchain==0.1.4
+langchain-community==0.0.16
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0
+
+# CORS support
+fastapi-cors==0.0.6

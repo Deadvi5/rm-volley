@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RM Volley - AI Assistant</title>
+    <link rel="icon" type="image/png" href="media/rmlogo.png">
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a237e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --primary-color: #1a237e;
+            --secondary-color: #3949ab;
+        }
+
+        body {
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .chat-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            gap: 12px;
+            animation: messageSlideIn 0.3s ease-out;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: var(--secondary-color);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .message.system .message-content {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .message.error .message-content {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .message-content.loading {
+            background: #e3f2fd;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: loadingBounce 1.4s infinite ease-in-out;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes loadingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .sources {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.85em;
+        }
+
+        .sources-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .source-item {
+            margin: 4px 0;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .chat-input-container {
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 24px;
+            font-size: 1em;
+            resize: none;
+            font-family: inherit;
+            max-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .quick-questions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .quick-question-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-question-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+        }
+
+        .status-dot.disconnected {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .quick-questions {
+                flex-direction: column;
+            }
+
+            .quick-question-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>
+                <span>🏐</span>
+                <span>RM Volley AI Assistant</span>
+            </h1>
+            <p>Chiedi informazioni su partite, statistiche e classifiche</p>
+            <div class="status-indicator">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Connessione in corso...</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <!-- Welcome message -->
+            <div class="message system">
+                <div class="message-avatar">ℹ️</div>
+                <div class="message-content">
+                    <strong>Benvenuto!</strong><br>
+                    Sono l'assistente AI di RM Volley. Posso aiutarti con:
+                    <ul style="margin: 8px 0; padding-left: 20px;">
+                        <li>Risultati delle partite</li>
+                        <li>Classifiche dei campionati</li>
+                        <li>Statistiche delle squadre</li>
+                        <li>Calendario delle partite</li>
+                    </ul>
+                    Prova a farmi una domanda!
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="quick-questions" id="quick-questions">
+                <button class="quick-question-btn" onclick="askQuickQuestion('Come ha giocato RM VOLLEY #18 recentemente?')">
+                    Risultati RM VOLLEY #18
+                </button>
+                <button class="quick-question-btn" onclick="askQuickQuestion('Qual è la classifica della Serie D Femminile?')">
+                    Classifica Serie D
+                </button>
+                <button class="quick-question-btn" onclick="askQuickQuestion('Quando è la prossima partita?')">
+                    Prossima partita
+                </button>
+            </div>
+
+            <div class="chat-input-wrapper">
+                <textarea
+                    id="question-input"
+                    class="chat-input"
+                    placeholder="Fai una domanda..."
+                    rows="1"
+                    onkeydown="handleKeyDown(event)"
+                ></textarea>
+                <button class="send-button" onclick="askQuestion()" id="send-button">
+                    Invia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link back to dashboard -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+        <a href="index.html" target="_blank" style="color: white; background: #1a237e; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: inline-block; transition: all 0.2s;">
+            ← Dashboard
+        </a>
+    </div>
+
+    <script src="rag-chat.js"></script>
+</body>
+</html>

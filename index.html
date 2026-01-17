@@ -46,6 +46,60 @@
     <!-- Custom Styles -->
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="privacy-footer.css">
+
+    <!-- AI Assistant Button Styles -->
+    <style>
+        .ai-assistant-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #1a237e, #3949ab);
+            color: white;
+            text-decoration: none;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+            margin-left: 20px;
+            white-space: nowrap;
+        }
+
+        .ai-assistant-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(26, 35, 126, 0.4);
+            background: linear-gradient(135deg, #283593, #5c6bc0);
+        }
+
+        .ai-icon {
+            font-size: 1.3em;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .ai-text {
+            font-size: 1em;
+        }
+
+        @media (max-width: 768px) {
+            .ai-assistant-btn {
+                padding: 10px 16px;
+                font-size: 0.9em;
+                margin-left: 10px;
+            }
+            .ai-text {
+                display: none;
+            }
+            .ai-icon {
+                font-size: 1.5em;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -97,6 +151,12 @@
                     <div class="stat-label">Win Rate</div>
                 </div>
             </div>
+
+            <!-- AI Assistant Button -->
+            <a href="rag-chat.html" target="_blank" class="ai-assistant-btn" title="Apri AI Assistant">
+                <span class="ai-icon">🤖</span>
+                <span class="ai-text">AI Assistant</span>
+            </a>
         </div>
     </header>
 

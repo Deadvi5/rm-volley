@@ -139,10 +139,50 @@ Test on actual devices or use browser DevTools:
 3. ✅ Add your own logo in the header
 4. ✅ Deploy to your hosting platform
 
+## 🤖 AI Assistant (RAG System)
+
+**NEW!** Ask natural language questions about your volleyball data using a local AI assistant.
+
+### Features
+- 🏐 Natural language queries about matches, standings, and statistics
+- 🔒 Completely local - no data leaves your machine
+- ⚡ Fast responses using Ollama LLM
+- 📊 Semantic search over all your volleyball data
+
+### Quick Start
+
+```bash
+# 1. Automated setup (detects your OS, installs everything)
+cd rag-backend
+./setup.sh
+
+# 2. Start the system
+./start.sh
+
+# 3. Open chat interface
+open ../rag-chat.html
+```
+
+**That's it!** The setup script automatically:
+- Detects your OS (macOS/Linux)
+- Installs Ollama if needed
+- Downloads the AI model
+- Sets up Python environment
+- Indexes your data
+
+### Example Questions
+- "How did RM VOLLEY #18 perform in January?"
+- "What's the current standing of Serie D Femminile?"
+- "Show me all 3-0 victories"
+- "When is our next match?"
+
+For detailed setup instructions, see [RAG_SETUP.md](RAG_SETUP.md).
+
 ## Support
 
 Refer to:
-- `IMPROVEMENTS.md`Per ulteriori dettagli e personalizzazione, consulta la [documentazione completa](README.md).
+- `IMPROVEMENTS.md` - Development documentation
+- `RAG_SETUP.md` - AI assistant setup guide
 
 ## ⚙️ Configuration
 

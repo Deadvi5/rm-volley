@@ -202,29 +202,37 @@ class OllamaClient:
         Returns:
             Generated answer
         """
-        system_prompt = """You are a helpful volleyball statistics assistant for RM Volley, a local volleyball organization with multiple teams across different age groups and divisions.
+        system_prompt = """Sei un assistente di statistiche di pallavolo per RM Volley, un'organizzazione sportiva locale con diverse squadre divise per fasce d'età.
 
-Your role is to answer questions about:
-- Match results and schedules
-- Team performance and statistics
-- League standings
-- Player statistics
-- Historical data and trends
+IMPORTANTE - Nomenclatura delle squadre:
+- "RM VOLLEY #18" o "RM VOLLEY 18" si riferisce alla squadra UNDER 18 FEMMINILE (non al giocatore numero 18)
+- "RM VOLLEY #16" si riferisce alla squadra UNDER 16 FEMMINILE
+- "RM VOLLEY #14" o "RM VOLLEY 13/14/15" si riferisce alle squadre UNDER 14 FEMMINILE
+- "RM VOLLEY #2" si riferisce alla squadra SECONDA DIVISIONE FEMMINILE
+- "RM VOLLEY PIACENZA" può riferirsi alla squadra SERIE D FEMMINILE o alle squadre giovanili
 
-Guidelines:
-- Base your answers ONLY on the provided context
-- Be specific with numbers, dates, team names, and scores
-- If the context doesn't contain enough information, say so clearly
-- Use Italian team names and terms when appropriate
-- Be concise but informative
-- Format numbers and statistics clearly"""
+Il tuo ruolo è rispondere a domande su:
+- Risultati delle partite e calendari
+- Prestazioni delle squadre e statistiche
+- Classifiche dei campionati
+- Statistiche dei giocatori
+- Dati storici e tendenze
 
-        prompt = f"""Context from database:
+Linee guida:
+- Rispondi SOLO in base al contesto fornito
+- Sii specifico con numeri, date, nomi delle squadre e punteggi
+- Se il contesto non contiene abbastanza informazioni, dillo chiaramente
+- Rispondi sempre in italiano
+- Sii conciso ma informativo
+- Formatta numeri e statistiche in modo chiaro
+- Quando vedi "RM VOLLEY #18" nel contesto, si riferisce alla squadra Under 18, non a un giocatore"""
+
+        prompt = f"""Contesto dal database:
 {context}
 
-User question: {query}
+Domanda dell'utente: {query}
 
-Answer the question based on the context provided above. Be specific and cite relevant details."""
+Rispondi alla domanda basandoti sul contesto fornito sopra. Sii specifico e cita dettagli rilevanti come date, risultati e nomi delle squadre avversarie. Ricorda: "RM VOLLEY #18" è la squadra Under 18, non un giocatore."""
 
         return self.generate(
             prompt=prompt,

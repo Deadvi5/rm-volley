@@ -2,30 +2,72 @@
 
 Get your RM Volley AI assistant running in 5 minutes!
 
-## One-Line Installation
+## ⚡ Ultra-Quick Start (2 Commands!)
 
 ```bash
-cd rag-backend && ./setup.sh
+# 1. Run automated setup (detects your OS, installs everything)
+cd rag-backend
+./setup.sh
+
+# 2. Start the system
+./start.sh
 ```
 
-That's it! The script will:
-- ✅ Check prerequisites
-- ✅ Create virtual environment
-- ✅ Install dependencies
-- ✅ Pull Ollama model
-- ✅ Index your data
+Then open `rag-chat.html` in your browser!
 
-## Manual 3-Step Setup
+## 📝 What the Setup Script Does
 
-If you prefer manual setup:
+The `setup.sh` script automatically:
+- ✅ Detects your OS (macOS/Linux/Windows)
+- ✅ Installs Ollama (if needed)
+- ✅ Downloads AI model (llama3.2:3b)
+- ✅ Creates Python environment
+- ✅ Installs all dependencies
+- ✅ Indexes your volleyball data
+- ✅ Starts Ollama service
+
+**On macOS:** Uses Homebrew to install Ollama (or guides manual install)
+**On Linux:** Uses official Ollama install script
+**On Windows WSL:** Linux instructions apply
+
+## 🎯 After Setup
+
+Just run:
+```bash
+cd rag-backend
+./start.sh
+```
+
+This starts:
+1. Ollama service (if not running)
+2. RAG API server on http://localhost:8000
+
+Then open the chat interface:
+```bash
+open ../rag-chat.html
+```
+
+## 🔧 Manual Setup (If You Prefer)
 
 ### 1️⃣ Install Ollama
 
+**macOS:**
 ```bash
-# macOS/Linux
-curl -fsSL https://ollama.com/install.sh | sh
+# Option A: Via Homebrew
+brew install ollama
 
-# Pull the model
+# Option B: Download from website
+# Visit https://ollama.com/download
+# Download .dmg, drag to Applications
+```
+
+**Linux:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+Pull the model:
+```bash
 ollama pull llama3.2:3b
 ```
 
@@ -39,7 +81,7 @@ pip install -r requirements.txt
 python indexer.py
 ```
 
-### 3️⃣ Start and Use
+### 3️⃣ Start Everything
 
 ```bash
 # Terminal 1: Start Ollama
@@ -50,7 +92,7 @@ cd rag-backend
 source venv/bin/activate
 python main.py
 
-# Terminal 3: Open chat (or just double-click rag-chat.html)
+# Open chat interface
 open ../rag-chat.html
 ```
 

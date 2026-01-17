@@ -152,16 +152,23 @@ Test on actual devices or use browser DevTools:
 ### Quick Start
 
 ```bash
-# 1. Install and setup
+# 1. Automated setup (detects your OS, installs everything)
 cd rag-backend
 ./setup.sh
 
-# 2. Start the RAG server
-python main.py
+# 2. Start the system
+./start.sh
 
-# 3. Open the chat interface
+# 3. Open chat interface
 open ../rag-chat.html
 ```
+
+**That's it!** The setup script automatically:
+- Detects your OS (macOS/Linux)
+- Installs Ollama if needed
+- Downloads the AI model
+- Sets up Python environment
+- Indexes your data
 
 ### Example Questions
 - "How did RM VOLLEY #18 perform in January?"

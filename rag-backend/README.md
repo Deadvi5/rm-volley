@@ -4,19 +4,49 @@ Local RAG (Retrieval-Augmented Generation) system for volleyball statistics usin
 
 ## Quick Start
 
+### ⚡ Automatic Setup (Recommended)
+
 ```bash
-# 1. Run automated setup
+# 1. Run fully automated setup (detects OS, installs everything)
 ./setup.sh
 
-# 2. Start Ollama (separate terminal)
-ollama serve
+# 2. Start the system
+./start.sh
 
-# 3. Start API server
-source venv/bin/activate
-python main.py
-
-# 4. Open chat interface
+# 3. Open chat interface
 open ../rag-chat.html
+```
+
+The `setup.sh` script automatically:
+- Detects your OS (macOS/Linux)
+- Installs Ollama if needed
+- Downloads the AI model (llama3.2:3b)
+- Creates Python virtual environment
+- Installs all dependencies
+- Starts Ollama service
+- Indexes your volleyball data
+
+### 🔧 Manual Setup (Alternative)
+
+```bash
+# 1. Install Ollama
+# macOS: brew install ollama
+# Linux: curl -fsSL https://ollama.com/install.sh | sh
+
+# 2. Pull model
+ollama pull llama3.2:3b
+
+# 3. Setup Python
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Index data
+python indexer.py
+
+# 5. Start servers
+ollama serve              # Terminal 1
+python main.py            # Terminal 2
 ```
 
 ## What's Inside

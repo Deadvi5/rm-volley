@@ -105,19 +105,88 @@ class VectorRetriever:
         """
         return self.retrieve(query, n_results, filter_metadata={"type": "standing"})
 
-    def retrieve_by_team(self, team_name: str, n_results: int = 10) -> Dict[str, Any]:
+    def retrieve_by_team(self, team_name: str, n_results: int = 10, only_played: bool = True) -> Dict[str, Any]:
         """
         Retrieve documents related to a specific team
 
         Args:
             team_name: Name of the team (e.g., "RM VOLLEY #18")
             n_results: Number of results
+            only_played: If True, filter out future matches
 
         Returns:
-            Retrieved documents for the team
+            Retrieved documents for the team, sorted by date (most recent first)
         """
-        query = f"matches and statistics for {team_name}"
-        return self.retrieve(query, n_results)
+        from datetime import datetime
+
+        # Retrieve more results to filter
+        query = f"partite recenti {team_name} risultati"
+        raw_results = self.retrieve(query, n_results * 3)
+
+        # Filter and sort
+        filtered_docs = []
+        filtered_metas = []
+        filtered_dists = []
+        filtered_ids = []
+
+        today = datetime.now()
+
+        for doc, meta, dist, doc_id in zip(
+            raw_results["documents"],
+            raw_results["metadatas"],
+            raw_results["distances"],
+            raw_results["ids"]
+        ):
+            # Check if it's a match
+            if meta.get("type") != "match":
+                continue
+
+            # Check if it's the right team
+            rm_team = meta.get("rm_team", "")
+            if team_name.replace(" ", "").upper() not in rm_team.replace(" ", "").upper():
+                continue
+
+            # Parse date and filter future matches if requested
+            if only_played:
+                date_str = meta.get("date", "")
+                try:
+                    # Try to parse Italian date format DD/MM/YYYY
+                    match_date = datetime.strptime(date_str, "%d/%m/%Y")
+
+                    # Skip future matches
+                    if match_date > today:
+                        continue
+
+                    # Add parsed date for sorting
+                    meta["_parsed_date"] = match_date
+                except:
+                    # If can't parse, skip it
+                    continue
+
+            filtered_docs.append(doc)
+            filtered_metas.append(meta)
+            filtered_dists.append(dist)
+            filtered_ids.append(doc_id)
+
+        # Sort by date (most recent first)
+        if filtered_metas:
+            sorted_indices = sorted(
+                range(len(filtered_metas)),
+                key=lambda i: filtered_metas[i].get("_parsed_date", datetime.min),
+                reverse=True
+            )
+
+            filtered_docs = [filtered_docs[i] for i in sorted_indices[:n_results]]
+            filtered_metas = [filtered_metas[i] for i in sorted_indices[:n_results]]
+            filtered_dists = [filtered_dists[i] for i in sorted_indices[:n_results]]
+            filtered_ids = [filtered_ids[i] for i in sorted_indices[:n_results]]
+
+        return {
+            "documents": filtered_docs[:n_results],
+            "metadatas": filtered_metas[:n_results],
+            "distances": filtered_dists[:n_results],
+            "ids": filtered_ids[:n_results]
+        }
 
     def retrieve_by_league(self, league_name: str, n_results: int = 10) -> Dict[str, Any]:
         """

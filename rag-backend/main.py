@@ -149,16 +149,42 @@ async def ask_question(request: QueryRequest):
     ```
     """
     try:
-        # Step 1: Retrieve relevant context
+        # Step 1: Detect if query is about a specific team
+        import re
+        team_patterns = [
+            r"RM\s*VOLLEY\s*#?(\d+)",
+            r"RMVOLLEY\s*#?(\d+)",
+            r"RM\s*VOLLEY\s*PIACENZA"
+        ]
+
+        detected_team = None
+        for pattern in team_patterns:
+            match = re.search(pattern, request.question.upper())
+            if match:
+                if match.groups():
+                    detected_team = f"RM VOLLEY #{match.group(1)}"
+                else:
+                    detected_team = "RM VOLLEY PIACENZA"
+                break
+
+        # Step 2: Retrieve relevant context
         filter_metadata = None
         if request.filter_type:
             filter_metadata = {"type": request.filter_type}
 
-        results = retriever.retrieve(
-            query=request.question,
-            n_results=request.n_results,
-            filter_metadata=filter_metadata
-        )
+        # Use team-specific retrieval if a team was detected
+        if detected_team and ("recente" in request.question.lower() or "giocato" in request.question.lower() or "performance" in request.question.lower() or "risultat" in request.question.lower()):
+            results = retriever.retrieve_by_team(
+                team_name=detected_team,
+                n_results=request.n_results,
+                only_played=True  # Filter out future matches
+            )
+        else:
+            results = retriever.retrieve(
+                query=request.question,
+                n_results=request.n_results,
+                filter_metadata=filter_metadata
+            )
 
         # Step 2: Format context for LLM
         context = retriever.format_results_for_llm(results, max_length=2000)

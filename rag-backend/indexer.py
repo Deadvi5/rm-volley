@@ -94,22 +94,37 @@ class VolleyballDataIndexer:
             opponent = match.get('SquadraCasa', '')
             is_home = False
 
-        # Build semantic description
+        # Detect team category from team name
+        team_category = None
+        if rm_team:
+            if "#18" in rm_team or " 18" in rm_team:
+                team_category = "Under 18 Femminile"
+            elif "#16" in rm_team or " 16" in rm_team:
+                team_category = "Under 16 Femminile"
+            elif "#14" in rm_team or " 14" in rm_team or " 13" in rm_team or " 15" in rm_team:
+                team_category = "Under 14 Femminile"
+            elif "#2" in rm_team or " 2" in rm_team:
+                team_category = "Seconda Divisione Femminile"
+
+        # Build semantic description in Italian
         chunks = []
 
-        # Basic match info
-        date_str = str(match.get('Data', 'Unknown date'))
-        home_team = match.get('SquadraCasa', 'Unknown')
-        away_team = match.get('SquadraOspite', 'Unknown')
+        # Basic match info with category
+        date_str = str(match.get('Data', 'Data sconosciuta'))
+        home_team = match.get('SquadraCasa', 'Sconosciuto')
+        away_team = match.get('SquadraOspite', 'Sconosciuto')
 
-        chunks.append(f"Match on {date_str}: {home_team} vs {away_team}")
+        if team_category and rm_team:
+            chunks.append(f"Partita del {date_str}: {home_team} vs {away_team} (Squadra {team_category})")
+        else:
+            chunks.append(f"Partita del {date_str}: {home_team} vs {away_team}")
 
         # Result and sets
         result = match.get('Risultato', '')
         parziali = match.get('Parziali', '')
 
         if pd.notna(result) and result:
-            chunks.append(f"Final result: {result}")
+            chunks.append(f"Risultato finale: {result}")
 
             # Determine winner
             if is_rm_home or is_rm_away:
@@ -120,27 +135,35 @@ class VolleyballDataIndexer:
                     else:
                         rm_won = away_sets > home_sets
 
-                    outcome = "won" if rm_won else "lost"
-                    chunks.append(f"{rm_team} {outcome} {result} against {opponent}")
+                    outcome = "ha vinto" if rm_won else "ha perso"
+                    team_desc = f"{rm_team} ({team_category})" if team_category else rm_team
+                    chunks.append(f"{team_desc} {outcome} {result} contro {opponent}")
                 except:
                     pass
 
         if pd.notna(parziali) and parziali:
-            chunks.append(f"Set scores: {parziali}")
+            chunks.append(f"Parziali: {parziali}")
 
         # Venue and league
         venue = match.get('Impianto', '')
         if pd.notna(venue) and venue:
-            chunks.append(f"Venue: {venue}")
+            chunks.append(f"Impianto: {venue}")
 
         league = match.get('Campionato', '')
         if pd.notna(league) and league:
-            chunks.append(f"League: {league}")
+            chunks.append(f"Campionato: {league}")
 
         # Match status
         status = match.get('StatoDescrizione', '')
         if pd.notna(status) and status:
-            chunks.append(f"Status: {status}")
+            status_it = status
+            if "gara omologata" in status.lower():
+                status_it = "partita omologata"
+            elif "risultato ufficioso" in status.lower():
+                status_it = "risultato non ufficiale"
+            elif "da disputare" in status.lower():
+                status_it = "da giocare"
+            chunks.append(f"Stato: {status_it}")
 
         text = ". ".join(chunks) + "."
 
@@ -159,6 +182,8 @@ class VolleyballDataIndexer:
             metadata["rm_team"] = rm_team
             metadata["opponent"] = opponent
             metadata["is_home"] = is_home
+            if team_category:
+                metadata["team_category"] = team_category
 
         if pd.notna(result) and result:
             metadata["result"] = str(result)

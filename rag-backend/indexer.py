@@ -194,6 +194,72 @@ class VolleyballDataIndexer:
             "metadata": metadata
         }
 
+    def create_league_standing_chunk(self, teams: List[Dict], league_name: str) -> Dict[str, Any]:
+        """
+        Convert an entire league standings into a single semantic text chunk
+
+        Args:
+            teams: List of team dictionaries with standing data
+            league_name: Name of the league
+
+        Returns:
+            Dictionary with text, metadata, and ID
+        """
+        if not teams:
+            return None
+
+        # Helper function to safely convert to int
+        def safe_int(value, default=0):
+            try:
+                return int(value) if value not in [None, '', '-', 'nan'] else default
+            except (ValueError, TypeError):
+                return default
+
+        # Sort teams by position
+        sorted_teams = sorted(teams, key=lambda t: safe_int(t.get('Pos.', 999)))
+
+        # Build the standings text in Italian with query-like preambles for better semantic matching
+        preambles = [
+            f"Qual è la classifica della {league_name}? Ecco la classifica aggiornata della {league_name}:",
+            f"La classifica della {league_name} è la seguente:",
+            f"Posizioni e punti della {league_name}:",
+            ""  # Empty line for separation
+        ]
+
+        lines = preambles.copy()
+
+        for team in sorted_teams:
+            team_name = team.get('Squadra', 'Unknown')
+            position = safe_int(team.get('Pos.', 0))
+            points = safe_int(team.get('Punti', 0))
+            played = safe_int(team.get('PG', 0))
+            wins = safe_int(team.get('PV', 0))
+            losses = safe_int(team.get('PP', 0))
+            sets_for = safe_int(team.get('SF', 0))
+            sets_against = safe_int(team.get('SS', 0))
+
+            # Format: Position. Team - Points pts (Wins-Losses, Sets For-Against)
+            line = (f"{position}. {team_name} - {points} punti "
+                   f"({wins} vittorie, {losses} sconfitte, "
+                   f"set {sets_for}-{sets_against})")
+            lines.append(line)
+
+        text = "\n".join(lines)
+
+        # Metadata with summary info
+        metadata = {
+            "type": "standing",
+            "league": league_name,
+            "num_teams": len(sorted_teams),
+            "leader": sorted_teams[0].get('Squadra', '') if sorted_teams else ''
+        }
+
+        return {
+            "id": f"standing_{league_name.replace(' ', '_').replace('-', '_')}",
+            "text": text,
+            "metadata": metadata
+        }
+
     def create_standing_chunk(self, team: Dict, league_name: str) -> Dict[str, Any]:
         """
         Convert a standings record into a semantic text chunk
@@ -206,33 +272,41 @@ class VolleyballDataIndexer:
             Dictionary with text, metadata, and ID
         """
         team_name = team.get('Squadra', 'Unknown team')
-        position = team.get('Pos.', 0)
-        points = team.get('Punti', 0)
-        played = team.get('PG', 0)
-        wins = team.get('PV', 0)
-        losses = team.get('PP', 0)
-        sets_for = team.get('SF', 0)
-        sets_against = team.get('SS', 0)
+
+        # Convert to int, handling non-numeric values
+        def safe_int(value, default=0):
+            try:
+                return int(value) if value not in [None, '', '-', 'nan'] else default
+            except (ValueError, TypeError):
+                return default
+
+        position = safe_int(team.get('Pos.', 0))
+        points = safe_int(team.get('Punti', 0))
+        played = safe_int(team.get('PG', 0))
+        wins = safe_int(team.get('PV', 0))
+        losses = safe_int(team.get('PP', 0))
+        sets_for = safe_int(team.get('SF', 0))
+        sets_against = safe_int(team.get('SS', 0))
 
         # Calculate set difference
         set_diff = sets_for - sets_against
         set_diff_str = f"+{set_diff}" if set_diff > 0 else str(set_diff)
 
-        # Build semantic description
+        # Build semantic description in Italian
         text = (
-            f"{team_name} in {league_name}: "
-            f"Position {position} with {points} points. "
-            f"Record: {wins} wins, {losses} losses in {played} matches. "
-            f"Sets: {sets_for}-{sets_against} ({set_diff_str})"
+            f"Classifica {league_name}: "
+            f"{team_name} è in posizione {position} con {points} punti. "
+            f"Bilancio: {wins} vittorie, {losses} sconfitte in {played} partite giocate. "
+            f"Set: {sets_for}-{sets_against} (differenza {set_diff_str})"
         )
 
         # Add point differential if available
         if 'QS' in team and 'QP' in team:
-            points_for = team.get('QS', 0)
-            points_against = team.get('QP', 0)
+            points_for = safe_int(team.get('QS', 0))
+            points_against = safe_int(team.get('QP', 0))
             point_diff = points_for - points_against
             point_diff_str = f"+{point_diff}" if point_diff > 0 else str(point_diff)
-            text += f". Points scored: {points_for}-{points_against} ({point_diff_str})"
+            text += f". Punti realizzati: {points_for}-{points_against} (differenza {point_diff_str})"
 
         metadata = {
             "type": "standing",
@@ -339,8 +413,9 @@ class VolleyballDataIndexer:
             ids = []
 
             for league_name, teams in standings_data.items():
-                for team in teams:
-                    chunk = self.create_standing_chunk(team, league_name)
+                # Create a single chunk for the entire league standings
+                chunk = self.create_league_standing_chunk(teams, league_name)
+                if chunk:
                     documents.append(chunk["text"])
                     metadatas.append(chunk["metadata"])
                     ids.append(chunk["id"])

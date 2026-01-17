@@ -1,3 +1,4 @@
 .vscode/
 rag-backend/venv
 rag-backend/volleyball_db
+rag-backend/server.log

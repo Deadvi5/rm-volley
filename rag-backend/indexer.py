@@ -11,32 +11,47 @@ import os
 import sys
 from datetime import datetime
 from typing import List, Dict, Any
+
+# Disable ChromaDB telemetry before importing
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+os.environ["CHROMA_TELEMETRY"] = "false"
+
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Default embedding model
+DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
+
 
 class VolleyballDataIndexer:
     """Indexes volleyball data into ChromaDB vector database"""
 
     def __init__(self,
-                 data_dir: str = "../",
-                 db_path: str = "./volleyball_db",
-                 model_name: str = "all-MiniLM-L6-v2"):
+                 data_dir: str = None,
+                 db_path: str = None,
+                 model_name: str = None):
         """
         Initialize the indexer
 
         Args:
-            data_dir: Directory containing Gare.xls and classifica.json
-            db_path: Path to ChromaDB persistence directory
-            model_name: SentenceTransformer model for embeddings
+            data_dir: Directory containing Gare.xls and classifica.json (default: from .env or "../")
+            db_path: Path to ChromaDB persistence directory (default: from .env or "./volleyball_db")
+            model_name: SentenceTransformer model for embeddings (default: from .env)
         """
-        self.data_dir = Path(data_dir)
-        self.db_path = db_path
+        # Use provided values or fall back to env vars or defaults
+        self.data_dir = Path(data_dir or os.getenv("DATA_DIR", "../"))
+        self.db_path = db_path or os.getenv("DB_PATH", "./volleyball_db")
+        model_name = model_name or os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
 
         print(f"🔧 Initializing RM Volley RAG Indexer...")
         print(f"   Data directory: {self.data_dir.absolute()}")
-        print(f"   Database path: {db_path}")
+        print(f"   Database path: {self.db_path}")
 
         # Initialize embedding model
         print(f"📦 Loading embedding model: {model_name}")

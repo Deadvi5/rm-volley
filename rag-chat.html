@@ -8,353 +8,720 @@
 
     <!-- PWA Support -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a237e">
+    <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --primary-color: #1a237e;
-            --secondary-color: #3949ab;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-message-user: #3b82f6;
+            --bg-message-assistant: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: #334155;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
         }
 
         body {
-            background: #f5f5f5;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .chat-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        /* Main Layout */
+        .app-container {
+            display: flex;
             height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            padding: 16px;
         }
 
-        .chat-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .chat-header h1 {
-            margin: 0;
-            font-size: 1.8em;
+        .sidebar-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .chat-header p {
-            margin: 8px 0 0 0;
-            opacity: 0.9;
-            font-size: 0.9em;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #f5f5f5;
-            border-left: 1px solid #ddd;
-            border-right: 1px solid #ddd;
-            scroll-behavior: smooth;
-        }
-
-        .message {
-            margin-bottom: 16px;
-            display: flex;
             gap: 12px;
-            animation: messageSlideIn 0.3s ease-out;
+            padding: 12px;
+            margin-bottom: 20px;
         }
 
-        @keyframes messageSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message.user {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
+        .logo {
             width: 40px;
             height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            color: white;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
+            font-size: 20px;
         }
 
-        .message.user .message-avatar {
-            background: var(--secondary-color);
+        .brand-name {
+            font-weight: 700;
+            font-size: 1.1rem;
         }
 
-        .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            line-height: 1.6;
-        }
-
-        .message.user .message-content {
-            background: var(--secondary-color);
-            color: white;
-        }
-
-        .message.system .message-content {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-
-        .message.error .message-content {
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
-        }
-
-        .message-content.loading {
-            background: #e3f2fd;
-        }
-
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .loading-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            animation: loadingBounce 1.4s infinite ease-in-out;
-        }
-
-        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes loadingBounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        .sources {
-            margin-top: 12px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            font-size: 0.85em;
-        }
-
-        .sources-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: var(--primary-color);
-        }
-
-        .source-item {
-            margin: 4px 0;
-            padding: 6px 10px;
-            background: white;
-            border-radius: 4px;
-            border-left: 3px solid var(--primary-color);
-        }
-
-        .chat-input-container {
-            background: white;
-            padding: 20px;
-            border-radius: 0 0 12px 12px;
-            box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
-        }
-
-        .chat-input-wrapper {
+        .new-chat-btn {
             display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 24px;
-            font-size: 1em;
-            resize: none;
-            font-family: inherit;
-            max-height: 120px;
-            transition: border-color 0.2s;
-        }
-
-        .chat-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .send-button {
-            padding: 12px 24px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 24px;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .send-button:hover:not(:disabled) {
-            background: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .send-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .quick-questions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
-        .quick-question-btn {
-            padding: 8px 16px;
-            background: white;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            border-radius: 20px;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .quick-question-btn:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .status-indicator {
-            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
-            font-size: 0.85em;
-            margin-top: 8px;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--border-color);
+        }
+
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .quick-action:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .quick-action-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            font-size: 0.8rem;
         }
 
         .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #4caf50;
+            background: var(--success);
         }
 
         .status-dot.disconnected {
-            background: #f44336;
+            background: var(--error);
+        }
+
+        /* Main Chat Area */
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Messages Container */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 0;
+        }
+
+        .messages-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Message Styles */
+        .message {
+            display: flex;
+            gap: 16px;
+            padding: 24px 0;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message + .message {
+            border-top: 1px solid var(--border-color);
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, var(--accent), #06b6d4);
+        }
+
+        .message-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .message-role {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .message-content {
+            line-height: 1.7;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .message-content p {
+            margin-bottom: 12px;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .message-content li {
+            margin-bottom: 6px;
+        }
+
+        /* Sources Card */
+        .sources-card {
+            margin-top: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .sources-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .sources-list {
+            padding: 8px;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .source-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .source-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .source-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .source-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .source-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Loading Animation */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 16px 24px 24px;
+            background: var(--bg-primary);
+        }
+
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input-container:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: none;
+            max-height: 200px;
+            line-height: 1.5;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-input:focus {
+            outline: none;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .input-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .welcome-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 24px;
+        }
+
+        .welcome-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 400px;
+        }
+
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .suggestion-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .suggestion-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .suggestion-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .messages-wrapper {
+                padding: 0 16px;
+            }
+
+            .input-area {
+                padding: 12px 16px 20px;
+            }
+
+            .suggestion-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .message {
+                gap: 12px;
+                padding: 16px 0;
+            }
+
+            .message-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-btn {
+            display: none;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
         }
 
         @media (max-width: 768px) {
-            .message-content {
-                max-width: 85%;
-            }
-
-            .quick-questions {
-                flex-direction: column;
-            }
-
-            .quick-question-btn {
-                width: 100%;
+            .mobile-menu-btn {
+                display: block;
             }
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>
-                <span>🏐</span>
-                <span>RM Volley AI Assistant</span>
-            </h1>
-            <p>Chiedi informazioni su partite, statistiche e classifiche</p>
-            <div class="status-indicator">
-                <span class="status-dot" id="status-dot"></span>
-                <span id="status-text">Connessione in corso...</span>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">🏐</div>
+                <span class="brand-name">RM Volley AI</span>
             </div>
-        </div>
 
-        <div class="chat-messages" id="chat-messages">
-            <!-- Welcome message -->
-            <div class="message system">
-                <div class="message-avatar">ℹ️</div>
-                <div class="message-content">
-                    <strong>Benvenuto!</strong><br>
-                    Sono l'assistente AI di RM Volley. Posso aiutarti con:
-                    <ul style="margin: 8px 0; padding-left: 20px;">
-                        <li>Risultati delle partite</li>
-                        <li>Classifiche dei campionati</li>
-                        <li>Statistiche delle squadre</li>
-                        <li>Calendario delle partite</li>
-                    </ul>
-                    Prova a farmi una domanda!
+            <button class="new-chat-btn" onclick="clearHistory()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nuova conversazione
+            </button>
+
+            <div class="sidebar-section-title">Domande rapide</div>
+
+            <button class="quick-action" onclick="askQuickQuestion('Qual è la classifica della Serie D Femminile?')">
+                <span class="quick-action-icon">🏆</span>
+                Classifica Serie D
+            </button>
+
+            <button class="quick-action" onclick="askQuickQuestion('Prossima partita RM VOLLEY PIACENZA')">
+                <span class="quick-action-icon">📅</span>
+                Prossima partita
+            </button>
+
+            <button class="quick-action" onclick="askQuickQuestion('Risultati recenti RM VOLLEY #18')">
+                <span class="quick-action-icon">📊</span>
+                Risultati Under 18
+            </button>
+
+            <button class="quick-action" onclick="askQuickQuestion('Com\'è andata l\'ultima partita di RM VOLLEY PIACENZA?')">
+                <span class="quick-action-icon">⚡</span>
+                Ultima partita Serie D
+            </button>
+
+            <div class="sidebar-footer">
+                <div class="status-badge">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Connessione...</span>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <div class="chat-input-container">
-            <div class="quick-questions" id="quick-questions">
-                <button class="quick-question-btn" onclick="askQuickQuestion('Come ha giocato RM VOLLEY #18 recentemente?')">
-                    Risultati RM VOLLEY #18
+        <!-- Main Chat Area -->
+        <main class="chat-main">
+            <header class="chat-header">
+                <button class="mobile-menu-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
                 </button>
-                <button class="quick-question-btn" onclick="askQuickQuestion('Qual è la classifica della Serie D Femminile?')">
-                    Classifica Serie D
-                </button>
-                <button class="quick-question-btn" onclick="askQuickQuestion('Quando è la prossima partita?')">
-                    Prossima partita
-                </button>
+                <h1 class="chat-title">Assistente RM Volley</h1>
+                <div class="header-actions">
+                    <a href="index.html" class="header-btn">Dashboard</a>
+                </div>
+            </header>
+
+            <div class="messages-container" id="messages-container">
+                <div class="messages-wrapper" id="chat-messages">
+                    <!-- Welcome Screen -->
+                    <div class="welcome-screen" id="welcome-screen">
+                        <div class="welcome-icon">🏐</div>
+                        <h2 class="welcome-title">Ciao! Sono l'assistente RM Volley</h2>
+                        <p class="welcome-subtitle">
+                            Posso aiutarti con risultati, classifiche, calendario e statistiche delle squadre RM Volley.
+                        </p>
+                        <div class="suggestion-grid">
+                            <div class="suggestion-card" onclick="askQuickQuestion('Qual è la classifica della Serie D Femminile?')">
+                                <div class="suggestion-icon">🏆</div>
+                                <div class="suggestion-text">Mostrami la classifica della Serie D Femminile</div>
+                            </div>
+                            <div class="suggestion-card" onclick="askQuickQuestion('Prossima partita RM VOLLEY PIACENZA')">
+                                <div class="suggestion-icon">📅</div>
+                                <div class="suggestion-text">Quando gioca RM Volley Piacenza?</div>
+                            </div>
+                            <div class="suggestion-card" onclick="askQuickQuestion('Com\'è andata l\'ultima partita di RM VOLLEY PIACENZA?')">
+                                <div class="suggestion-icon">⚡</div>
+                                <div class="suggestion-text">Risultato ultima partita Serie D</div>
+                            </div>
+                            <div class="suggestion-card" onclick="askQuickQuestion('Risultati recenti RM VOLLEY #18')">
+                                <div class="suggestion-icon">📊</div>
+                                <div class="suggestion-text">Come sta andando l'Under 18?</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="chat-input-wrapper">
-                <textarea
-                    id="question-input"
-                    class="chat-input"
-                    placeholder="Fai una domanda..."
-                    rows="1"
-                    onkeydown="handleKeyDown(event)"
-                ></textarea>
-                <button class="send-button" onclick="askQuestion()" id="send-button">
-                    Invia
-                </button>
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <div class="input-container">
+                        <textarea
+                            id="question-input"
+                            class="chat-input"
+                            placeholder="Scrivi un messaggio..."
+                            rows="1"
+                            onkeydown="handleKeyDown(event)"
+                            oninput="autoResize()"
+                        ></textarea>
+                        <button class="send-btn" id="send-button" onclick="askQuestion()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="input-hint">Premi Invio per inviare, Shift+Invio per andare a capo</p>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Link back to dashboard -->
-    <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
-        <a href="index.html" target="_blank" style="color: white; background: #1a237e; padding: 10px 20px; border-radius: 20px; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: inline-block; transition: all 0.2s;">
-            ← Dashboard
-        </a>
+        </main>
     </div>
 
     <script src="rag-chat.js"></script>

@@ -3,6 +3,12 @@ Retriever Module
 Handles vector similarity search using ChromaDB
 """
 
+import os
+
+# Disable ChromaDB telemetry before importing
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+os.environ["CHROMA_TELEMETRY"] = "false"
+
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional
@@ -158,13 +164,20 @@ class VectorRetriever:
             except:
                 continue  # Skip if date can't be parsed
 
-            # Filter based on past/future
+            # Check if match has a result
+            has_result = bool(meta.get("result"))
+
+            # Filter based on past/future and result
             is_future = match_date > today
 
-            if only_played and is_future:
-                continue  # Skip future matches when looking for past
-            if only_future and not is_future:
-                continue  # Skip past matches when looking for future
+            if only_played:
+                # For past queries, only include matches with results
+                if not has_result:
+                    continue
+            if only_future:
+                # For future queries, only include matches without results (or future dates)
+                if has_result or not is_future:
+                    continue
 
             filtered_docs.append(doc)
             filtered_metas.append(meta)

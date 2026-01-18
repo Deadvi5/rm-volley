@@ -3,9 +3,13 @@ Embeddings Module
 Handles text embedding generation using SentenceTransformers
 """
 
+import os
 from sentence_transformers import SentenceTransformer
 from typing import List, Union
 import numpy as np
+
+# Default model - can be overridden via EMBEDDING_MODEL env var
+DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
 
 
 class EmbeddingGenerator:
@@ -75,17 +79,19 @@ class EmbeddingGenerator:
 _embedding_generator = None
 
 
-def get_embedding_generator(model_name: str = "all-MiniLM-L6-v2") -> EmbeddingGenerator:
+def get_embedding_generator(model_name: str = None) -> EmbeddingGenerator:
     """
     Get or create singleton embedding generator
 
     Args:
-        model_name: Name of the model to use
+        model_name: Name of the model to use (defaults to EMBEDDING_MODEL env var)
 
     Returns:
         EmbeddingGenerator instance
     """
     global _embedding_generator
     if _embedding_generator is None:
-        _embedding_generator = EmbeddingGenerator(model_name)
+        # Use provided model_name, or env var, or default
+        model = model_name or os.getenv("EMBEDDING_MODEL", DEFAULT_EMBEDDING_MODEL)
+        _embedding_generator = EmbeddingGenerator(model)
     return _embedding_generator

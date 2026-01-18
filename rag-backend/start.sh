@@ -98,6 +98,15 @@ print_info "Activating Python environment..."
 source venv/bin/activate
 print_success "Python environment activated"
 
+# Kill any existing process on port 8000
+API_PORT=8000
+if lsof -ti:$API_PORT >/dev/null 2>&1; then
+    print_info "Port $API_PORT is in use. Killing existing process..."
+    lsof -ti:$API_PORT | xargs kill -9 2>/dev/null
+    sleep 1
+    print_success "Port $API_PORT cleared"
+fi
+
 # Start the API server
 echo ""
 echo "============================================================"

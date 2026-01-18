@@ -15,6 +15,10 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Disable ChromaDB telemetry to suppress warning messages
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+os.environ["CHROMA_TELEMETRY"] = "false"
+
 from retriever import get_retriever
 from llm_client import get_llm_client
 from embeddings import get_embedding_generator
@@ -176,6 +180,10 @@ async def ask_question(request: QueryRequest):
         if request.filter_type:
             filter_metadata = {"type": request.filter_type}
 
+        # Detect if query is about standings/classifica
+        standings_keywords = ["classifica", "posizione", "punti", "graduatoria", "campionato"]
+        is_standings_query = any(kw in request.question.lower() for kw in standings_keywords)
+
         # Detect if query is about past matches (results)
         past_keywords = ["recente", "giocato", "giocata", "performance", "risultat",
                         "ultima", "ieri", "scorsa", "contro", "com'è andata", "come è andata",
@@ -187,8 +195,14 @@ async def ask_question(request: QueryRequest):
                          "prossimo", "futura", "future", "da giocare"]
         is_future_query = any(kw in request.question.lower() for kw in future_keywords)
 
+        # PRIORITY: If asking for standings, use standings-only retrieval
+        if is_standings_query and not is_past_query and not is_future_query:
+            results = retriever.retrieve_standings(
+                query=request.question,
+                n_results=request.n_results
+            )
         # Use team-specific retrieval if a team was detected and query is about matches
-        if detected_team and is_past_query and not is_future_query:
+        elif detected_team and is_past_query and not is_future_query:
             results = retriever.retrieve_by_team(
                 team_name=detected_team,
                 n_results=request.n_results,
@@ -218,11 +232,15 @@ async def ask_question(request: QueryRequest):
         context = retriever.format_results_for_llm(results, max_length=2000)
 
         # Step 3: Generate answer
+        # Use higher max_tokens for standings queries (need room for full league table)
+        is_standings_query = "classifica" in request.question.lower()
+        max_tokens = 800 if is_standings_query else 400
+
         answer = llm_client.generate_rag_response(
             query=request.question,
             context=context,
             temperature=request.temperature,
-            max_tokens=400
+            max_tokens=max_tokens
         )
 
         # Step 4: Return response

@@ -11,7 +11,13 @@ let currentMatch = null;
 let username = null;
 let messagesRef = null;
 let scoresRef = null;
+let setsRef = null;
 const MESSAGE_EXPIRY = 4 * 60 * 60 * 1000; // 4 hours
+
+// Connection management
+let reconnectTimeout = null;
+let isListenersActive = true;
+let pageVisibilityState = 'visible';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -37,10 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Check if match is actually live (10 minutes before) vs just chat available (12 hours before)
         checkMatchLiveStatus();
 
-        // Setup Firebase references
-        const matchKey = getMatchKey();
-        messagesRef = database.ref(`live-matches/${matchKey}/messages`);
-        scoresRef = database.ref(`live-matches/${matchKey}/scores`);
+        // Setup Firebase references and listeners
+        initializeFirebaseListeners();
 
         // Load match info
         loadMatchInfo();
@@ -54,21 +58,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Setup event listeners
         setupEventListeners();
 
-        // Listen for real-time score updates
-        listenToScores();
-
-        // Listen for real-time messages
-        listenToMessages();
-
-        // Listen for completed sets
-        listenToCompletedSets();
-
         // Clean expired messages periodically
         cleanExpiredMessages();
         setInterval(cleanExpiredMessages, 60000); // Every minute
 
-        // Setup scroll tracking for smart auto-scroll
-        setupScrollTracking();
+// Setup scroll tracking for smart auto-scroll
+setupScrollTracking();
+
+// Setup keyboard detection for mobile
+setupKeyboardDetection();
 
         console.log('✅ Live match initialized with Firebase');
     } catch (error) {
@@ -306,45 +304,57 @@ function listenToMessages() {
         // Sort by timestamp
         messages.sort((a, b) => a.timestamp - b.timestamp);
 
-        renderMessages(messages);
+        renderMessagesIncremental(messages);
     });
 }
 
 // Track if user is scrolled to bottom
 let isUserAtBottom = true;
 let lastMessageCount = 0;
+let lastProcessedTimestamp = 0;
+let renderedMessageIds = new Set();
 
-// Render messages
-function renderMessages(messages) {
+// Render messages incrementally (performance optimized)
+function renderMessagesIncremental(messages) {
     const container = document.getElementById('chatMessages');
     const wasAtBottom = isNearBottom(container);
 
     if (messages.length === 0) {
         container.innerHTML = '<div class="chat-empty">No messages yet. Be the first to comment!</div>';
+        lastProcessedTimestamp = 0;
+        renderedMessageIds.clear();
         return;
     }
 
-    // Check if there are new messages
-    const hasNewMessages = messages.length > lastMessageCount;
-    lastMessageCount = messages.length;
+    // Find new messages (messages with timestamp > lastProcessedTimestamp)
+    const newMessages = messages.filter(msg => 
+        msg.timestamp > lastProcessedTimestamp && !renderedMessageIds.has(msg.id)
+    );
 
-    container.innerHTML = messages.map(msg => {
-        const isOwn = msg.username === username;
-        const time = formatMessageTime(msg.timestamp);
+    // Update last processed timestamp
+    if (messages.length > 0) {
+        lastProcessedTimestamp = Math.max(...messages.map(m => m.timestamp));
+    }
 
-        return `
-            <div class="chat-message ${isOwn ? 'own' : ''}">
-                <div class="message-header">
-                    <span class="message-username">${escapeHtml(msg.username)}</span>
-                    <span class="message-time">${time}</span>
-                </div>
-                <div class="message-text">${escapeHtml(msg.text)}</div>
-            </div>
-        `;
-    }).join('');
+    // If this is the first render or there are many new messages, do full render
+    if (renderedMessageIds.size === 0 || newMessages.length > 10) {
+        renderFullMessageList(messages, wasAtBottom);
+        return;
+    }
+
+    // Add new messages incrementally
+    const hasNewMessages = newMessages.length > 0;
+    
+    if (hasNewMessages) {
+        newMessages.forEach(msg => {
+            const messageElement = createMessageElement(msg);
+            container.appendChild(messageElement);
+            renderedMessageIds.add(msg.id);
+        });
+    }
 
     // Smart scroll: only auto-scroll if user was at bottom or it's their own message
-    if (wasAtBottom || (hasNewMessages && messages[messages.length - 1]?.username === username)) {
+    if (wasAtBottom || (hasNewMessages && newMessages[newMessages.length - 1]?.username === username)) {
         scrollToBottom(container, true);
     } else if (hasNewMessages && !wasAtBottom) {
         showNewMessagesIndicator();
@@ -354,6 +364,55 @@ function renderMessages(messages) {
     const recentMessages = messages.filter(m => m.timestamp > Date.now() - 5 * 60 * 1000);
     const uniqueUsers = new Set(recentMessages.map(m => m.username)).size;
     document.getElementById('onlineCount').textContent = `${uniqueUsers} online`;
+}
+
+// Full message list render (fallback)
+function renderFullMessageList(messages, wasAtBottom) {
+    const container = document.getElementById('chatMessages');
+    
+    container.innerHTML = messages.map(msg => {
+        const isOwn = msg.username === username;
+        const time = formatMessageTime(msg.timestamp);
+        const messageClass = msg.username === username ? 'own' : '';
+        
+        return createMessageHTML(msg, messageClass, time);
+    }).join('');
+
+    // Reset tracking
+    renderedMessageIds = new Set(messages.map(m => m.id));
+    lastProcessedTimestamp = messages.length > 0 ? Math.max(...messages.map(m => m.timestamp)) : 0;
+    lastMessageCount = messages.length;
+
+    // Auto-scroll if user was at bottom
+    if (wasAtBottom) {
+        scrollToBottom(container, true);
+    }
+}
+
+// Create individual message element
+function createMessageElement(msg) {
+    const isOwn = msg.username === username;
+    const time = formatMessageTime(msg.timestamp);
+    const messageClass = isOwn ? 'own' : '';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${messageClass}`;
+    messageDiv.innerHTML = createMessageHTML(msg, messageClass, time);
+    
+    return messageDiv;
+}
+
+// Create message HTML (reusable)
+function createMessageHTML(msg, messageClass, time) {
+    return `
+        <div class="chat-message ${messageClass}">
+            <div class="message-header">
+                <span class="message-username">${escapeHtml(msg.username)}</span>
+                <span class="message-time">${time}</span>
+            </div>
+            <div class="message-text">${escapeHtml(msg.text)}</div>
+        </div>
+    `;
 }
 
 // Check if user is near bottom of chat
@@ -583,12 +642,9 @@ window.confirmEndSet = function () {
     });
 };
 
-// Listen to completed sets
+// Listen to completed sets (moved to initializeFirebaseListeners)
 function listenToCompletedSets() {
-    if (!database) return;
-
-    const matchKey = getMatchKey();
-    const setsRef = database.ref(`live-matches/${matchKey}/sets`);
+    if (!setsRef) return;
 
     setsRef.on('value', (snapshot) => {
         const sets = [];
@@ -652,6 +708,105 @@ function cleanupFirebaseListeners() {
         messagesRef.off();
         console.log('🧹 Cleaned up messages listener');
     }
+    if (setsRef) {
+        setsRef.off();
+        console.log('🧹 Cleaned up sets listener');
+    }
+    isListenersActive = false;
+}
+
+// Pause listeners instead of cleaning up
+function pauseFirebaseListeners() {
+    if (scoresRef) {
+        scoresRef.off();
+        console.log('⏸️ Paused scores listener');
+    }
+    if (messagesRef) {
+        messagesRef.off();
+        console.log('⏸️ Paused messages listener');
+    }
+    if (setsRef) {
+        setsRef.off();
+        console.log('⏸️ Paused sets listener');
+    }
+    isListenersActive = false;
+}
+
+// Resume Firebase listeners
+function resumeFirebaseListeners() {
+    if (!database || !isListenersActive) {
+        // Re-initialize listeners if they were cleaned up
+        if (database && !messagesRef && !scoresRef) {
+            initializeFirebaseListeners();
+            return;
+        }
+    }
+    
+    if (!isListenersActive && messagesRef && scoresRef && setsRef) {
+        console.log('▶️ Resuming Firebase listeners...');
+        
+        // Resume messages listener
+        messagesRef.on('value', (snapshot) => {
+            const messages = [];
+            const now = Date.now();
+
+            snapshot.forEach((childSnapshot) => {
+                const msg = childSnapshot.val();
+                // Only include non-expired messages
+                if (msg.expiresAt > now) {
+                    messages.push({
+                        id: childSnapshot.key,
+                        ...msg
+                    });
+                }
+            });
+
+            // Sort by timestamp
+            messages.sort((a, b) => a.timestamp - b.timestamp);
+            renderMessages(messages);
+        });
+        
+        // Resume scores listener
+        scoresRef.on('value', (snapshot) => {
+            const scores = snapshot.val() || { home: 0, away: 0 };
+            document.getElementById('homeScore').textContent = scores.home || 0;
+            document.getElementById('awayScore').textContent = scores.away || 0;
+        });
+        
+        // Resume sets listener
+        setsRef.on('value', (snapshot) => {
+            const sets = [];
+            snapshot.forEach((childSnapshot) => {
+                sets.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+
+            // Sort by timestamp
+            sets.sort((a, b) => a.timestamp - b.timestamp);
+            renderCompletedSets(sets);
+        });
+        
+        isListenersActive = true;
+        console.log('✅ Firebase listeners resumed');
+    }
+}
+
+// Initialize all Firebase listeners
+function initializeFirebaseListeners() {
+    if (!database || !currentMatch) return;
+    
+    const matchKey = getMatchKey();
+    messagesRef = database.ref(`live-matches/${matchKey}/messages`);
+    scoresRef = database.ref(`live-matches/${matchKey}/scores`);
+    setsRef = database.ref(`live-matches/${matchKey}/sets`);
+    
+    // Start listening
+    listenToMessages();
+    listenToScores();
+    listenToCompletedSets();
+    isListenersActive = true;
 }
 
 // Export cleanup function for external use
@@ -660,9 +815,111 @@ window.cleanupLiveMatch = cleanupFirebaseListeners;
 // Clean up on page unload
 window.addEventListener('beforeunload', cleanupFirebaseListeners);
 
-// Also clean up on visibility change (when user navigates away)
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-        cleanupFirebaseListeners();
+// Setup keyboard detection
+function setupKeyboardDetection() {
+    const visualViewport = window.visualViewport;
+    let initialViewportHeight = window.innerHeight;
+    
+    if (visualViewport) {
+        // Use Visual Viewport API for better keyboard detection
+        visualViewport.addEventListener('resize', () => {
+            const keyboardVisible = visualViewport.height < window.innerHeight * 0.75;
+            
+            if (keyboardVisible) {
+                document.body.classList.add('keyboard-visible');
+                console.log('⌨️ Keyboard detected, adjusting layout');
+            } else {
+                document.body.classList.remove('keyboard-visible');
+                console.log('📱 Keyboard hidden, restoring layout');
+            }
+            
+            // Adjust chat scroll position if needed
+            adjustChatScroll();
+        });
+    } else {
+        // Fallback for browsers without Visual Viewport API
+        let keyboardCheckInterval;
+        
+        const startKeyboardDetection = () => {
+            keyboardCheckInterval = setInterval(() => {
+                const currentHeight = window.innerHeight;
+                const keyboardVisible = currentHeight < initialViewportHeight * 0.75;
+                
+                if (keyboardVisible) {
+                    document.body.classList.add('keyboard-visible');
+                } else {
+                    document.body.classList.remove('keyboard-visible');
+                }
+                
+                adjustChatScroll();
+            }, 250);
+        };
+        
+        // Start detection when chat input is focused
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) {
+            chatInput.addEventListener('focus', startKeyboardDetection);
+            chatInput.addEventListener('blur', () => {
+                clearInterval(keyboardCheckInterval);
+                document.body.classList.remove('keyboard-visible');
+            });
+        }
     }
+}
+
+// Adjust chat scroll when keyboard appears/disappears
+function adjustChatScroll() {
+    const container = document.getElementById('chatMessages');
+    if (container && isUserAtBottom) {
+        // Small delay to allow layout adjustment
+        setTimeout(() => {
+            scrollToBottom(container, false);
+        }, 100);
+    }
+}
+
+// Smart visibility change handling
+document.addEventListener('visibilitychange', () => {
+    pageVisibilityState = document.hidden ? 'hidden' : 'visible';
+    
+    if (document.hidden) {
+        // Don't cleanup immediately - user might just be switching apps briefly
+        // Use a timeout to avoid disconnection for quick screen locks
+        reconnectTimeout = setTimeout(() => {
+            if (document.hidden) {
+                console.log('📱 Screen hidden for >30s, pausing Firebase listeners');
+                pauseFirebaseListeners();
+            }
+        }, 30000); // 30 second delay
+    } else {
+        // Clear timeout and resume immediately when page becomes visible
+        if (reconnectTimeout) {
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = null;
+        }
+        console.log('📱 Screen visible, resuming Firebase listeners');
+        resumeFirebaseListeners();
+    }
+});
+
+// Handle page show/focus events for better reconnection
+window.addEventListener('pageshow', () => {
+    console.log('📄 Page show event');
+    resumeFirebaseListeners();
+});
+
+window.addEventListener('focus', () => {
+    console.log('🎯 Window focus event');
+    resumeFirebaseListeners();
+});
+
+// Handle online/offline events
+window.addEventListener('online', () => {
+    console.log('🌐 Network connection restored');
+    resumeFirebaseListeners();
+});
+
+window.addEventListener('offline', () => {
+    console.log('📵 Network connection lost');
+    pauseFirebaseListeners();
 });

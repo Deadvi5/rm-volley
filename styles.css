@@ -2215,6 +2215,12 @@ body {
 .team-name-standings {
     font-weight: 600;
     color: var(--text-primary);
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: var(--space-2);
+    line-height: 1.3;
 }
 
 .highlight-row .team-name-standings {
@@ -2247,11 +2253,22 @@ body {
     }
 
     .team-name-standings {
-        font-size: 0.875rem;
-        max-width: 140px;
+        font-size: 0.8rem;
+        max-width: 160px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        padding: var(--space-1);
+    }
+    
+    /* Add horizontal scroll for table on very small screens */
+    .standings-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .standings-table {
+        min-width: 600px;
     }
 }
 

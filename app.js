@@ -691,7 +691,7 @@ function renderStandings(leagueName) {
                     <div class="rank-badge ${rankClass}">${team['Pos.']}</div>
                 </td>
                 <td class="team-cell">
-                    <div class="team-name-standings">${team.Squadra}</div>
+                    <div class="team-name-standings" title="${team.Squadra}">${team.Squadra}</div>
                 </td>
                 <td class="text-center font-bold">${team.Punti}</td>
                 <td class="text-center">${team.PG}</td>

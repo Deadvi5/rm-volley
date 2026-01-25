@@ -184,6 +184,10 @@ async def ask_question(request: QueryRequest):
         standings_keywords = ["classifica", "posizione", "punti", "graduatoria", "campionato"]
         is_standings_query = any(kw in request.question.lower() for kw in standings_keywords)
 
+        # Detect if query is about general statistics (needs both past AND next match)
+        stats_keywords = ["statistiche", "statistica", "bilancio", "andamento", "forma", "stagione"]
+        is_stats_query = any(kw in request.question.lower() for kw in stats_keywords)
+
         # Detect if query is about past matches (results)
         past_keywords = ["recente", "giocato", "giocata", "performance", "risultat",
                         "ultima", "ieri", "scorsa", "contro", "com'è andata", "come è andata",
@@ -196,11 +200,34 @@ async def ask_question(request: QueryRequest):
         is_future_query = any(kw in request.question.lower() for kw in future_keywords)
 
         # PRIORITY: If asking for standings, use standings-only retrieval
-        if is_standings_query and not is_past_query and not is_future_query:
+        if is_standings_query and not is_past_query and not is_future_query and not is_stats_query:
             results = retriever.retrieve_standings(
                 query=request.question,
                 n_results=request.n_results
             )
+        # Statistics query: get both past matches AND next match
+        elif detected_team and is_stats_query:
+            # Get past matches
+            past_results = retriever.retrieve_by_team(
+                team_name=detected_team,
+                n_results=request.n_results - 1,  # Leave room for next match
+                only_played=True,
+                only_future=False
+            )
+            # Get next match
+            future_results = retriever.retrieve_by_team(
+                team_name=detected_team,
+                n_results=1,
+                only_played=False,
+                only_future=True
+            )
+            # Combine results
+            results = {
+                "documents": past_results["documents"] + future_results["documents"],
+                "metadatas": past_results["metadatas"] + future_results["metadatas"],
+                "distances": past_results["distances"] + future_results["distances"],
+                "ids": past_results["ids"] + future_results["ids"]
+            }
         # Use team-specific retrieval if a team was detected and query is about matches
         elif detected_team and is_past_query and not is_future_query:
             results = retriever.retrieve_by_team(
@@ -229,12 +256,18 @@ async def ask_question(request: QueryRequest):
             )
 
         # Step 2: Format context for LLM
-        context = retriever.format_results_for_llm(results, max_length=2000)
+        # Use larger context for statistics queries (need all matches + next match)
+        context_max_length = 4000 if is_stats_query else 2000
+        context = retriever.format_results_for_llm(results, max_length=context_max_length)
 
         # Step 3: Generate answer
-        # Use higher max_tokens for standings queries (need room for full league table)
-        is_standings_query = "classifica" in request.question.lower()
-        max_tokens = 800 if is_standings_query else 400
+        # Use higher max_tokens for standings and statistics queries
+        if is_standings_query:
+            max_tokens = 800
+        elif is_stats_query:
+            max_tokens = 600  # Statistics need more room for complete response
+        else:
+            max_tokens = 400
 
         answer = llm_client.generate_rag_response(
             query=request.question,

@@ -15,6 +15,17 @@
 .live-match-body {
     background: var(--live-bg);
     padding-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Support for dynamic viewport height (better for mobile) */
+@supports (height: 100dvh) {
+    .live-match-body {
+        height: 100dvh;
+    }
 }
 
 /* ==================== Header ==================== */
@@ -22,6 +33,7 @@
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
     padding: 0.875rem 1rem;
+    padding-top: calc(0.875rem + env(safe-area-inset-top));
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -29,6 +41,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    flex-shrink: 0;
 }
 
 .back-btn,
@@ -82,6 +95,7 @@
     border-radius: 16px;
     padding: 1.5rem 1rem;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
 
 .match-info {
@@ -327,23 +341,10 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 420px);
-    min-height: 400px;
-    max-height: 600px;
+    flex: 1;
+    min-height: 0;
     position: relative;
-}
-
-/* Handle dynamic viewport height for mobile keyboards */
-@supports (height: 100dvh) {
-    .chat-section {
-        height: calc(100dvh - 420px);
-    }
-    
-    /* When keyboard is active, adjust chat height */
-    body.keyboard-visible .chat-section {
-        height: calc(100dvh - 500px);
-        min-height: 300px;
-    }
+    overflow: hidden;
 }
 
 .chat-header {
@@ -491,7 +492,7 @@
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* Chat Input Container - Sticky on Mobile */
+/* Chat Input Container */
 .chat-input-container {
     padding: 1rem 1.25rem;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
@@ -502,6 +503,7 @@
     border-radius: 0 0 16px 16px;
     flex-shrink: 0;
     align-items: center;
+    position: relative;
 }
 
 .chat-input {
@@ -649,6 +651,7 @@
 @media (max-width: 768px) {
     .live-header {
         padding: 0.625rem 0.875rem;
+        padding-top: calc(0.625rem + env(safe-area-inset-top));
     }
 
     .back-btn,
@@ -686,13 +689,13 @@
         font-size: 1.125rem;
     }
 
-    /* Mobile Chat - Fixed Input */
+    /* Mobile Chat - Flex Layout */
     .chat-section {
         margin: 0 0.75rem 0;
-        height: calc(100vh - 380px);
-        max-height: none;
         border-radius: 16px 16px 0 0;
         margin-bottom: 0;
+        flex: 1;
+        min-height: 0;
     }
 
     .chat-header {
@@ -706,8 +709,6 @@
     .chat-messages {
         padding: 1rem;
         gap: 0.75rem;
-        /* Account for fixed input on mobile */
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     }
 
     .message-username {
@@ -725,34 +726,12 @@
 
     /* Enhanced keyboard-safe input on mobile */
     .chat-input-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
         padding: 0.875rem 1rem;
         padding-bottom: calc(0.875rem + env(safe-area-inset-bottom));
         border-radius: 0;
         border-top: 1px solid #e5e7eb;
         box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
         background: white;
-        transform: translateZ(0); /* Hardware acceleration */
-        will-change: transform; /* Optimize animations */
-        transition: transform 0.3s ease;
-    }
-    
-    /* Add visual viewport API support */
-    @supports (height: 100dvh) {
-        .chat-input-container {
-            bottom: env(keyboard-inset-height, 0px);
-        }
-    }
-    
-    /* Handle iOS Safari quirks */
-    @supports (-webkit-touch-callout: none) {
-        .chat-input-container {
-            padding-bottom: calc(0.875rem + env(safe-area-inset-bottom) + 10px);
-        }
     }
 
     .chat-input {

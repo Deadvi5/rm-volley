@@ -1900,7 +1900,8 @@ body {
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-top: 0.5px solid var(--border-light);
-    padding-bottom: calc(var(--safe-area-bottom) + 10px);
+    padding: 6px 0 calc(var(--safe-area-bottom) + 2px);
+    min-height: calc(49px + var(--safe-area-bottom));
     display: flex;
     justify-content: space-around;
     align-items: stretch;
@@ -1929,7 +1930,7 @@ body {
 }
 
 .ios-tab-label {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: -0.01em;
 }

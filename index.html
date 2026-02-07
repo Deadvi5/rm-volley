@@ -363,39 +363,28 @@
         <!-- Standings Tab -->
         <div id="standings-tab" class="tab-content">
             <div class="section-header">
-                <div>
-                    <h2 class="section-title">
-                        <span class="section-icon">🏆</span>
-                        Classifica
-                    </h2>
-                    <div class="league-selector-container">
-                        <select id="leagueSelect" class="league-select">
-                            <!-- Options populated by JS -->
-                        </select>
-                    </div>
-                </div>
+                <h2 class="section-title">
+                    <span class="section-icon">🏆</span>
+                    Classifica
+                </h2>
                 <div class="last-update" id="standingsLastUpdate"></div>
             </div>
-            <div class="standings-container" id="standingsContainer">
-                <div class="table-responsive">
-                    <table class="standings-table" id="standingsTable">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Pos</th>
-                                <th>Squadra</th>
-                                <th class="text-center">Pt</th>
-                                <th class="text-center">G</th>
-                                <th class="text-center">V</th>
-                                <th class="text-center">P</th>
-                                <th class="text-center mobile-hide">SF</th>
-                                <th class="text-center mobile-hide">SS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="standingsBody">
-                            <!-- Rows will be populated by JS -->
-                        </tbody>
-                    </table>
+            
+            <!-- League Pills Selector -->
+            <div class="league-pills-container">
+                <div class="league-pills" id="leaguePills">
+                    <!-- Pills populated by JS -->
                 </div>
+            </div>
+
+            <!-- Podium Section (Top 3) -->
+            <div class="standings-podium" id="standingsPodium">
+                <!-- Podium cards populated by JS -->
+            </div>
+
+            <!-- Remaining Teams List -->
+            <div class="standings-list" id="standingsList">
+                <!-- Team cards populated by JS -->
             </div>
         </div>
     </main>

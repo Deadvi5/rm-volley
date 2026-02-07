@@ -100,21 +100,15 @@ async function loadStandings() {
         if (!response.ok) throw new Error('Classifica not found');
         standingsData = await response.json();
 
-        // Initialize selector and render first league
+        // Initialize pills and render first league
         populateLeagueSelector();
 
         // Default to first league or Serie D
         const leagues = Object.keys(standingsData);
         if (leagues.length > 0) {
             const defaultLeague = leagues.find(l => l.includes('Serie D')) || leagues[0];
-            document.getElementById('leagueSelect').value = defaultLeague;
             renderStandings(defaultLeague);
         }
-
-        // Add event listener
-        document.getElementById('leagueSelect').addEventListener('change', (e) => {
-            renderStandings(e.target.value);
-        });
 
     } catch (error) {
         console.error('Error loading standings:', error);
@@ -122,14 +116,30 @@ async function loadStandings() {
 }
 
 function populateLeagueSelector() {
-    const select = document.getElementById('leagueSelect');
-    select.innerHTML = '';
+    const pillsContainer = document.getElementById('leaguePills');
+    pillsContainer.innerHTML = '';
 
-    Object.keys(standingsData).forEach(league => {
-        const option = document.createElement('option');
-        option.value = league;
-        option.textContent = league;
-        select.appendChild(option);
+    Object.keys(standingsData).forEach((league, index) => {
+        const pill = document.createElement('button');
+        pill.className = 'league-pill';
+        pill.textContent = league;
+        pill.dataset.league = league;
+        
+        // Set first pill as active by default
+        if (index === 0 || league.includes('Serie D')) {
+            pill.classList.add('active');
+        }
+
+        pill.addEventListener('click', () => {
+            // Remove active from all pills
+            document.querySelectorAll('.league-pill').forEach(p => p.classList.remove('active'));
+            // Add active to clicked pill
+            pill.classList.add('active');
+            // Render standings
+            renderStandings(league);
+        });
+
+        pillsContainer.appendChild(pill);
     });
 }
 
@@ -650,10 +660,11 @@ async function createTodayMatchCardHTML(match) {
 
 
 /**
- * Render Standings Table
+ * Render Standings with Podium + Card Layout
  */
 function renderStandings(leagueName) {
-    const tbody = document.getElementById('standingsBody');
+    const podiumContainer = document.getElementById('standingsPodium');
+    const listContainer = document.getElementById('standingsList');
     const lastUpdate = document.getElementById('standingsLastUpdate');
     const data = standingsData[leagueName];
 
@@ -663,43 +674,78 @@ function renderStandings(leagueName) {
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center py-4">
-                    <div class="empty-state-small">
-                        <span>⚠️</span> Dati classifica non disponibili
-                    </div>
-                </td>
-            </tr>
+        podiumContainer.innerHTML = '';
+        listContainer.innerHTML = `
+            <div class="empty-state-small">
+                <span>⚠️</span> Dati classifica non disponibili
+            </div>
         `;
         return;
     }
 
-    tbody.innerHTML = data.map((team, index) => {
-        const rankClass = index === 0 ? 'rank-1' :
-            index === 1 ? 'rank-2' :
-                index === 2 ? 'rank-3' : '';
+    // Render top 3 teams in podium
+    const top3 = data.slice(0, 3);
+    podiumContainer.innerHTML = top3.map((team, index) => {
+        const rankClass = index === 0 ? 'podium-gold' :
+            index === 1 ? 'podium-silver' : 'podium-bronze';
+        const rankEmoji = index === 0 ? '🥇' :
+            index === 1 ? '🥈' : '🥉';
 
         const isRm = team.Squadra && config && config.team.matchPatterns.some(pattern => {
             return team.Squadra.toUpperCase().includes(pattern.toUpperCase());
         });
-        const rowClass = isRm ? 'highlight-row' : '';
 
         return `
-            <tr class="${rowClass}">
-                <td class="text-center">
-                    <div class="rank-badge ${rankClass}">${team['Pos.']}</div>
-                </td>
-                <td class="team-cell">
-                    <div class="team-name-standings" title="${team.Squadra}">${team.Squadra}</div>
-                </td>
-                <td class="text-center font-bold">${team.Punti}</td>
-                <td class="text-center">${team.PG}</td>
-                <td class="text-center">${team.PV}</td>
-                <td class="text-center">${team.PP}</td>
-                <td class="text-center mobile-hide">${team.SF}</td>
-                <td class="text-center mobile-hide">${team.SS}</td>
-            </tr>
+            <div class="podium-card ${rankClass} ${isRm ? 'podium-highlight' : ''}">
+                <div class="podium-rank">${rankEmoji}</div>
+                <div class="podium-team-name" title="${team.Squadra}">${team.Squadra}</div>
+                <div class="podium-points">${team.Punti}</div>
+                <div class="podium-points-label">Punti</div>
+                <div class="podium-stats">
+                    <div class="podium-stat">
+                        <span class="podium-stat-label">G</span>
+                        <span class="podium-stat-value">${team.PG}</span>
+                    </div>
+                    <div class="podium-stat">
+                        <span class="podium-stat-label">V</span>
+                        <span class="podium-stat-value">${team.PV}</span>
+                    </div>
+                    <div class="podium-stat">
+                        <span class="podium-stat-label">P</span>
+                        <span class="podium-stat-value">${team.PP}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Render remaining teams as card list
+    const remaining = data.slice(3);
+    if (remaining.length === 0) {
+        listContainer.innerHTML = '';
+        return;
+    }
+
+    listContainer.innerHTML = remaining.map((team, index) => {
+        const isRm = team.Squadra && config && config.team.matchPatterns.some(pattern => {
+            return team.Squadra.toUpperCase().includes(pattern.toUpperCase());
+        });
+
+        return `
+            <div class="standings-team-card ${isRm ? 'standings-team-highlight' : ''}">
+                <div class="standings-team-rank">${team['Pos.']}</div>
+                <div class="standings-team-info">
+                    <div class="standings-team-name" title="${team.Squadra}">${team.Squadra}</div>
+                    <div class="standings-team-stats-inline">
+                        <span class="standings-stat"><span class="standings-stat-label">G:</span> ${team.PG}</span>
+                        <span class="standings-stat"><span class="standings-stat-label">V:</span> ${team.PV}</span>
+                        <span class="standings-stat"><span class="standings-stat-label">P:</span> ${team.PP}</span>
+                        <span class="standings-stat standings-stat-desktop"><span class="standings-stat-label">SF:</span> ${team.SF}</span>
+                        <span class="standings-stat standings-stat-desktop"><span class="standings-stat-label">SS:</span> ${team.SS}</span>
+                    </div>
+                </div>
+                <div class="standings-team-points">${team.Punti}</div>
+            </div>
         `;
     }).join('');
 }
@@ -1456,11 +1502,13 @@ function initializeEventListeners() {
 
     // Pull to refresh functionality
     let startY = 0;
+    let startX = 0;
     let isPulling = false;
 
     document.addEventListener('touchstart', (e) => {
         if (window.scrollY === 0) {
             startY = e.touches[0].pageY;
+            startX = e.touches[0].pageX;
             isPulling = false;
         }
     });
@@ -1468,13 +1516,24 @@ function initializeEventListeners() {
     document.addEventListener('touchmove', (e) => {
         if (window.scrollY === 0 && startY > 0) {
             const currentY = e.touches[0].pageY;
-            const pullDistance = currentY - startY;
+            const currentX = e.touches[0].pageX;
+            const pullDistanceY = currentY - startY;
+            const pullDistanceX = Math.abs(currentX - startX);
 
-            if (pullDistance > 0 && pullDistance < 100) {
-                isPulling = true;
-                const indicator = document.getElementById('pullIndicator');
-                indicator.style.opacity = Math.min(pullDistance / 100, 1);
-                indicator.style.transform = `translateY(${Math.min(pullDistance, 80)}px)`;
+            // Only activate pull-to-refresh if:
+            // 1. Vertical movement is downward (pullDistanceY > 0)
+            // 2. Vertical movement exceeds horizontal movement (predominantly vertical gesture)
+            // 3. Vertical movement exceeds dead zone (10px)
+            if (pullDistanceY > 10 && pullDistanceY > pullDistanceX) {
+                if (pullDistanceY < 100) {
+                    isPulling = true;
+                    const indicator = document.getElementById('pullIndicator');
+                    indicator.style.opacity = Math.min(pullDistanceY / 100, 1);
+                    indicator.style.transform = `translateY(${Math.min(pullDistanceY, 80)}px)`;
+                }
+            } else {
+                // Reset if gesture is horizontal
+                isPulling = false;
             }
         }
     });
@@ -1482,12 +1541,20 @@ function initializeEventListeners() {
     document.addEventListener('touchend', () => {
         const indicator = document.getElementById('pullIndicator');
         if (isPulling) {
+            const currentY = event.changedTouches ? event.changedTouches[0].pageY : startY;
+            const finalPullDistance = currentY - startY;
+            
             indicator.style.opacity = '0';
             indicator.style.transform = 'translateY(-100%)';
-            location.reload();
+            
+            // Only reload if pull distance exceeds threshold (60px minimum)
+            if (finalPullDistance >= 60) {
+                location.reload();
+            }
         }
         isPulling = false;
         startY = 0;
+        startX = 0;
     });
 
     // iOS Large Title scroll behavior (throttled with requestAnimationFrame)

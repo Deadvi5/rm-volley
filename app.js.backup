@@ -427,19 +427,19 @@ function renderInsights() {
             <div class="insight-value">${bestHome?.homeWins || 0} vittorie</div>
             <div class="insight-description">${bestHome?.name || 'N/A'}</div>
         </div>
-        <div class="insight-card insight-card--away">
+        <div class="insight-card" style="background: linear-gradient(135deg, #00C853, #00A844);">
             <div class="insight-icon">✈️</div>
             <div class="insight-title">Migliori in Trasferta</div>
             <div class="insight-value">${bestAway?.awayWins || 0} vittorie</div>
             <div class="insight-description">${bestAway?.name || 'N/A'}</div>
         </div>
-        <div class="insight-card insight-card--streak">
+        <div class="insight-card" style="background: linear-gradient(135deg, #FFB300, #FF8F00);">
             <div class="insight-icon">🔥</div>
             <div class="insight-title">Striscia Più Lunga</div>
             <div class="insight-value">${longestStreak?.longestWinStreak || 0} vittorie</div>
             <div class="insight-description">${longestStreak?.name || 'N/A'}</div>
         </div>
-        <div class="insight-card insight-card--sets">
+        <div class="insight-card" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);">
             <div class="insight-icon">📈</div>
             <div class="insight-title">Miglior Rapporto Set</div>
             <div class="insight-value">${bestSetRatio ? Math.round((bestSetRatio.setsWon / (bestSetRatio.setsWon + bestSetRatio.setsLost)) * 100) : 0}%</div>

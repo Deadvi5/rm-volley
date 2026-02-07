@@ -1,48 +1,67 @@
-/* Privacy Disclaimer Footer Styles */
+/* Privacy Disclaimer Footer Styles - Minimal Inline Design */
 .privacy-footer {
-    background: rgba(0, 0, 0, 0.05);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top: 0.5px solid var(--border-light);
+    padding: var(--space-3) var(--space-4);
     text-align: center;
-    font-size: 0.75rem;
-    color: rgba(0, 0, 0, 0.6);
-    margin-top: auto;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-top: var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    line-height: 1.5;
 }
 
-.privacy-footer p {
-    margin: 0.25rem 0;
-    line-height: 1.4;
+.privacy-lock {
+    font-size: 0.875rem;
+    opacity: 0.8;
 }
 
 .privacy-footer a {
-    color: #0066FF;
+    color: var(--primary);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
+    transition: all var(--transition-fast);
 }
 
 .privacy-footer a:hover {
+    color: var(--primary-dark);
     text-decoration: underline;
 }
 
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .privacy-footer {
-        background: rgba(255, 255, 255, 0.05);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(30, 30, 30, 0.9);
+        border-top: 0.5px solid rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.6);
-    }
-
-    .privacy-footer a {
-        color: #4d9fff;
     }
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .privacy-footer {
-        padding: 0.75rem;
-        font-size: 0.7rem;
-        padding-bottom: calc(env(safe-area-inset-bottom) + 60px);
-        /* Account for iOS tab bar */
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.75rem;
+        gap: var(--space-1);
+        /* Footer is now inside .container which has padding-bottom: calc(80px + safe-area),
+           so we don't need extra margin. Just add safe-area for notch. */
+        padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    }
+    
+    .privacy-lock {
+        font-size: 0.8125rem;
     }
 }
+
+/* Special handling for pages WITH the iOS tab bar (index.html) */
+/* The .container already has padding-bottom: calc(80px + safe-area) at mobile,
+   so we don't need to add extra padding here. The footer will be pushed up naturally. */
+
+/* For sub-pages WITHOUT the iOS tab bar (scout, social, player-stats, live-match, privacy),
+   the footer just needs standard padding which we already have above. */

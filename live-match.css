@@ -665,26 +665,32 @@ html {
 
 /* ==================== Desktop ==================== */
 @media (min-width: 640px) {
-    .score-section {
-        max-width: 700px;
-        margin: 0 auto;
-        border-bottom: none;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        margin: 16px auto 0;
-    }
-
+    /* Two-column layout: score panel left, chat right */
     .live-match-body {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        grid-template-columns: 400px 1fr;
+        grid-template-areas:
+            "header header"
+            "score  chat";
         background: var(--bg-subtle);
     }
 
+    .live-header  { grid-area: header; }
+
+    .score-section {
+        grid-area: score;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 24px;
+    }
+
     .chat-section {
-        max-width: 700px;
-        margin: 12px auto 16px;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        height: 420px;
+        grid-area: chat;
+        border-radius: 0;
+        border: none;
+        height: auto;
     }
 
     .score-number { font-size: 4rem; min-width: 90px; }

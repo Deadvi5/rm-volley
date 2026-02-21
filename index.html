@@ -4,427 +4,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0066FF">
-    <title>RM Volley - Dashboard Pro</title>
+    <meta name="theme-color" content="#2563EB">
+    <title>RM Volley</title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
 
     <!-- iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="RM Volley">
 
     <!-- iOS Icons -->
     <link rel="apple-touch-icon" sizes="152x152" href="media/icon-152x152.png">
     <link rel="apple-touch-icon" sizes="144x144" href="media/icon-144x144.png">
     <link rel="apple-touch-icon" sizes="120x120" href="media/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="media/icon-128x128.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="media/icon-96x96.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="media/icon-72x72.png">
     <link rel="apple-touch-icon" href="media/icon-192x192.png">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192" href="media/icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="media/icon-72x72.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="media/icon-72x72.png">
 
-    <!-- Preconnect to CDNs for better performance -->
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
-    <!-- SheetJS library for reading Excel files -->
+    <!-- SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- Chart.js for data visualizations -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-    <!-- Firebase SDK for live match data -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <!-- Custom Styles -->
+    <!-- Styles -->
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="privacy-footer.css">
-
-
 </head>
 
 <body>
     <!-- Pull to refresh indicator -->
     <div class="pull-indicator" id="pullIndicator">
-        <div class="pull-indicator-icon">↓</div>
+        <span class="pull-indicator-icon">&#8595;</span>
         <span>Rilascia per aggiornare</span>
     </div>
 
-    <!-- Mobile Header -->
-    <header class="header mobile-header">
-        <div class="header-content">
-            <div class="logo-section">
-                <img src="media/rmlogo.png" alt="RM Volley" class="header-logo" onerror="this.style.display='none'">
-                <h1 class="app-title"></h1>
+    <!-- App layout: sidebar + main -->
+    <div class="app-layout">
+
+        <!-- SIDEBAR (desktop only) -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img src="media/rmlogo.png" alt="RM Volley" class="sidebar-logo" onerror="this.style.display='none'">
+                <span class="sidebar-title">RM Volley</span>
             </div>
-            <div class="mobile-actions">
+
+            <nav class="sidebar-nav" aria-label="Navigazione principale">
+                <button class="sidebar-nav-item active" data-tab="home" aria-selected="true">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>Home</span>
+                </button>
+                <button class="sidebar-nav-item" data-tab="partite" aria-selected="false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span>Partite</span>
+                </button>
+                <button class="sidebar-nav-item" data-tab="squadre" aria-selected="false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    <span>Squadre</span>
+                </button>
+                <button class="sidebar-nav-item" data-tab="classifiche" aria-selected="false">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Classifiche</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="rag-chat.html" target="_blank" class="sidebar-nav-item sidebar-link">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    <span>AI Assistant</span>
+                </a>
+                <button id="scoutTabBtn" class="sidebar-nav-item" data-tab="scout" style="display:none">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Scouting</span>
+                </button>
+                <button id="socialTabBtn" class="sidebar-nav-item" data-tab="social" style="display:none">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    <span>Social Media</span>
+                </button>
+                <button id="loginTabBtn" class="sidebar-nav-item" data-tab="login">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    <span>Login</span>
+                </button>
+                <button id="logoutTabBtn" class="sidebar-nav-item" data-tab="logout" style="display:none">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span>Logout</span>
+                </button>
             </div>
-        </div>
-    </header>
-    <!-- Desktop Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <div class="logo-icon">
-                    <img src="media/rmlogo.png" alt="RM Volley Logo">
-                </div>
-                <div class="logo-text">
-                    <h1>RM Volley</h1>
-                    <p>Dashboard Pro</p>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+
+            <!-- Mobile topbar -->
+            <div class="topbar">
+                <span class="topbar-title" id="topbarTitle">Home</span>
+                <div class="topbar-actions">
+                    <a href="rag-chat.html" target="_blank" class="topbar-icon-btn" title="AI Assistant">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    </a>
+                    <button id="loginTabBtnMobile" class="topbar-icon-btn" data-tab="login" title="Login">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    </button>
+                    <button id="logoutTabBtnMobile" class="topbar-icon-btn" data-tab="logout" style="display:none" title="Logout">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    </button>
                 </div>
             </div>
 
-            <div class="header-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="totalTeams">0</div>
-                    <div class="stat-label">Squadre</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalMatches">0</div>
-                    <div class="stat-label">Partite</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalWins">0</div>
-                    <div class="stat-label">Vittorie</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="winRate">0%</div>
-                    <div class="stat-label">Win Rate</div>
-                </div>
-            </div>
+            <!-- Hidden stubs for mobile scout/social (auth-tabs.js compatibility) -->
+            <button id="scoutTabBtnMobile" data-tab="scout" style="display:none" aria-hidden="true"></button>
+            <button id="socialTabBtnMobile" data-tab="social" style="display:none" aria-hidden="true"></button>
 
-            <!-- AI Assistant Button -->
-            <a href="rag-chat.html" target="_blank" class="ai-assistant-btn" title="Apri AI Assistant">
-                <span class="ai-icon">🤖</span>
-                <span class="ai-text">AI Assistant</span>
-            </a>
-        </div>
-    </header>
+            <div class="content-area">
 
-    <!-- Desktop Navigation Tabs (shown on desktop only) -->
-    <nav class="nav-tabs" role="navigation">
-        <button class="nav-tab active" data-tab="overview" aria-selected="true">
-            <span class="nav-tab-icon">📊</span>
-            <span class="nav-tab-text">Panoramica</span>
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Caricamento dati...</p>
+                </div>
+
+                <!-- HOME TAB -->
+                <div id="home-tab" class="tab-content active" style="display:none">
+
+                    <section class="content-section" id="todaysMatchesSection" style="display:none">
+                        <h2 class="section-title">Oggi</h2>
+                        <div id="todaysMatchesList"></div>
+                    </section>
+
+                    <section class="content-section" id="nextMatchSection" style="display:none">
+                        <h2 class="section-title">Prossima partita</h2>
+                        <div id="nextMatchCard"></div>
+                    </section>
+
+                    <section class="content-section">
+                        <h2 class="section-title">Ultimi risultati</h2>
+                        <div class="card" id="recentMatchesList"></div>
+                    </section>
+
+                </div>
+
+                <!-- PARTITE TAB -->
+                <div id="partite-tab" class="tab-content">
+
+                    <div class="filters card">
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label" for="filterTeam">Squadra</label>
+                                <select id="filterTeam" class="filter-select">
+                                    <option value="">Tutte le squadre</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="filterStatus">Stato</label>
+                                <select id="filterStatus" class="filter-select">
+                                    <option value="">Tutti gli stati</option>
+                                    <option value="gara omologata">Completate</option>
+                                    <option value="risultato ufficioso">Non ufficiali</option>
+                                    <option value="da disputare" selected>Da disputare</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label" for="searchInput">Cerca</label>
+                                <input type="text" id="searchInput" class="filter-input" placeholder="Squadra, impianto...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="matches-count" id="matchesSubtitle"></p>
+                    <div id="matchesList"></div>
+
+                </div>
+
+                <!-- SQUADRE TAB -->
+                <div id="squadre-tab" class="tab-content">
+                    <div class="teams-grid" id="teamsGrid"></div>
+
+                    <div class="charts-section">
+                        <h2 class="section-title">Statistiche</h2>
+                        <div class="charts-grid">
+                            <div class="chart-card card">
+                                <h3 class="chart-title">Vittorie e Sconfitte</h3>
+                                <div class="chart-container">
+                                    <canvas id="winsChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card card">
+                                <h3 class="chart-title">Set Vinti vs Persi</h3>
+                                <div class="chart-container">
+                                    <canvas id="setsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLASSIFICHE TAB -->
+                <div id="classifiche-tab" class="tab-content">
+                    <div class="standings-header">
+                        <h2 class="section-title">Classifica</h2>
+                        <div class="standings-controls">
+                            <select id="leagueSelect" class="filter-select"></select>
+                            <span class="last-update" id="standingsLastUpdate"></span>
+                        </div>
+                    </div>
+
+                    <div class="card standings-card">
+                        <div class="table-responsive">
+                            <table class="standings-table" id="standingsTable">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center">#</th>
+                                        <th>Squadra</th>
+                                        <th class="text-center">Pt</th>
+                                        <th class="text-center">G</th>
+                                        <th class="text-center">V</th>
+                                        <th class="text-center">P</th>
+                                        <th class="text-center col-hide">SF</th>
+                                        <th class="text-center col-hide">SS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="standingsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /content-area -->
+        </main>
+    </div><!-- /app-layout -->
+
+    <!-- Privacy Footer -->
+    <footer class="privacy-footer">
+        <p><strong>Privacy:</strong> Utilizziamo solo i dati necessari per il funzionamento (localStorage e Firebase per chat live).</p>
+        <p>Non utilizziamo cookie di tracciamento. <a href="privacy.html">Leggi la Privacy Policy completa</a>.</p>
+    </footer>
+
+    <!-- Mobile Bottom Nav -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navigazione mobile">
+        <button class="bottom-nav-item active" data-tab="home" aria-selected="true">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Home</span>
         </button>
-        <button class="nav-tab" data-tab="teams" aria-selected="false">
-            <span class="nav-tab-icon">👥</span>
-            <span class="nav-tab-text">Squadre</span>
+        <button class="bottom-nav-item" data-tab="partite" aria-selected="false">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Partite</span>
         </button>
-        <button class="nav-tab" data-tab="matches" aria-selected="false">
-            <span class="nav-tab-icon">🏐</span>
-            <span class="nav-tab-text">Partite</span>
+        <button class="bottom-nav-item" data-tab="squadre" aria-selected="false">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            <span>Squadre</span>
         </button>
-        <button class="nav-tab" data-tab="stats" aria-selected="false">
-            <span class="nav-tab-icon">📈</span>
-            <span class="nav-tab-text">Statistiche</span>
-        </button>
-        <button class="nav-tab" data-tab="standings" aria-selected="false">
-            <span class="nav-tab-icon">🏆</span>
-            <span class="nav-tab-text">Classifica</span>
-        </button>
-        <button class="nav-tab" id="loginTabBtn" data-tab="login" aria-selected="false">
-            <span class="nav-tab-icon">🔑</span>
-            <span class="nav-tab-text">Login</span>
-        </button>
-        <button class="nav-tab" id="logoutTabBtn" data-tab="logout" aria-selected="false" style="display: none;">
-            <span class="nav-tab-icon">🚪</span>
-            <span class="nav-tab-text">Logout</span>
-        </button>
-        <button class="nav-tab" id="scoutTabBtn" data-tab="scout" aria-selected="false" style="display: none;">
-            <span class="nav-tab-icon">🎯</span>
-            <span class="nav-tab-text">Scouting</span>
-        </button>
-        <button class="nav-tab" id="socialTabBtn" data-tab="social" aria-selected="false" style="display: none;">
-            <span class="nav-tab-icon">📱</span>
-            <span class="nav-tab-text">Social Media</span>
+        <button class="bottom-nav-item" data-tab="classifiche" aria-selected="false">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Classifiche</span>
         </button>
     </nav>
-
-    <!-- iOS-Style Navigation Bar (mobile only) -->
-    <header class="ios-navbar">
-        <div class="ios-navbar-content">
-            <div class="ios-large-title" id="largeTitle">Panoramica</div>
-        </div>
-    </header>
-
-    <!-- Stats Header Card (mobile only - iOS grouped style) -->
-    <div class="stats-header-card">
-        <div class="header-stats">
-            <div class="stat-item">
-                <div class="stat-value" id="totalTeamsMobile">0</div>
-                <div class="stat-label">Squadre</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalMatchesMobile">0</div>
-                <div class="stat-label">Partite</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="totalWinsMobile">0</div>
-                <div class="stat-label">Vittorie</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="winRateMobile">0%</div>
-                <div class="stat-label">Win Rate</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <main class="container">
-        <!-- Loading State -->
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Caricamento dati...</p>
-        </div>
-
-        <!-- Overview Tab -->
-        <div id="overview-tab" class="tab-content active" style="display: none;">
-            <!-- Today's Matches Section -->
-            <section class="todays-matches-section" id="todaysMatchesSection" style="display: none;">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">📅</span>
-                        Partite di Oggi
-                    </h2>
-                </div>
-                <div id="todaysMatchesList" class="matches-list"></div>
-            </section>
-
-            <!-- Quick Stats -->
-            <section class="quick-stats" id="quickStats" aria-label="Statistiche rapide"></section>
-
-            <!-- Insights -->
-            <section class="insights-grid" id="insightsGrid" aria-label="Insights principali"></section>
-
-            <!-- Leaderboard -->
-            <section class="leaderboard" aria-label="Classifica squadre">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">🏆</span>
-                        Classifica per Win Rate
-                    </h2>
-                </div>
-                <div id="leaderboardList"></div>
-            </section>
-
-            <!-- Recent Matches -->
-            <section aria-label="Partite recenti">
-                <div class="section-header">
-                    <div>
-                        <h2 class="section-title">
-                            <span class="section-icon">⚡</span>
-                            Ultime Partite
-                        </h2>
-                        <p class="section-subtitle">Risultati recenti</p>
-                    </div>
-                </div>
-                <div class="matches-list" id="recentMatchesList"></div>
-            </section>
-        </div>
-
-        <!-- Teams Tab -->
-        <div id="teams-tab" class="tab-content">
-            <div class="teams-grid" id="teamsGrid"></div>
-        </div>
-
-        <!-- Matches Tab -->
-        <div id="matches-tab" class="tab-content">
-            <div class="filters">
-                <div class="filter-grid">
-                    <div class="filter-group">
-                        <label class="filter-label" for="filterTeam">Squadra</label>
-                        <select id="filterTeam" class="filter-select">
-                            <option value="">Tutte le squadre</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="filterStatus">Stato</label>
-                        <select id="filterStatus" class="filter-select">
-                            <option value="">Tutti gli stati</option>
-                            <option value="gara omologata">Completate</option>
-                            <option value="risultato ufficioso">Non ufficiali</option>
-                            <option value="da disputare" selected>Da disputare</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label" for="searchInput">Cerca</label>
-                        <input type="text" id="searchInput" class="filter-input"
-                            placeholder="Cerca squadra, impianto...">
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">
-                        <span class="section-icon">📅</span>
-                        Calendario
-                    </h2>
-                    <p class="section-subtitle" id="matchesSubtitle">Tutte le partite</p>
-                </div>
-            </div>
-            <div class="matches-list" id="matchesList"></div>
-        </div>
-
-        <!-- Stats Tab (with Insights) -->
-        <div id="stats-tab" class="tab-content">
-            <!-- Detailed Insights Section -->
-            <div id="detailedInsights"></div>
-
-            <!-- Charts Grid -->
-            <div class="charts-grid">
-                <div class="chart-card">
-                    <h3 class="chart-title">Vittorie per Squadra</h3>
-                    <div class="chart-container">
-                        <canvas id="winsChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">Win Rate Percentuale</h3>
-                    <div class="chart-container">
-                        <canvas id="winRateChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">Partite per Campionato</h3>
-                    <div class="chart-container">
-                        <canvas id="championshipChart"></canvas>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h3 class="chart-title">Set Vinti vs Persi</h3>
-                    <div class="chart-container">
-                        <canvas id="setsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Standings Tab -->
-        <div id="standings-tab" class="tab-content">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <span class="section-icon">🏆</span>
-                    Classifica
-                </h2>
-                <div class="last-update" id="standingsLastUpdate"></div>
-            </div>
-            
-            <!-- League Pills Selector -->
-            <div class="league-pills-container">
-                <div class="league-pills" id="leaguePills">
-                    <!-- Pills populated by JS -->
-                </div>
-            </div>
-
-            <!-- Podium Section (Top 3) -->
-            <div class="standings-podium" id="standingsPodium">
-                <!-- Podium cards populated by JS -->
-            </div>
-
-            <!-- Remaining Teams List -->
-            <div class="standings-list" id="standingsList">
-                <!-- Team cards populated by JS -->
-            </div>
-        </div>
-
-        <!-- Privacy Disclaimer Footer -->
-        <footer class="privacy-footer">
-            <span class="privacy-lock">🔒</span>
-            <span>Dati essenziali, no tracciamento.</span>
-            <a href="privacy.html">Privacy Policy</a>
-        </footer>
-    </main>
 
     <!-- Team Detail Modal -->
     <div id="teamModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTeamName">
         <div class="modal-backdrop" onclick="closeTeamModal()"></div>
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTeamName" class="modal-title">Team Details</h2>
+                <h2 id="modalTeamName" class="modal-title">Dettagli Squadra</h2>
                 <button class="modal-close" onclick="closeTeamModal()" aria-label="Chiudi">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
             </div>
             <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
 
-    <!-- iOS Bottom Tab Bar -->
-    <nav class="ios-tab-bar" role="navigation">
-        <button class="ios-tab active" data-tab="overview" aria-selected="true">
-            <span class="ios-tab-icon">📊</span>
-            <span class="ios-tab-label">Panoramica</span>
-        </button>
-        <button class="ios-tab" data-tab="teams" aria-selected="false">
-            <span class="ios-tab-icon">👥</span>
-            <span class="ios-tab-label">Squadre</span>
-        </button>
-        <button class="ios-tab" data-tab="matches" aria-selected="false">
-            <span class="ios-tab-icon">🏐</span>
-            <span class="ios-tab-label">Partite</span>
-        </button>
-        <button class="ios-tab" data-tab="stats" aria-selected="false">
-            <span class="ios-tab-icon">📈</span>
-            <span class="ios-tab-label">Statistiche</span>
-        </button>
-        <button class="ios-tab" data-tab="standings" aria-selected="false">
-            <span class="ios-tab-icon">🏆</span>
-            <span class="ios-tab-label">Classifica</span>
-        </button>
-        <button class="ios-tab" id="loginTabBtnMobile" data-tab="login" aria-selected="false">
-            <span class="ios-tab-icon">🔑</span>
-            <span class="ios-tab-label">Login</span>
-        </button>
-        <button class="ios-tab" id="logoutTabBtnMobile" data-tab="logout" aria-selected="false" style="display: none;">
-            <span class="ios-tab-icon">🚪</span>
-            <span class="ios-tab-label">Logout</span>
-        </button>
-        <button class="ios-tab" id="scoutTabBtnMobile" data-tab="scout" aria-selected="false" style="display: none;">
-            <span class="ios-tab-icon">🎯</span>
-            <span class="ios-tab-label">Scouting</span>
-        </button>
-        <button class="ios-tab" id="socialTabBtnMobile" data-tab="social" aria-selected="false" style="display: none;">
-            <span class="ios-tab-icon">📱</span>
-            <span class="ios-tab-label">Social</span>
-        </button>
-    </nav>
-
     <!-- JavaScript -->
     <script type="module" src="utils.js"></script>
     <script type="module" src="app.js"></script>
 
-    <!-- Scouting Link Handler -->
+    <!-- Nav redirect handlers -->
     <script>
-        // Handle scouting tab clicks - redirect to scout page
         document.addEventListener('DOMContentLoaded', () => {
-            const scoutBtns = [document.getElementById('scoutTabBtn'), document.getElementById('scoutTabBtnMobile')];
-            scoutBtns.forEach(btn => {
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        window.location.href = 'scout.html';
-                    });
-                }
+            ['scoutTabBtn','scoutTabBtnMobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', () => window.location.href = 'scout.html');
             });
-
-            // Handle social media tab clicks
-            const socialBtns = [document.getElementById('socialTabBtn'), document.getElementById('socialTabBtnMobile')];
-            socialBtns.forEach(btn => {
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        window.location.href = 'social.html';
-                    });
-                }
+            ['socialTabBtn','socialTabBtnMobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', () => window.location.href = 'social.html');
             });
         });
     </script>
@@ -432,79 +306,31 @@
     <!-- Login/Logout handlers -->
     <script type="module">
         import { signOut } from './auth-simple.js';
-
         document.addEventListener('DOMContentLoaded', () => {
-            const loginBtn = document.getElementById('loginBtn');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const loginBtnMobile = document.getElementById('loginBtnMobile');
-            const logoutBtnMobile = document.getElementById('logoutBtnMobile');
-
-            // Desktop login
-            if (loginBtn) {
-                loginBtn.addEventListener('click', () => {
-                    window.location.href = 'login.html';
-                });
-            }
-
-            // Desktop logout
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    signOut();
-                    window.location.reload();
-                });
-            }
-
-            // Mobile login
-            if (loginBtnMobile) {
-                loginBtnMobile.addEventListener('click', () => {
-                    window.location.href = 'login.html';
-                });
-            }
-
-            // Mobile logout
-            if (logoutBtnMobile) {
-                logoutBtnMobile.addEventListener('click', () => {
-                    signOut();
-                    window.location.reload();
-                });
-            }
-
-            // Tab Login/Logout handlers
-            const loginTabBtn = document.getElementById('loginTabBtn');
-            const logoutTabBtn = document.getElementById('logoutTabBtn');
-            const loginTabBtnMobile = document.getElementById('loginTabBtnMobile');
-            const logoutTabBtnMobile = document.getElementById('logoutTabBtnMobile');
-
             const handleLogin = () => window.location.href = 'login.html';
-            const handleLogout = () => {
-                signOut();
-                window.location.reload();
-            };
-
-            if (loginTabBtn) loginTabBtn.addEventListener('click', handleLogin);
-            if (loginTabBtnMobile) loginTabBtnMobile.addEventListener('click', handleLogin);
-            if (logoutTabBtn) logoutTabBtn.addEventListener('click', handleLogout);
-            if (logoutTabBtnMobile) logoutTabBtnMobile.addEventListener('click', handleLogout);
+            const handleLogout = () => { signOut(); window.location.reload(); };
+            ['loginTabBtn','loginTabBtnMobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', handleLogin);
+            });
+            ['logoutTabBtn','logoutTabBtnMobile'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('click', handleLogout);
+            });
         });
     </script>
 
-    <!-- Tab visibility for authenticated users -->
+    <!-- Auth tab visibility -->
     <script type="module" src="auth-tabs.js"></script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('Service Worker registered successfully:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Service Worker registration failed:', error);
-                    });
+                    .catch(err => console.log('SW registration failed:', err));
             });
         }
     </script>
 </body>
-
 </html>

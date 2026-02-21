@@ -127,11 +127,11 @@ function checkMatchLiveStatus() {
             endSetBtn.style.display = 'none';
         }
 
-        // Update header badge to show "Chat Available" instead of "LIVE"
+        // Update header badge to show "Chat" instead of "LIVE"
         const liveBadge = document.querySelector('.live-badge');
         if (liveBadge) {
-            liveBadge.textContent = '💬 Chat Available';
-            liveBadge.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            liveBadge.textContent = 'Chat';
+            liveBadge.classList.add('chat-only');
         }
 
         console.log('📅 Chat available but match not yet live. Score controls disabled.');

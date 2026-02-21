@@ -873,32 +873,47 @@ function initializeEventListeners() {
     );
 
     // Pull to refresh
-    let startY = 0, isPulling = false;
+    let startY = 0, startX = 0, isPulling = false, isHorizontal = false;
     const indicator = document.getElementById('pullIndicator');
 
     document.addEventListener('touchstart', (e) => {
-        if (window.scrollY === 0) { startY = e.touches[0].pageY; isPulling = false; }
+        if (window.scrollY === 0) {
+            startY = e.touches[0].pageY;
+            startX = e.touches[0].pageX;
+            isPulling = false;
+            isHorizontal = false;
+        }
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
         if (window.scrollY === 0 && startY > 0) {
-            const dist = e.touches[0].pageY - startY;
-            if (dist > 0 && dist < 120) {
+            const distY = e.touches[0].pageY - startY;
+            const distX = Math.abs(e.touches[0].pageX - startX);
+            // If the gesture is more horizontal than vertical, ignore it
+            if (!isHorizontal && distX > Math.abs(distY) && distX > 10) {
+                isHorizontal = true;
+            }
+            if (!isHorizontal && distY > 0 && distY < 120) {
                 isPulling = true;
-                indicator.style.opacity = Math.min(dist / 80, 1);
-                indicator.style.transform = `translateX(-50%) translateY(${Math.min(dist * 0.7, 70)}px)`;
+                indicator.style.opacity = Math.min(distY / 80, 1);
+                indicator.style.transform = `translateX(-50%) translateY(${Math.min(distY * 0.7, 70)}px)`;
             }
         }
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
-        if (isPulling) {
+        if (isPulling && !isHorizontal) {
             indicator.style.opacity = '0';
             indicator.style.transform = 'translateX(-50%) translateY(-80px)';
             location.reload();
+        } else if (isPulling) {
+            indicator.style.opacity = '0';
+            indicator.style.transform = 'translateX(-50%) translateY(-80px)';
         }
         isPulling = false;
+        isHorizontal = false;
         startY = 0;
+        startX = 0;
     });
 
     // Scroll: nothing fancy needed anymore

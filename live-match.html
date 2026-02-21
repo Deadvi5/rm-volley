@@ -3,30 +3,43 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Live Match - RM Volley</title>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Live Match — RM Volley</title>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="live-match.css">
-    <link rel="stylesheet" href="privacy-footer.css">
 </head>
 
 <body class="live-match-body">
+
     <!-- Header -->
     <header class="live-header">
-        <button id="backBtn" class="back-btn">← Dashboard</button>
-        <div class="live-badge">🔴 LIVE</div>
-        <button id="refreshBtn" class="refresh-btn">🔄 Refresh</button>
+        <button id="backBtn" class="live-header-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Dashboard
+        </button>
+
+        <div class="live-badge">
+            <span class="live-dot"></span>
+            LIVE
+        </div>
+
+        <button id="refreshBtn" class="live-header-btn live-header-btn--icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+        </button>
     </header>
 
-    <!-- Match Score Section -->
+    <!-- Score Section -->
     <section class="score-section">
         <div class="match-info">
             <div id="matchDate" class="match-date"></div>
@@ -36,60 +49,60 @@
         <div class="teams-score">
             <!-- Home Team -->
             <div class="team-side">
-                <div id="homeTeam" class="team-name">Team A</div>
+                <div id="homeTeam" class="team-name">Home</div>
                 <div class="score-display">
                     <div id="homeScore" class="score-number">0</div>
                     <div class="score-controls">
-                        <button class="score-btn" onclick="updateScore('home', 1)">+</button>
-                        <button class="score-btn decrease" onclick="updateScore('home', -1)">−</button>
+                        <button class="score-btn score-btn--plus" onclick="updateScore('home', 1)">+</button>
+                        <button class="score-btn score-btn--minus" onclick="updateScore('home', -1)">−</button>
                     </div>
                 </div>
             </div>
 
-            <!-- VS Divider -->
-            <div class="vs-divider">VS</div>
+            <!-- Divider -->
+            <div class="vs-divider">–</div>
 
             <!-- Away Team -->
             <div class="team-side">
-                <div id="awayTeam" class="team-name">Team B</div>
+                <div id="awayTeam" class="team-name">Away</div>
                 <div class="score-display">
                     <div id="awayScore" class="score-number">0</div>
                     <div class="score-controls">
-                        <button class="score-btn" onclick="updateScore('away', 1)">+</button>
-                        <button class="score-btn decrease" onclick="updateScore('away', -1)">−</button>
+                        <button class="score-btn score-btn--plus" onclick="updateScore('away', 1)">+</button>
+                        <button class="score-btn score-btn--minus" onclick="updateScore('away', -1)">−</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Completed Sets Display -->
-        <div id="completedSets" class="completed-sets" style="display: none;"></div>
+        <!-- Completed Sets -->
+        <div id="completedSets" class="completed-sets" style="display:none"></div>
 
-        <!-- End Set Section -->
+        <!-- End Set -->
         <div class="end-set-section">
-            <button id="endSetBtn" class="end-set-btn" onclick="showEndSetModal()">🏁 End Current Set</button>
+            <button id="endSetBtn" class="end-set-btn" onclick="showEndSetModal()">Chiudi Set</button>
         </div>
     </section>
 
     <!-- End Set Modal -->
-    <div id="endSetModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>🏁 End Current Set</h2>
-            <p>Enter the final score for this set:</p>
+    <div id="endSetModal" class="lm-modal" style="display:none">
+        <div class="lm-modal-content">
+            <h2 class="lm-modal-title">Chiudi Set</h2>
+            <p class="lm-modal-desc">Inserisci il punteggio finale del set:</p>
             <div class="set-score-inputs">
                 <div class="set-score-input-group">
-                    <label id="homeTeamLabel">Home</label>
-                    <input type="number" id="homeSetScore" class="set-score-input" min="0" max="50" value="25" />
+                    <label id="homeTeamLabel" class="set-score-label">Casa</label>
+                    <input type="number" id="homeSetScore" class="set-score-input" min="0" max="50" value="25"/>
                 </div>
-                <div class="set-score-divider">-</div>
+                <div class="set-score-divider">–</div>
                 <div class="set-score-input-group">
-                    <label id="awayTeamLabel">Away</label>
-                    <input type="number" id="awaySetScore" class="set-score-input" min="0" max="50" value="23" />
+                    <label id="awayTeamLabel" class="set-score-label">Ospite</label>
+                    <input type="number" id="awaySetScore" class="set-score-input" min="0" max="50" value="23"/>
                 </div>
             </div>
             <div class="modal-actions">
-                <button onclick="closeEndSetModal()" class="secondary-btn">Cancel</button>
-                <button onclick="confirmEndSet()" class="primary-btn">✓ Confirm Set</button>
+                <button onclick="closeEndSetModal()" class="btn btn--secondary">Annulla</button>
+                <button onclick="confirmEndSet()" class="btn btn--primary">Conferma</button>
             </div>
         </div>
     </div>
@@ -97,40 +110,35 @@
     <!-- Chat Section -->
     <section class="chat-section">
         <div class="chat-header">
-            <h2>💬 Live Chat</h2>
+            <span class="chat-title">Chat</span>
             <div id="onlineCount" class="online-count"></div>
         </div>
 
-        <!-- Chat Messages -->
         <div id="chatMessages" class="chat-messages"></div>
 
-        <!-- Chat Input -->
         <div class="chat-input-container">
-            <textarea id="chatInput" placeholder="Type a message..." class="chat-input" rows="1"></textarea>
-            <button id="sendBtn" class="send-btn" disabled>Send</button>
+            <textarea id="chatInput" placeholder="Scrivi un messaggio..." class="chat-input" rows="1"></textarea>
+            <button id="sendBtn" class="send-btn" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+            </button>
         </div>
     </section>
 
     <!-- Username Modal -->
-    <div id="usernameModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>👋 Welcome to Live Chat!</h2>
-            <p>Please enter your name to join the conversation:</p>
-            <input type="text" id="usernameInput" placeholder="Your name" class="username-input" maxlength="20" />
-            <button id="setUsernameBtn" class="primary-btn">Join Chat</button>
+    <div id="usernameModal" class="lm-modal" style="display:none">
+        <div class="lm-modal-content">
+            <h2 class="lm-modal-title">Entra nella chat</h2>
+            <p class="lm-modal-desc">Inserisci il tuo nome per partecipare:</p>
+            <input type="text" id="usernameInput" placeholder="Il tuo nome" class="username-input" maxlength="20"/>
+            <button id="setUsernameBtn" class="btn btn--primary btn--full">Entra</button>
         </div>
     </div>
 
-    <!-- Privacy Disclaimer Footer -->
-    <footer class="privacy-footer">
-        <span class="privacy-lock">🔒</span>
-        <span>Dati essenziali, no tracciamento.</span>
-        <a href="privacy.html">Privacy Policy</a>
-    </footer>
-
-    <!-- Back button (no auth required) -->
+    <!-- Back button handler -->
     <script>
-        // Setup back button (works for everyone)
         document.getElementById('backBtn').addEventListener('click', () => {
             window.location.href = 'index.html';
         });

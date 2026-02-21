@@ -1,65 +1,49 @@
 // ====================================
-// RM Volley Dashboard - JavaScript
+// RM Volley Dashboard
 // ====================================
 
-// Import utility functions
 import { debounce, throttleRAF, processInChunks, deepEqual } from './utils.js';
 
-// Global state
+// ==================== Global State ====================
 let allMatches = [];
 let filteredMatches = [];
 let teamsData = {};
-let currentTab = 'overview';
+let currentTab = 'home';
 let chartInstances = {};
-let standingsData = {}; // Store all standings data
-let config = null; // Configuration from config.json
-let firebaseDatabase = null; // Firebase database instance
-let lastChartData = null; // Cache for chart data to prevent unnecessary re-renders
+let standingsData = {};
+let config = null;
+let firebaseDatabase = null;
+let lastChartData = null;
 
 // ==================== Data Loading ====================
 
-/**
- * Load configuration from config.json
- */
 async function loadConfig() {
     try {
         const response = await fetch('config.json');
-        if (!response.ok) {
-            throw new Error('Config file not found');
-        }
+        if (!response.ok) throw new Error('Config file not found');
         config = await response.json();
-        console.log('✅ Configuration loaded:', config);
         return config;
     } catch (error) {
-        console.error('❌ Error loading config.json:', error);
         document.getElementById('loading').innerHTML = `
             <div class="empty-icon">⚠️</div>
             <h3>Errore Configurazione</h3>
-            <p style="font-size: 0.875rem; margin-top: 0.5rem;">File config.json non trovato o non valido</p>
+            <p>File config.json non trovato o non valido</p>
         `;
         throw error;
     }
 }
 
-/**
- * Load Excel file and initialize dashboard
- */
 async function loadExcelFile() {
     try {
-        // Load config first
         await loadConfig();
 
-        // Initialize Firebase for live match data
         try {
             const firebaseConfigModule = await import('./firebase-config.js');
             const firebaseConfig = firebaseConfigModule.default;
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             firebaseDatabase = firebase.database();
-            console.log('✅ Firebase initialized for live match data');
         } catch (error) {
-            console.warn('⚠️ Firebase not configured, live sets won\'t update:', error.message);
+            console.warn('Firebase not configured:', error.message);
         }
 
         const response = await fetch('Gare.xls');
@@ -69,46 +53,43 @@ async function loadExcelFile() {
         const data = XLSX.utils.sheet_to_json(firstSheet);
 
         allMatches = data;
-        await processData(); // Now async to prevent UI blocking
+        await processData();
         renderAll();
         loadStandings();
 
         document.getElementById('loading').style.display = 'none';
         document.querySelectorAll('.tab-content').forEach(tab => {
-            if (tab.id === 'overview-tab') {
-                tab.style.display = 'block';
-            }
+            if (tab.id === 'home-tab') tab.style.display = 'block';
         });
-
 
     } catch (error) {
         console.error('Error loading Excel file:', error);
         document.getElementById('loading').innerHTML = `
             <div class="empty-icon">⚠️</div>
             <h3>Errore nel caricamento</h3>
-            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Assicurati che Gare.xls sia disponibile</p>
+            <p>Assicurati che Gare.xls sia disponibile</p>
         `;
     }
 }
 
-/**
- * Load Standings JSON
- */
 async function loadStandings() {
     try {
         const response = await fetch('classifica.json');
         if (!response.ok) throw new Error('Classifica not found');
         standingsData = await response.json();
 
-        // Initialize pills and render first league
         populateLeagueSelector();
 
-        // Default to first league or Serie D
         const leagues = Object.keys(standingsData);
         if (leagues.length > 0) {
             const defaultLeague = leagues.find(l => l.includes('Serie D')) || leagues[0];
+            document.getElementById('leagueSelect').value = defaultLeague;
             renderStandings(defaultLeague);
         }
+
+        document.getElementById('leagueSelect').addEventListener('change', (e) => {
+            renderStandings(e.target.value);
+        });
 
     } catch (error) {
         console.error('Error loading standings:', error);
@@ -116,64 +97,35 @@ async function loadStandings() {
 }
 
 function populateLeagueSelector() {
-    const pillsContainer = document.getElementById('leaguePills');
-    pillsContainer.innerHTML = '';
-
-    Object.keys(standingsData).forEach((league, index) => {
-        const pill = document.createElement('button');
-        pill.className = 'league-pill';
-        pill.textContent = league;
-        pill.dataset.league = league;
-        
-        // Set first pill as active by default
-        if (index === 0 || league.includes('Serie D')) {
-            pill.classList.add('active');
-        }
-
-        pill.addEventListener('click', () => {
-            // Remove active from all pills
-            document.querySelectorAll('.league-pill').forEach(p => p.classList.remove('active'));
-            // Add active to clicked pill
-            pill.classList.add('active');
-            // Render standings
-            renderStandings(league);
-        });
-
-        pillsContainer.appendChild(pill);
+    const select = document.getElementById('leagueSelect');
+    select.innerHTML = '';
+    Object.keys(standingsData).forEach(league => {
+        const option = document.createElement('option');
+        option.value = league;
+        option.textContent = league;
+        select.appendChild(option);
     });
 }
 
 // ==================== Data Processing ====================
 
-/**
- * Process raw match data and calculate team statistics
- * Uses chunked processing to prevent UI blocking
- */
 async function processData() {
     teamsData = {};
     const rmTeams = new Set();
 
-    // Helper to identify teams based on config patterns
     function isRmTeam(name) {
         if (!name || !config) return false;
         const normalized = String(name).toUpperCase().replace(/\s+/g, ' ');
-        // Check against all configured patterns
-        return config.team.matchPatterns.some(pattern => {
-            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
-            return normalized.includes(patternNormalized);
-        });
+        return config.team.matchPatterns.some(pattern =>
+            normalized.includes(pattern.toUpperCase().replace(/\s+/g, ' '))
+        );
     }
 
-    // Find all RM Volley teams
     allMatches.forEach(match => {
-        const home = match.SquadraCasa;
-        const away = match.SquadraOspite;
-
-        if (isRmTeam(home)) rmTeams.add(home);
-        if (isRmTeam(away)) rmTeams.add(away);
+        if (isRmTeam(match.SquadraCasa)) rmTeams.add(match.SquadraCasa);
+        if (isRmTeam(match.SquadraOspite)) rmTeams.add(match.SquadraOspite);
     });
 
-    // Initialize team data with extended metrics
     rmTeams.forEach(team => {
         teamsData[team] = {
             name: team,
@@ -191,14 +143,12 @@ async function processData() {
             awayWins: 0,
             homeLosses: 0,
             awayLosses: 0,
-            winStreak: 0,
-            currentStreak: 0,
             longestWinStreak: 0,
+            currentStreak: 0,
             recentForm: []
         };
     });
 
-    // Process matches in chunks to prevent UI blocking
     await processInChunks(allMatches, (matchChunk) => {
         matchChunk.forEach(match => {
             const home = match.SquadraCasa;
@@ -222,7 +172,6 @@ async function processData() {
                     teamsData[team].setsWon += isHome ? homeSets : awaySets;
                     teamsData[team].setsLost += isHome ? awaySets : homeSets;
 
-                    // Calculate points from partials
                     if (match.Parziali) {
                         const sets = match.Parziali.split(' ').filter(s => s.trim());
                         sets.forEach(set => {
@@ -255,74 +204,32 @@ async function processData() {
                 }
             }
         });
-    }, 50); // Process 50 matches at a time
+    }, 50);
 
-    // Keep only last 5 form results
     Object.values(teamsData).forEach(team => {
         team.recentForm = team.recentForm.slice(-5);
         team.matches.sort((a, b) => parseDate(b.Data) - parseDate(a.Data));
     });
 
-    updateHeaderStats();
     populateFilters();
 }
 
-/**
- * Get category from team name
- */
 function getCategory(teamName) {
-    if (!config) return 'Sconosciuto';
+    if (!config) return '';
     const num = teamName.match(/#(\d+)/)?.[1];
-    return config.categories[num] || 'Sconosciuto';
+    return config.categories[num] || '';
 }
 
-/**
- * Get team badge emoji based on performance
- */
-function getTeamBadge(team) {
-    if (team.played === 0) return '⏳';
-    const winRate = team.wins / team.played;
-    if (winRate === 1) return '🔥';
-    if (winRate >= 0.8) return '⭐';
-    if (winRate >= 0.6) return '✅';
-    if (winRate >= 0.4) return '📊';
-    if (team.currentStreak >= 3) return '🚀';
-    if (team.currentStreak <= -3) return '⚠️';
-    return '🏐';
+function isRmTeamCheck(teamName) {
+    if (!teamName || !config) return false;
+    const normalized = String(teamName).toUpperCase().replace(/\s+/g, ' ');
+    return config.team.matchPatterns.some(pattern =>
+        normalized.includes(pattern.toUpperCase().replace(/\s+/g, ' '))
+    );
 }
 
-/**
- * Update header statistics
- */
-function updateHeaderStats() {
-    const totalPlayed = Object.values(teamsData).reduce((sum, team) => sum + team.played, 0);
-    const totalWins = Object.values(teamsData).reduce((sum, team) => sum + team.wins, 0);
-    const overallWinRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
-
-    // Update desktop header stats
-    document.getElementById('totalTeams').textContent = Object.keys(teamsData).length;
-    document.getElementById('totalMatches').textContent = allMatches.length;
-    document.getElementById('totalWins').textContent = totalWins;
-    document.getElementById('winRate').textContent = overallWinRate + '%';
-
-    // Update mobile stats (iOS card)
-    const totalTeamsMobile = document.getElementById('totalTeamsMobile');
-    const totalMatchesMobile = document.getElementById('totalMatchesMobile');
-    const totalWinsMobile = document.getElementById('totalWinsMobile');
-    const winRateMobile = document.getElementById('winRateMobile');
-
-    if (totalTeamsMobile) totalTeamsMobile.textContent = Object.keys(teamsData).length;
-    if (totalMatchesMobile) totalMatchesMobile.textContent = allMatches.length;
-    if (totalWinsMobile) totalWinsMobile.textContent = totalWins;
-    if (winRateMobile) winRateMobile.textContent = overallWinRate + '%';
-}
-
-/**
- * Populate filter dropdowns
- */
 function populateFilters() {
     const teams = [...new Set(Object.keys(teamsData))].sort();
-
     const teamSelect = document.getElementById('filterTeam');
     teamSelect.innerHTML = '<option value="">Tutte le squadre</option>';
     teams.forEach(team => {
@@ -333,12 +240,8 @@ function populateFilters() {
     });
 }
 
-// ==================== Rendering Functions ====================
+// ==================== Rendering ====================
 
-/**
- * Render all dashboard components
- * @param {Object} options - Rendering options to skip unchanged sections
- */
 function renderAll(options = {}) {
     const {
         skipCharts = false,
@@ -349,9 +252,7 @@ function renderAll(options = {}) {
 
     if (!skipToday) renderTodaysMatches();
     if (!skipStats) {
-        renderQuickStats();
-        renderInsights();
-        renderLeaderboard();
+        renderNextMatch();
         renderRecentMatches();
         renderTeams();
     }
@@ -361,163 +262,21 @@ function renderAll(options = {}) {
     }
     if (!skipCharts) {
         renderCharts();
-        renderDetailedInsights();
     }
 }
 
-/**
- * Render quick stats cards
- */
-function renderQuickStats() {
-    const container = document.getElementById('quickStats');
-    const totalPlayed = Object.values(teamsData).reduce((sum, t) => sum + t.played, 0);
-    const totalWins = Object.values(teamsData).reduce((sum, t) => sum + t.wins, 0);
-    const totalSetsWon = Object.values(teamsData).reduce((sum, t) => sum + t.setsWon, 0);
-    const totalSetsLost = Object.values(teamsData).reduce((sum, t) => sum + t.setsLost, 0);
-    const totalSets = totalSetsWon + totalSetsLost;
-    const totalPoints = Object.values(teamsData).reduce((sum, t) => sum + t.pointsScored, 0);
-    const avgPointsPerSet = totalSets > 0 ? Math.round(totalPoints / totalSets) : 0;
+// ---- Today's Matches ----
 
-    const bestTeam = Object.values(teamsData)
-        .filter(t => t.played > 0)
-        .sort((a, b) => (b.wins / b.played) - (a.wins / a.played))[0];
-
-    container.innerHTML = `
-        <div class="quick-stat-card">
-            <div class="quick-stat-icon">🎯</div>
-            <div class="quick-stat-value">${totalWins}/${totalPlayed}</div>
-            <div class="quick-stat-label">Vittorie Totali</div>
-        </div>
-        <div class="quick-stat-card">
-            <div class="quick-stat-icon">📊</div>
-            <div class="quick-stat-value">${totalSetsWon}</div>
-            <div class="quick-stat-label">Set Vinti</div>
-        </div>
-        <div class="quick-stat-card">
-            <div class="quick-stat-icon">⚡</div>
-            <div class="quick-stat-value">${avgPointsPerSet}</div>
-            <div class="quick-stat-label">Punti/Set (avg)</div>
-        </div>
-        <div class="quick-stat-card">
-            <div class="quick-stat-icon">🏆</div>
-            <div class="quick-stat-value">${bestTeam ? Math.round((bestTeam.wins / bestTeam.played) * 100) : 0}%</div>
-            <div class="quick-stat-label">Miglior Win Rate</div>
-        </div>
-    `;
-}
-
-/**
- * Render insights cards
- */
-function renderInsights() {
-    const container = document.getElementById('insightsGrid');
-    const teams = Object.values(teamsData).filter(t => t.played > 0);
-
-    const bestHome = teams.sort((a, b) => b.homeWins - a.homeWins)[0];
-    const bestAway = teams.sort((a, b) => b.awayWins - a.awayWins)[0];
-    const longestStreak = teams.sort((a, b) => b.longestWinStreak - a.longestWinStreak)[0];
-    const bestSetRatio = teams.sort((a, b) =>
-        (b.setsWon / (b.setsWon + b.setsLost)) - (a.setsWon / (a.setsWon + a.setsLost))
-    )[0];
-
-    container.innerHTML = `
-        <div class="insight-card">
-            <div class="insight-icon">🏠</div>
-            <div class="insight-title">Migliori in Casa</div>
-            <div class="insight-value">${bestHome?.homeWins || 0} vittorie</div>
-            <div class="insight-description">${bestHome?.name || 'N/A'}</div>
-        </div>
-        <div class="insight-card insight-card--away">
-            <div class="insight-icon">✈️</div>
-            <div class="insight-title">Migliori in Trasferta</div>
-            <div class="insight-value">${bestAway?.awayWins || 0} vittorie</div>
-            <div class="insight-description">${bestAway?.name || 'N/A'}</div>
-        </div>
-        <div class="insight-card insight-card--streak">
-            <div class="insight-icon">🔥</div>
-            <div class="insight-title">Striscia Più Lunga</div>
-            <div class="insight-value">${longestStreak?.longestWinStreak || 0} vittorie</div>
-            <div class="insight-description">${longestStreak?.name || 'N/A'}</div>
-        </div>
-        <div class="insight-card insight-card--sets">
-            <div class="insight-icon">📈</div>
-            <div class="insight-title">Miglior Rapporto Set</div>
-            <div class="insight-value">${bestSetRatio ? Math.round((bestSetRatio.setsWon / (bestSetRatio.setsWon + bestSetRatio.setsLost)) * 100) : 0}%</div>
-            <div class="insight-description">${bestSetRatio?.name || 'N/A'}</div>
-        </div>
-    `;
-}
-
-/**
- * Render leaderboard
- */
-function renderLeaderboard() {
-    const container = document.getElementById('leaderboardList');
-    const teams = Object.values(teamsData)
-        .filter(t => t.played > 0)
-        .sort((a, b) => (b.wins / b.played) - (a.wins / a.played))
-        .slice(0, 5);
-
-    container.innerHTML = teams.map((team, index) => {
-        const winRate = Math.round((team.wins / team.played) * 100);
-        const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
-
-        return `
-            <div class="leaderboard-item" data-team-name="${team.name}">
-                <div class="leaderboard-rank ${rankClass}">${index + 1}</div>
-                <div class="leaderboard-info">
-                    <div class="leaderboard-name">${team.name}</div>
-                    <div class="leaderboard-stats">${team.wins}V - ${team.losses}P • ${team.played} partite</div>
-                </div>
-                <div class="leaderboard-value">${winRate}%</div>
-            </div>
-        `;
-    }).join('');
-
-    // Add event delegation for leaderboard items (replaces inline onclick)
-    container.addEventListener('click', (e) => {
-        const item = e.target.closest('.leaderboard-item');
-        if (item) {
-            const teamName = item.dataset.teamName;
-            showTeamDetail(teamName);
-        }
-    });
-}
-
-/**
- * Render recent matches
- */
-/**
- * Render recent matches
- */
-function renderRecentMatches() {
-    const container = document.getElementById('recentMatchesList');
-    const recent = [...allMatches]
-        .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
-        .sort((a, b) => parseDate(b.Data) - parseDate(a.Data))
-        .slice(0, 5);
-
-    container.innerHTML = recent.map(match => createMatchCardHTML(match)).join('');
-}
-
-/**
- * Render today's matches section
- */
 async function renderTodaysMatches() {
     const section = document.getElementById('todaysMatchesSection');
     const container = document.getElementById('todaysMatchesList');
-
-    // Get today's date
     const today = new Date();
 
-    // Find matches scheduled for today
     const todaysMatches = allMatches.filter(match => {
         if (!match.Data) return false;
-        const matchDate = parseDate(match.Data);
-        return matchDate.toDateString() === today.toDateString();
+        return parseDate(match.Data).toDateString() === today.toDateString();
     });
 
-    // Hide section if no matches today
     if (todaysMatches.length === 0) {
         section.style.display = 'none';
         return;
@@ -525,316 +284,269 @@ async function renderTodaysMatches() {
 
     section.style.display = 'block';
 
-    // Sort by time
-    const sorted = todaysMatches.sort((a, b) => {
-        const timeA = a.Ora || '23:59';
-        const timeB = b.Ora || '23:59';
-        return timeA.localeCompare(timeB);
-    });
-
-    // Create cards concurrently and wait for all to complete
-    const cardPromises = sorted.map(match => createTodayMatchCardHTML(match));
-    const cards = await Promise.all(cardPromises);
+    const sorted = todaysMatches.sort((a, b) => (a.Ora || '23:59').localeCompare(b.Ora || '23:59'));
+    const cards = await Promise.all(sorted.map(m => createTodayMatchCardHTML(m)));
     container.innerHTML = cards.join('');
 }
-
 
 async function createTodayMatchCardHTML(match) {
     const now = new Date();
     const matchDate = parseDate(match.Data);
 
-    // Parse time (assuming format HH:MM)
     const timeParts = (match.Ora || '00:00').split(':');
     const matchTime = new Date(matchDate);
     matchTime.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
 
-    // Calculate time differences in milliseconds
-    const twelveHoursBefore = new Date(matchTime.getTime() - 12 * 60 * 60 * 1000);
     const tenMinutesBefore = new Date(matchTime.getTime() - 10 * 60 * 1000);
-    const twoHoursAfter = new Date(matchTime.getTime() + 2 * 60 * 60 * 1000);
+    const twoHoursAfter    = new Date(matchTime.getTime() + 2  * 60 * 60 * 1000);
+    const twelveHoursBefore = new Date(matchTime.getTime() - 12 * 60 * 60 * 1000);
 
-    // Determine if chat is available (12 hours before match)
-    const isChatAvailable = now >= twelveHoursBefore && now <= twoHoursAfter;
-
-    // Determine if match is live (10 minutes before match - for LIVE badge and score updates)
-    const isLive = now >= tenMinutesBefore && now <= twoHoursAfter;
+    const isLive      = now >= tenMinutesBefore && now <= twoHoursAfter;
+    const isChatAvail = now >= twelveHoursBefore && now <= twoHoursAfter;
     const isCompleted = match.StatoDescrizione === 'gara omologata' || match.StatoDescrizione === 'risultato ufficioso';
 
-    // Helper function to check if team matches config patterns
-    const isTeamMatch = (teamName) => {
-        if (!teamName || !config) return false;
-        const normalized = String(teamName).toUpperCase().replace(/\s+/g, ' ');
-        return config.team.matchPatterns.some(pattern => {
-            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
-            return normalized.includes(patternNormalized);
-        });
-    };
+    const isRmHome = isRmTeamCheck(match.SquadraCasa);
+    const isRmAway = isRmTeamCheck(match.SquadraOspite);
 
-    const isRmHome = isTeamMatch(match.SquadraCasa);
-    const isRmAway = isTeamMatch(match.SquadraOspite);
+    let homeScore = '', awayScore = '', homeWinner = false, awayWinner = false;
 
-    let homeScore = '';
-    let awayScore = '';
-    let homeWinner = false;
-    let awayWinner = false;
-
-    // For live matches, fetch set data from Firebase
     if (isLive && !isCompleted && firebaseDatabase) {
         try {
             const matchKey = `${match.SquadraCasa}_vs_${match.SquadraOspite}_${match.Data}`
-                .replace(/\s+/g, '_')
-                .replace(/\//g, '-')
-                .replace(/[.#$\[\]]/g, '_'); // Remove Firebase-invalid characters
-
-            const setsSnapshot = await firebaseDatabase.ref(`live-matches/${matchKey}/sets`).once('value');
-            const setsData = setsSnapshot.val();
-
+                .replace(/\s+/g, '_').replace(/\//g, '-').replace(/[.#$\[\]]/g, '_');
+            const snap = await firebaseDatabase.ref(`live-matches/${matchKey}/sets`).once('value');
+            const setsData = snap.val();
             if (setsData) {
-                // Count set wins
-                let homeSets = 0;
-                let awaySets = 0;
-
+                let hs = 0, as = 0;
                 Object.values(setsData).forEach(set => {
-                    if (set.home > set.away) homeSets++;
-                    else awaySets++;
+                    if (set.home > set.away) hs++; else as++;
                 });
-
-                homeScore = homeSets;
-                awayScore = awaySets;
-                homeWinner = homeSets > awaySets;
-                awayWinner = awaySets > homeSets;
+                homeScore = hs; awayScore = as;
+                homeWinner = hs > as; awayWinner = as > hs;
             }
-        } catch (error) {
-            console.warn('Could not fetch live sets:', error);
-        }
+        } catch (e) { console.warn('Could not fetch live sets:', e); }
     } else if (match.Risultato && match.Risultato.includes('-')) {
-        // For completed matches, use static result
-        const [homeSets, awaySets] = match.Risultato.split('-').map(s => parseInt(s.trim()));
-        homeScore = homeSets;
-        awayScore = awaySets;
-        homeWinner = homeSets > awaySets;
-        awayWinner = awaySets > homeSets;
+        const [hs, as] = match.Risultato.split('-').map(s => parseInt(s.trim()));
+        homeScore = hs; awayScore = as;
+        homeWinner = hs > as; awayWinner = as > hs;
     }
 
-    // Generate onclick handler for chat availability (12 hours before)
-    const onClickHandler = (isChatAvailable && !isCompleted) ?
-        `onclick="openLiveMatch(${JSON.stringify(match).replace(/"/g, '&quot;')})"` : '';
-    const cursorStyle = (isChatAvailable && !isCompleted) ? 'style="cursor: pointer;"' : '';
+    const clickHandler = (isChatAvail && !isCompleted)
+        ? `onclick="openLiveMatch(${JSON.stringify(match).replace(/"/g, '&quot;')})"` : '';
+    const cursorStyle = (isChatAvail && !isCompleted) ? 'style="cursor:pointer"' : '';
 
-    // Compact horizontal design
     return `
-        <div class="today-match-card ${isLive && !isCompleted ? 'today-match-live' : ''}" ${onClickHandler} ${cursorStyle} data-match-id="${match.SquadraCasa}_vs_${match.SquadraOspite}">
+        <div class="today-match-card ${isLive && !isCompleted ? 'today-match-live' : ''}"
+             ${clickHandler} ${cursorStyle}>
             <div class="today-match-header">
-                <div class="today-match-time">
-                    <span class="time-icon">🕐</span>
-                    <span class="time-text">${match.Ora || 'TBD'}</span>
-                </div>
-                ${isLive && !isCompleted ? '<div class="today-live-badge"><span class="today-live-dot"></span>LIVE</div>' : ''}
+                <span class="today-match-time">${match.Ora || 'TBD'}</span>
+                ${isLive && !isCompleted
+                    ? '<span class="today-live-badge"><span class="today-live-dot"></span>LIVE</span>'
+                    : ''}
             </div>
             <div class="today-match-body">
                 <div class="today-team-box ${isRmHome ? 'today-rm-team' : ''}">
-                    <div class="today-team-name">${match.SquadraCasa || 'TBD'}</div>
-                    ${homeScore !== '' ? `<div class="today-team-score ${homeWinner ? 'score-winner' : ''}">${homeScore}</div>` : ''}
+                    <span class="today-team-name">${match.SquadraCasa || 'TBD'}</span>
+                    ${homeScore !== '' ? `<span class="today-team-score ${homeWinner ? 'score-winner' : ''}">${homeScore}</span>` : ''}
                 </div>
-                <div class="today-match-vs">
-                    <div class="vs-circle">VS</div>
-                </div>
+                <div class="today-match-vs"><div class="vs-circle">vs</div></div>
                 <div class="today-team-box ${isRmAway ? 'today-rm-team' : ''}">
-                    <div class="today-team-name">${match.SquadraOspite || 'TBD'}</div>
-                    ${awayScore !== '' ? `<div class="today-team-score ${awayWinner ? 'score-winner' : ''}">${awayScore}</div>` : ''}
+                    <span class="today-team-name">${match.SquadraOspite || 'TBD'}</span>
+                    ${awayScore !== '' ? `<span class="today-team-score ${awayWinner ? 'score-winner' : ''}">${awayScore}</span>` : ''}
                 </div>
             </div>
+            ${match.Impianto ? `
             <div class="today-match-footer">
-                <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto || '')}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   class="today-venue-link"
-                   onclick="event.stopPropagation();">
-                    <span class="today-venue-icon">📍</span>
-                    <span class="today-venue-text">${match.Impianto || 'TBD'}</span>
+                <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto)}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="today-venue-link" onclick="event.stopPropagation()">
+                   📍 ${match.Impianto}
                 </a>
+            </div>` : ''}
+        </div>
+    `;
+}
+
+// ---- Next Match ----
+
+function renderNextMatch() {
+    const section = document.getElementById('nextMatchSection');
+    const container = document.getElementById('nextMatchCard');
+    const today = new Date();
+
+    const upcoming = allMatches
+        .filter(m => m.Data && parseDate(m.Data) > today && m.StatoDescrizione !== 'gara omologata')
+        .sort((a, b) => parseDate(a.Data) - parseDate(b.Data));
+
+    if (!upcoming.length) {
+        section.style.display = 'none';
+        return;
+    }
+
+    const match = upcoming[0];
+    const isRmHome = isRmTeamCheck(match.SquadraCasa);
+    const isRmAway = isRmTeamCheck(match.SquadraOspite);
+    const dateStr = parseDate(match.Data).toLocaleDateString('it-IT', { weekday:'short', day:'numeric', month:'short' });
+
+    section.style.display = 'block';
+    container.innerHTML = `
+        <div class="next-match-card card">
+            <div class="next-match-meta">
+                <span>${dateStr}</span>
+                <span>·</span>
+                <span>${match.Ora || 'TBD'}</span>
+                ${match.Campionato ? `<span>·</span><span>${match.Campionato}</span>` : ''}
+            </div>
+            <div class="next-match-body">
+                <span class="next-team-name${isRmHome ? ' rm' : ''}">${match.SquadraCasa || 'TBD'}</span>
+                <span class="next-vs">vs</span>
+                <span class="next-team-name${isRmAway ? ' rm' : ''}">${match.SquadraOspite || 'TBD'}</span>
             </div>
         </div>
     `;
 }
 
+// ---- Recent Matches (compact rows) ----
 
-/**
- * Render Standings with Podium + Card Layout
- */
+function renderRecentMatches() {
+    const container = document.getElementById('recentMatchesList');
+    const recent = [...allMatches]
+        .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
+        .sort((a, b) => parseDate(b.Data) - parseDate(a.Data))
+        .slice(0, 8);
+
+    if (!recent.length) {
+        container.innerHTML = '<div class="empty-state"><p>Nessun risultato disponibile</p></div>';
+        return;
+    }
+
+    container.innerHTML = recent.map(match => {
+        const date = parseDate(match.Data);
+        const dateStr = date.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit' });
+        const isRmHome = isRmTeamCheck(match.SquadraCasa);
+        const isRmAway = isRmTeamCheck(match.SquadraOspite);
+        const teams = `${match.SquadraCasa || '?'} – ${match.SquadraOspite || '?'}`;
+
+        let score = '', badgeClass = 'none', badgeText = '';
+        if (match.Risultato && match.Risultato.includes('-')) {
+            const [hs, as] = match.Risultato.split('-').map(s => parseInt(s.trim()));
+            score = `${hs}–${as}`;
+            if (isRmHome || isRmAway) {
+                const won = isRmHome ? hs > as : as > hs;
+                badgeClass = won ? 'win' : 'loss';
+                badgeText  = won ? 'V' : 'P';
+            }
+        }
+
+        return `
+            <div class="result-row">
+                <span class="result-date">${dateStr}</span>
+                <span class="result-teams">${teams}</span>
+                <span class="result-score">${score}</span>
+                ${badgeText ? `<span class="result-badge ${badgeClass}">${badgeText}</span>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+// ---- Standings ----
+
 function renderStandings(leagueName) {
-    const podiumContainer = document.getElementById('standingsPodium');
-    const listContainer = document.getElementById('standingsList');
+    const tbody = document.getElementById('standingsBody');
     const lastUpdate = document.getElementById('standingsLastUpdate');
     const data = standingsData[leagueName];
 
     if (lastUpdate) {
         const now = new Date();
-        lastUpdate.textContent = `Aggiornato: ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        lastUpdate.textContent = `Agg. ${now.toLocaleDateString()} ${now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
     }
 
     if (!data || data.length === 0) {
-        podiumContainer.innerHTML = '';
-        listContainer.innerHTML = `
-            <div class="empty-state-small">
-                <span>⚠️</span> Dati classifica non disponibili
-            </div>
-        `;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding:24px;color:var(--text-2)">Dati non disponibili</td></tr>`;
         return;
     }
 
-    // Render top 3 teams in podium
-    const top3 = data.slice(0, 3);
-    podiumContainer.innerHTML = top3.map((team, index) => {
-        const rankClass = index === 0 ? 'podium-gold' :
-            index === 1 ? 'podium-silver' : 'podium-bronze';
-        const rankEmoji = index === 0 ? '🥇' :
-            index === 1 ? '🥈' : '🥉';
-
-        const isRm = team.Squadra && config && config.team.matchPatterns.some(pattern => {
-            return team.Squadra.toUpperCase().includes(pattern.toUpperCase());
-        });
-
+    tbody.innerHTML = data.map((team, index) => {
+        const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+        const isRm = team.Squadra && config && config.team.matchPatterns.some(p =>
+            team.Squadra.toUpperCase().includes(p.toUpperCase())
+        );
         return `
-            <div class="podium-card ${rankClass} ${isRm ? 'podium-highlight' : ''}">
-                <div class="podium-rank">${rankEmoji}</div>
-                <div class="podium-team-name" title="${team.Squadra}">${team.Squadra}</div>
-                <div class="podium-points">${team.Punti}</div>
-                <div class="podium-points-label">Punti</div>
-                <div class="podium-stats">
-                    <div class="podium-stat">
-                        <span class="podium-stat-label">G</span>
-                        <span class="podium-stat-value">${team.PG}</span>
-                    </div>
-                    <div class="podium-stat">
-                        <span class="podium-stat-label">V</span>
-                        <span class="podium-stat-value">${team.PV}</span>
-                    </div>
-                    <div class="podium-stat">
-                        <span class="podium-stat-label">P</span>
-                        <span class="podium-stat-value">${team.PP}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    // Render remaining teams as card list
-    const remaining = data.slice(3);
-    if (remaining.length === 0) {
-        listContainer.innerHTML = '';
-        return;
-    }
-
-    listContainer.innerHTML = remaining.map((team, index) => {
-        const isRm = team.Squadra && config && config.team.matchPatterns.some(pattern => {
-            return team.Squadra.toUpperCase().includes(pattern.toUpperCase());
-        });
-
-        return `
-            <div class="standings-team-card ${isRm ? 'standings-team-highlight' : ''}">
-                <div class="standings-team-rank">${team['Pos.']}</div>
-                <div class="standings-team-info">
-                    <div class="standings-team-name" title="${team.Squadra}">${team.Squadra}</div>
-                    <div class="standings-team-stats-inline">
-                        <span class="standings-stat"><span class="standings-stat-label">G:</span> ${team.PG}</span>
-                        <span class="standings-stat"><span class="standings-stat-label">V:</span> ${team.PV}</span>
-                        <span class="standings-stat"><span class="standings-stat-label">P:</span> ${team.PP}</span>
-                        <span class="standings-stat standings-stat-desktop"><span class="standings-stat-label">SF:</span> ${team.SF}</span>
-                        <span class="standings-stat standings-stat-desktop"><span class="standings-stat-label">SS:</span> ${team.SS}</span>
-                    </div>
-                </div>
-                <div class="standings-team-points">${team.Punti}</div>
-            </div>
+            <tr class="${isRm ? 'highlight-row' : ''}">
+                <td class="text-center"><span class="rank-badge ${rankClass}">${team['Pos.']}</span></td>
+                <td><span class="team-name-standings" title="${team.Squadra}">${team.Squadra}</span></td>
+                <td class="text-center font-bold">${team.Punti}</td>
+                <td class="text-center">${team.PG}</td>
+                <td class="text-center">${team.PV}</td>
+                <td class="text-center">${team.PP}</td>
+                <td class="text-center col-hide">${team.SF}</td>
+                <td class="text-center col-hide">${team.SS}</td>
+            </tr>
         `;
     }).join('');
 }
 
-/**
- * Render teams grid
- */
+// ---- Teams ----
+
 function renderTeams() {
     const grid = document.getElementById('teamsGrid');
     const teams = Object.values(teamsData).sort((a, b) => {
-        const rateA = a.played > 0 ? a.wins / a.played : 0;
-        const rateB = b.played > 0 ? b.wins / b.played : 0;
-        return rateB - rateA;
+        const rA = a.played > 0 ? a.wins / a.played : 0;
+        const rB = b.played > 0 ? b.wins / b.played : 0;
+        return rB - rA;
     });
 
     grid.innerHTML = teams.map(team => {
         const winRate = team.played > 0 ? Math.round((team.wins / team.played) * 100) : 0;
-        const badge = getTeamBadge(team);
-        const toPlay = team.totalMatches - team.played;
-        const setRatio = team.setsWon + team.setsLost > 0 ?
-            (team.setsWon / (team.setsWon + team.setsLost) * 100).toFixed(0) : 0;
+        const toPlay  = team.totalMatches - team.played;
+        const setRate = team.setsWon + team.setsLost > 0
+            ? Math.round(team.setsWon / (team.setsWon + team.setsLost) * 100)
+            : 0;
 
         return `
-            <div class="team-card" onclick="showTeamDetail('${team.name}')">
-                <div class="team-header">
-                    <div>
-                        <div class="team-name">${team.name}</div>
-                        <div class="team-category">${team.category}</div>
-                    </div>
-                    <div class="team-badge">${badge}</div>
+            <div class="team-card" onclick="showTeamDetail('${team.name.replace(/'/g, "\\'")}')">
+                <div class="team-card-header">
+                    <div class="team-name">${team.name}</div>
+                    ${team.category ? `<div class="team-category">${team.category}</div>` : ''}
                 </div>
                 <div class="team-stats-row">
                     <div class="stat-box">
                         <div class="stat-box-value">${team.wins}</div>
-                        <div class="stat-box-label">Vittorie</div>
+                        <div class="stat-box-label">Vinte</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-box-value">${team.losses}</div>
-                        <div class="stat-box-label">Sconfitte</div>
+                        <div class="stat-box-label">Perse</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-box-value">${toPlay}</div>
-                        <div class="stat-box-label">Da giocare</div>
+                        <div class="stat-box-label">Res.</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-box-value">${setRatio}%</div>
-                        <div class="stat-box-label">Set %</div>
+                        <div class="stat-box-value">${winRate}%</div>
+                        <div class="stat-box-label">Win%</div>
                     </div>
-                </div>
-                <div class="performance-indicators">
-                    ${team.recentForm.map(f =>
-            `<span class="indicator"><span class="indicator-icon">${f === 'W' ? '✅' : '❌'}</span></span>`
-        ).join('')}
-                    ${team.currentStreak !== 0 ? `
-                        <span class="indicator">
-                            <span class="indicator-icon">${team.currentStreak > 0 ? '🔥' : '❄️'}</span>
-                            ${Math.abs(team.currentStreak)}
-                        </span>
-                    ` : ''}
-                </div>
-                <div class="win-rate-bar">
-                    <div class="win-rate-fill" style="width: ${winRate}%"></div>
-                </div>
-                <div class="win-rate-label">
-                    <span>Win Rate</span>
-                    <span><strong>${winRate}%</strong></span>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-/**
- * Apply filters to matches
- */
+// ---- Matches (Partite tab) ----
+
 function applyFilters() {
-    const teamFilter = document.getElementById('filterTeam').value;
+    const teamFilter   = document.getElementById('filterTeam').value;
     const statusFilter = document.getElementById('filterStatus').value;
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const searchTerm   = document.getElementById('searchInput').value.toLowerCase();
 
     filteredMatches = allMatches.filter(match => {
-        const matchTeam = teamFilter ?
-            (match.SquadraCasa === teamFilter || match.SquadraOspite === teamFilter) : true;
+        const matchTeam   = teamFilter   ? (match.SquadraCasa === teamFilter || match.SquadraOspite === teamFilter) : true;
         const matchStatus = statusFilter ? match.StatoDescrizione === statusFilter : true;
-        const matchSearch = searchTerm ?
-            (match.SquadraCasa?.toLowerCase().includes(searchTerm) ||
-                match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
-                match.Impianto?.toLowerCase().includes(searchTerm)) : true;
-
+        const matchSearch = searchTerm
+            ? (match.SquadraCasa?.toLowerCase().includes(searchTerm) ||
+               match.SquadraOspite?.toLowerCase().includes(searchTerm) ||
+               match.Impianto?.toLowerCase().includes(searchTerm))
+            : true;
         return matchTeam && matchStatus && matchSearch;
     });
 
@@ -842,9 +554,6 @@ function applyFilters() {
         `${filteredMatches.length} partite trovate`;
 }
 
-/**
- * Render filtered matches
- */
 function renderMatches() {
     const list = document.getElementById('matchesList');
 
@@ -859,458 +568,140 @@ function renderMatches() {
         return;
     }
 
-    // Sort based on status filter
     const statusFilter = document.getElementById('filterStatus').value;
-
     const sorted = [...filteredMatches].sort((a, b) => {
-        if (statusFilter === 'da disputare') {
-            // Ascending for future matches (upcoming first)
-            return parseDate(a.Data) - parseDate(b.Data);
-        } else {
-            // Descending for everything else (most recent first)
-            return parseDate(b.Data) - parseDate(a.Data);
-        }
+        if (statusFilter === 'da disputare') return parseDate(a.Data) - parseDate(b.Data);
+        return parseDate(b.Data) - parseDate(a.Data);
     });
 
     list.innerHTML = sorted.map(match => createMatchCardHTML(match)).join('');
 }
 
-/**
- * Create match card HTML
- */
 function createMatchCardHTML(match) {
     const date = parseDate(match.Data);
-    const day = date.getDate();
-    const month = date.toLocaleDateString('it-IT', { month: 'short' });
+    const dateStr = date.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
 
-    // Helper function to check if team matches config patterns
-    const isTeamMatch = (teamName) => {
-        if (!teamName || !config) return false;
-        const normalized = String(teamName).toUpperCase().replace(/\s+/g, ' ');
-        return config.team.matchPatterns.some(pattern => {
-            const patternNormalized = pattern.toUpperCase().replace(/\s+/g, ' ');
-            return normalized.includes(patternNormalized);
-        });
-    };
+    const isRmHome = isRmTeamCheck(match.SquadraCasa);
+    const isRmAway = isRmTeamCheck(match.SquadraOspite);
 
-    const isRmHome = isTeamMatch(match.SquadraCasa);
-    const isRmAway = isTeamMatch(match.SquadraOspite);
-
-    let statusClass = 'status-upcoming';
-    let statusText = 'Da giocare';
-
+    let statusClass = 'status-upcoming', statusText = 'Da giocare';
     if (match.StatoDescrizione === 'gara omologata') {
-        statusClass = 'status-played';
-        statusText = 'Completata';
+        statusClass = 'status-played'; statusText = 'Completata';
     } else if (match.StatoDescrizione === 'risultato ufficioso') {
-        statusClass = 'status-unofficial';
-        statusText = 'Non ufficiale';
+        statusClass = 'status-unofficial'; statusText = 'Non ufficiale';
     }
 
-    let homeScore = '';
-    let awayScore = '';
-    let homeWinner = false;
-    let awayWinner = false;
-    let setsHtml = '';
-
+    let scoreHtml = '', setsHtml = '';
     if (match.Risultato && match.Risultato.includes('-')) {
-        const [homeSets, awaySets] = match.Risultato.split('-').map(s => parseInt(s.trim()));
-        homeScore = homeSets;
-        awayScore = awaySets;
-        homeWinner = homeSets > awaySets;
-        awayWinner = awaySets > homeSets;
-
+        const [hs, as] = match.Risultato.split('-').map(s => parseInt(s.trim()));
+        scoreHtml = `${hs}–${as}`;
         if (match.Parziali) {
-            const sets = match.Parziali.split(' ').filter(s => s.trim());
-            setsHtml = `
-                <div class="sets-detail">
-                    ${sets.map(set => `<span class="set-score">${set}</span>`).join('')}
-                </div>
-            `;
+            const sets = match.Parziali.split(' ').filter(s => s.trim()).join(' · ');
+            setsHtml = `<div class="match-score-sets">${sets}</div>`;
         }
     }
+
+    const venueHtml = match.Impianto ? `
+        <div class="match-venue-row">
+            <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto)}"
+               target="_blank" rel="noopener noreferrer"
+               class="match-venue-link">
+               📍 ${match.Impianto}
+            </a>
+        </div>
+    ` : '';
 
     return `
         <div class="match-card">
-            <div class="match-header">
-                <div class="match-meta">
-                    <div class="match-date">
-                        <div class="match-day">${day}</div>
-                        <div class="match-month">${month}</div>
-                    </div>
-                    <div class="match-info">
-                        <div class="match-championship">${match.Campionato || 'N/A'}</div>
-                        <div class="match-time">⏰ ${match.Ora || 'TBD'}</div>
-                    </div>
-                </div>
-                <div class="match-status ${statusClass}">${statusText}</div>
+            <div class="match-card-header">
+                <span class="match-date-label">${dateStr}</span>
+                ${match.Ora ? `<span class="match-date-label">· ${match.Ora}</span>` : ''}
+                <span class="match-championship-label">${match.Campionato || ''}</span>
+                <span class="match-status ${statusClass}">${statusText}</span>
             </div>
-            <div class="match-teams">
-                <div class="team home ${isRmHome ? 'rm' : ''}">
-                    <div class="team-logo">${isRmHome ? '🏐' : getTeamInitials(match.SquadraCasa)}</div>
-                    <div class="team-details">
-                        <div class="team-name-match">${match.SquadraCasa || 'TBD'}</div>
-                    </div>
-                    ${homeScore !== '' ? `<div class="score-inline ${homeWinner ? 'winner' : ''}">${homeScore}</div>` : ''}
+            <div class="match-card-body">
+                <span class="match-team-name${isRmHome ? ' rm' : ''}">${match.SquadraCasa || 'TBD'}</span>
+                <div class="match-score-block">
+                    ${scoreHtml
+                        ? `<div class="match-score-main">${scoreHtml}</div>${setsHtml}`
+                        : '<div class="match-score-main" style="color:var(--text-3)">–</div>'
+                    }
                 </div>
-                <div class="team away ${isRmAway ? 'rm' : ''}">
-                    <div class="team-logo">${isRmAway ? '🏐' : getTeamInitials(match.SquadraOspite)}</div>
-                    <div class="team-details">
-                        <div class="team-name-match">${match.SquadraOspite || 'TBD'}</div>
-                    </div>
-                    ${awayScore !== '' ? `<div class="score-inline ${awayWinner ? 'winner' : ''}">${awayScore}</div>` : ''}
-                </div>
+                <span class="match-team-name-right${isRmAway ? ' rm' : ''}">${match.SquadraOspite || 'TBD'}</span>
             </div>
-            ${setsHtml}
-            <div class="match-venue">
-                <a href="https://maps.google.com/?q=${encodeURIComponent(match.Impianto || '')}" 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   style="color: inherit; text-decoration: none; display: block;"
-                   onclick="event.stopPropagation();">
-                    📍 ${match.Impianto || 'Impianto TBD'}
-                </a>
-            </div>
+            ${venueHtml}
         </div>
     `;
 }
 
-/**
- * Get team initials for logo
- */
-function getTeamInitials(teamName) {
-    if (!teamName) return '?';
-    const words = teamName.split(' ').filter(w => w.length > 2);
-    if (words.length >= 2) {
-        return words[0][0] + words[1][0];
-    }
-    return teamName.substring(0, 2).toUpperCase();
-}
+// ---- Charts ----
 
-/**
- * Parse date string to Date object
- */
-function parseDate(dateStr) {
-    if (!dateStr) return new Date();
-    const [day, month, year] = dateStr.split('/');
-    return new Date(year, month - 1, day);
-}
-
-/**
- * Render charts
- * Uses caching to avoid unnecessary chart recreations
- */
 function renderCharts() {
     const teams = Object.values(teamsData).filter(t => t.played > 0);
 
-    // Check if data changed using simple comparison
     const currentData = teams.map(t => ({
-        name: t.name,
-        wins: t.wins,
-        losses: t.losses,
-        setsWon: t.setsWon,
-        setsLost: t.setsLost
+        name: t.name, wins: t.wins, losses: t.losses,
+        setsWon: t.setsWon, setsLost: t.setsLost
     }));
 
-    // Skip re-render if data hasn't changed
-    if (lastChartData && deepEqual(currentData, lastChartData)) {
-        console.log('📊 Chart data unchanged, skipping re-render');
-        return;
-    }
-
+    if (lastChartData && deepEqual(currentData, lastChartData)) return;
     lastChartData = currentData;
 
-    // Destroy existing charts
     Object.values(chartInstances).forEach(chart => chart.destroy());
     chartInstances = {};
 
-    // Reuse teams variable from above for chart creation
+    const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { padding: 16, font: { size: 12, weight: '600' }, boxWidth: 12 }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.04)' } },
+            x: { grid: { display: false } }
+        }
+    };
 
-    // Wins Chart
+    const labels = teams.map(t => t.name.replace(/RM VOLLEY\s*/i, '').replace(/RMVOLLEY\s*/i, '').trim() || t.name.split(' ')[0]);
+
+    // Wins/Losses chart
     const winsCtx = document.getElementById('winsChart');
-    chartInstances.wins = new Chart(winsCtx, {
-        type: 'bar',
-        data: {
-            labels: teams.map(t => t.name.split(' ')[0]),
-            datasets: [{
-                label: 'Vittorie',
-                data: teams.map(t => t.wins),
-                backgroundColor: 'rgba(0, 102, 255, 0.8)',
-                borderRadius: 8,
-                borderWidth: 0
-            }, {
-                label: 'Sconfitte',
-                data: teams.map(t => t.losses),
-                backgroundColor: 'rgba(255, 61, 0, 0.6)',
-                borderRadius: 8,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12,
-                            weight: '600'
-                        }
-                    }
-                }
+    if (winsCtx) {
+        chartInstances.wins = new Chart(winsCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Vittorie',  data: teams.map(t => t.wins),   backgroundColor: 'rgba(37,99,235,0.75)',  borderRadius: 5, borderWidth: 0 },
+                    { label: 'Sconfitte', data: teams.map(t => t.losses), backgroundColor: 'rgba(239,68,68,0.5)',   borderRadius: 5, borderWidth: 0 }
+                ]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
+            options: { ...chartDefaults }
+        });
+    }
 
-    // Win Rate Chart
-    const winRateCtx = document.getElementById('winRateChart');
-    chartInstances.winRate = new Chart(winRateCtx, {
-        type: 'doughnut',
-        data: {
-            labels: teams.map(t => t.name.split(' ')[0]),
-            datasets: [{
-                data: teams.map(t => Math.round((t.wins / t.played) * 100)),
-                backgroundColor: [
-                    'rgba(0, 102, 255, 0.8)',
-                    'rgba(0, 212, 255, 0.8)',
-                    'rgba(0, 200, 83, 0.8)',
-                    'rgba(255, 179, 0, 0.8)',
-                    'rgba(255, 61, 0, 0.8)',
-                    'rgba(156, 39, 176, 0.8)'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12,
-                            weight: '600'
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => context.label + ': ' + context.parsed + '%'
-                    }
-                }
-            }
-        }
-    });
-
-    // Championship Chart
-    const champCtx = document.getElementById('championshipChart');
-    const champCounts = {};
-    allMatches.forEach(match => {
-        const champ = match.Campionato ? String(match.Campionato).trim() : 'Sconosciuto';
-        champCounts[champ] = (champCounts[champ] || 0) + 1;
-    });
-
-    const champEntries = Object.entries(champCounts).sort((a, b) => b[1] - a[1]);
-    const champLabels = champEntries.map(e => e[0]);
-    const champData = champEntries.map(e => e[1]);
-
-    chartInstances.championship = new Chart(champCtx, {
-        type: 'bar',
-        data: {
-            labels: champLabels,
-            datasets: [{
-                label: 'Partite',
-                data: champData,
-                backgroundColor: 'rgba(0, 102, 255, 0.8)',
-                borderRadius: 8,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
-
-    // Sets Chart
+    // Sets chart
     const setsCtx = document.getElementById('setsChart');
-    chartInstances.sets = new Chart(setsCtx, {
-        type: 'bar',
-        data: {
-            labels: teams.map(t => t.name.split(' ')[0]),
-            datasets: [{
-                label: 'Set Vinti',
-                data: teams.map(t => t.setsWon),
-                backgroundColor: 'rgba(0, 200, 83, 0.8)',
-                borderRadius: 8,
-                borderWidth: 0
-            }, {
-                label: 'Set Persi',
-                data: teams.map(t => t.setsLost),
-                backgroundColor: 'rgba(255, 61, 0, 0.6)',
-                borderRadius: 8,
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12,
-                            weight: '600'
-                        }
-                    }
-                }
+    if (setsCtx) {
+        chartInstances.sets = new Chart(setsCtx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Set Vinti', data: teams.map(t => t.setsWon),  backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 5, borderWidth: 0 },
+                    { label: 'Set Persi', data: teams.map(t => t.setsLost), backgroundColor: 'rgba(239,68,68,0.5)',  borderRadius: 5, borderWidth: 0 }
+                ]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.05)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
+            options: { ...chartDefaults }
+        });
+    }
 }
 
-/**
- * Render detailed insights
- */
-function renderDetailedInsights() {
-    const container = document.getElementById('detailedInsights');
-    const teams = Object.values(teamsData).filter(t => t.played > 0);
+// ==================== Team Detail Modal ====================
 
-    const totalPoints = teams.reduce((sum, t) => sum + t.pointsScored, 0);
-    const totalSets = teams.reduce((sum, t) => sum + t.setsWon + t.setsLost, 0);
-    const totalPlayed = teams.reduce((sum, t) => sum + t.played, 0);
-    const avgPointsPerMatch = totalPlayed > 0 ? (totalPoints / totalPlayed).toFixed(1) : 0;
-
-    container.innerHTML = `
-        <div class="chart-card" style="margin-bottom: 1rem;">
-            <h3 class="chart-title">📊 Analisi Dettagliata</h3>
-            <div style="padding: 1rem 0;">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                    <div class="stat-detail-card">
-                        <div class="stat-detail-value">${totalPoints}</div>
-                        <div class="stat-detail-label">Punti Totali</div>
-                    </div>
-                    <div class="stat-detail-card">
-                        <div class="stat-detail-value">${totalSets}</div>
-                        <div class="stat-detail-label">Set Totali</div>
-                    </div>
-                    <div class="stat-detail-card">
-                        <div class="stat-detail-value">${avgPointsPerMatch}</div>
-                        <div class="stat-detail-label">Punti/Partita</div>
-                    </div>
-                    <div class="stat-detail-card">
-                        <div class="stat-detail-value">${totalPlayed > 0 ? (totalSets / totalPlayed).toFixed(1) : 0}</div>
-                        <div class="stat-detail-label">Set/Partita</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        ${teams.map(team => {
-        const winRate = Math.round((team.wins / team.played) * 100);
-        const setRate = Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100);
-        const totalTeamSets = team.setsWon + team.setsLost;
-        const avgPoints = totalTeamSets > 0 ? (team.pointsScored / totalTeamSets).toFixed(1) : 0;
-
-        return `
-                <div class="chart-card" style="margin-bottom: 1rem;">
-                    <h3 class="chart-title">${team.name}</h3>
-                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
-                        <div class="stat-detail-card">
-                            <div class="stat-detail-value">${winRate}%</div>
-                            <div class="stat-detail-label">Win Rate</div>
-                        </div>
-                        <div class="stat-detail-card">
-                            <div class="stat-detail-value">${setRate}%</div>
-                            <div class="stat-detail-label">Set Rate</div>
-                        </div>
-                        <div class="stat-detail-card">
-                            <div class="stat-detail-value">${avgPoints}</div>
-                            <div class="stat-detail-label">Punti/Set</div>
-                        </div>
-                        <div class="stat-detail-card">
-                            <div class="stat-detail-value">${team.longestWinStreak}</div>
-                            <div class="stat-detail-label">Striscia Max</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <div class="indicator">
-                            <span class="indicator-icon">🏠</span>
-                            <span>${team.homeWins}V - ${team.homeLosses}P</span>
-                        </div>
-                        <div class="indicator">
-                            <span class="indicator-icon">✈️</span>
-                            <span>${team.awayWins}V - ${team.awayLosses}P</span>
-                        </div>
-                        ${team.currentStreak !== 0 ? `
-                            <div class="indicator">
-                                <span class="indicator-icon">${team.currentStreak > 0 ? '🔥' : '❄️'}</span>
-                                <span>Serie di ${Math.abs(team.currentStreak)}</span>
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-    }).join('')}
-    `;
-}
-
-/**
- * Show team detail modal
- */
 function showTeamDetail(teamName) {
     const team = teamsData[teamName];
     if (!team) return;
@@ -1320,14 +711,18 @@ function showTeamDetail(teamName) {
     document.getElementById('modalTeamName').textContent = team.name;
 
     const winRate = team.played > 0 ? Math.round((team.wins / team.played) * 100) : 0;
-    const setRate = team.setsWon + team.setsLost > 0 ?
-        Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100) : 0;
-    const totalTeamSets = team.setsWon + team.setsLost;
-    const avgPoints = totalTeamSets > 0 ? (team.pointsScored / totalTeamSets).toFixed(1) : 0;
+    const setRate = team.setsWon + team.setsLost > 0
+        ? Math.round((team.setsWon / (team.setsWon + team.setsLost)) * 100) : 0;
+    const totalSets = team.setsWon + team.setsLost;
+    const avgPoints = totalSets > 0 ? (team.pointsScored / totalSets).toFixed(1) : 0;
+
+    const recentMatches = team.matches
+        .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
+        .slice(0, 10);
 
     modalBody.innerHTML = `
         <div class="detail-section">
-            <h3 class="detail-section-title">📊 Statistiche Generali</h3>
+            <div class="detail-section-title">Statistiche</div>
             <div class="stats-grid">
                 <div class="stat-detail-card">
                     <div class="stat-detail-value">${team.wins}</div>
@@ -1346,20 +741,12 @@ function showTeamDetail(teamName) {
                     <div class="stat-detail-label">Set Vinti</div>
                 </div>
                 <div class="stat-detail-card">
-                    <div class="stat-detail-value">${team.setsLost}</div>
-                    <div class="stat-detail-label">Set Persi</div>
-                </div>
-                <div class="stat-detail-card">
                     <div class="stat-detail-value">${setRate}%</div>
                     <div class="stat-detail-label">Set Rate</div>
                 </div>
                 <div class="stat-detail-card">
                     <div class="stat-detail-value">${avgPoints}</div>
                     <div class="stat-detail-label">Punti/Set</div>
-                </div>
-                <div class="stat-detail-card">
-                    <div class="stat-detail-value">${team.longestWinStreak}</div>
-                    <div class="stat-detail-label">Striscia Max</div>
                 </div>
                 <div class="stat-detail-card">
                     <div class="stat-detail-value">${team.homeWins}V</div>
@@ -1369,251 +756,167 @@ function showTeamDetail(teamName) {
                     <div class="stat-detail-value">${team.awayWins}V</div>
                     <div class="stat-detail-label">Trasferta</div>
                 </div>
+                <div class="stat-detail-card">
+                    <div class="stat-detail-value">${team.longestWinStreak}</div>
+                    <div class="stat-detail-label">Striscia Max</div>
+                </div>
             </div>
         </div>
 
+        ${recentMatches.length ? `
         <div class="detail-section">
-            <h3 class="detail-section-title">📅 Ultime Partite</h3>
+            <div class="detail-section-title">Ultimi risultati</div>
             <div class="match-timeline">
-                ${team.matches
-            .filter(m => m.StatoDescrizione !== 'Da disputare' && m.Risultato)
-            .sort((a, b) => parseDate(b.Data) - parseDate(a.Data))
-            .slice(0, 10)
-            .map(match => {
-                const date = parseDate(match.Data);
-                const dateStr = date.toLocaleDateString('it-IT');
-                const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
-                const result = match.Risultato || 'Da disputare';
-
-                let dotClass = '';
-                let resultText = result;
-
-                if (result.includes('-')) {
-                    const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
-                    const won = match.isHome ? (s1 > s2) : (s2 > s1);
-                    dotClass = won ? 'win' : 'loss';
-                    resultText = won ? `✅ ${result}` : `❌ ${result}`;
-                }
-
-                return `
+                ${recentMatches.map(match => {
+                    const dateStr = parseDate(match.Data).toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit' });
+                    const opponent = match.isHome ? match.SquadraOspite : match.SquadraCasa;
+                    const result = match.Risultato || '';
+                    let dotClass = '', score = result;
+                    if (result.includes('-')) {
+                        const [s1, s2] = result.split('-').map(s => parseInt(s.trim()));
+                        const won = match.isHome ? s1 > s2 : s2 > s1;
+                        dotClass = won ? 'win' : 'loss';
+                        score = `${s1}–${s2}`;
+                    }
+                    return `
                         <div class="timeline-item">
                             <div class="timeline-dot ${dotClass}"></div>
-                            <div class="timeline-content">
-                                <div class="timeline-date">${dateStr}</div>
-                                <div class="timeline-match">${match.isHome ? 'vs' : '@'} ${opponent}</div>
-                                <div class="timeline-score">${resultText}</div>
-                            </div>
+                            <span class="timeline-date">${dateStr}</span>
+                            <span class="timeline-match">${match.isHome ? 'vs' : '@'} ${opponent}</span>
+                            <span class="timeline-score">${score}</span>
                         </div>
                     `;
-            }).join('')}
+                }).join('')}
             </div>
-        </div>
+        </div>` : ''}
     `;
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
-/**
- * Close team modal
- */
 function closeTeamModal() {
     document.getElementById('teamModal').classList.remove('active');
     document.body.style.overflow = '';
 }
 
+// ==================== Utility ====================
+
+function parseDate(dateStr) {
+    if (!dateStr) return new Date();
+    const [day, month, year] = dateStr.split('/');
+    return new Date(year, month - 1, day);
+}
+
 // ==================== Event Listeners ====================
 
-/**
- * Initialize event listeners
- */
+const TAB_TITLES = {
+    home:        'Home',
+    partite:     'Partite',
+    squadre:     'Squadre',
+    classifiche: 'Classifiche'
+};
+
+function switchTab(tabName) {
+    if (tabName === 'login' || tabName === 'logout' || tabName === 'scout' || tabName === 'social') return;
+
+    // Update sidebar nav items
+    document.querySelectorAll('.sidebar-nav-item[data-tab]').forEach(item => {
+        const isActive = item.dataset.tab === tabName;
+        item.classList.toggle('active', isActive);
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    // Update bottom nav items
+    document.querySelectorAll('.bottom-nav-item[data-tab]').forEach(item => {
+        const isActive = item.dataset.tab === tabName;
+        item.classList.toggle('active', isActive);
+        item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    // Show/hide tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        const show = content.id === `${tabName}-tab`;
+        content.classList.toggle('active', show);
+        content.style.display = show ? 'block' : 'none';
+    });
+
+    // Update mobile topbar title
+    const topbarTitle = document.getElementById('topbarTitle');
+    if (topbarTitle) topbarTitle.textContent = TAB_TITLES[tabName] || 'RM Volley';
+
+    currentTab = tabName;
+
+    // Scroll to top on mobile
+    if (window.innerWidth <= 768) window.scrollTo(0, 0);
+}
+
 function initializeEventListeners() {
-    // Tab navigation - support both desktop (.nav-tab) and iOS (.ios-tab)
-    const tabSelectors = ['.nav-tab', '.ios-tab'];
-
-    tabSelectors.forEach(selector => {
-        document.querySelectorAll(selector).forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-
-                // Ignore login/logout tabs (handled separately)
-                if (tabName === 'login' || tabName === 'logout') return;
-
-                // Update active tab for both navigation types
-                tabSelectors.forEach(sel => {
-                    document.querySelectorAll(sel).forEach(t => {
-                        if (t.dataset.tab === tabName) {
-                            t.classList.add('active');
-                            t.setAttribute('aria-selected', 'true');
-                        } else {
-                            t.classList.remove('active');
-                            t.setAttribute('aria-selected', 'false');
-                        }
-                    });
-                });
-
-                // Show corresponding content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    const shouldShow = content.id === (tabName + '-tab');
-                    content.classList.toggle('active', shouldShow);
-                    content.style.display = shouldShow ? 'block' : 'none';
-                });
-
-                // Update iOS large title
-                const largeTitle = document.getElementById('largeTitle');
-                if (largeTitle) {
-                    const titleMap = {
-                        'overview': 'Panoramica',
-                        'teams': 'Squadre',
-                        'matches': 'Partite',
-                        'stats': 'Statistiche',
-                        'insights': 'Insights'
-                    };
-                    largeTitle.textContent = titleMap[tabName] || 'RM Volley';
-                }
-
-                currentTab = tabName;
-
-                // Reset scroll to top when changing tabs on mobile
-                if (window.innerWidth <= 768) {
-                    window.scrollTo(0, 0);
-                }
-            });
+    // Tab navigation
+    document.querySelectorAll('[data-tab]').forEach(el => {
+        el.addEventListener('click', () => {
+            const tabName = el.dataset.tab;
+            if (!TAB_TITLES[tabName]) return; // only real tabs
+            switchTab(tabName);
         });
     });
 
-    // Filter event listeners with selective rendering
+    // Filters
     document.getElementById('filterTeam').addEventListener('change', () => {
-        applyFilters();
-        renderMatches(); // Only re-render matches, not everything
+        applyFilters(); renderMatches();
     });
     document.getElementById('filterStatus').addEventListener('change', () => {
-        applyFilters();
-        renderMatches(); // Only re-render matches, not everything
+        applyFilters(); renderMatches();
     });
-
-    // Debounced search input (300ms delay)
     document.getElementById('searchInput').addEventListener('input',
-        debounce(() => {
-            applyFilters();
-            renderMatches(); // Only re-render matches, not everything
-        }, 300)
+        debounce(() => { applyFilters(); renderMatches(); }, 300)
     );
 
-    // Pull to refresh functionality
-    let startY = 0;
-    let startX = 0;
-    let isPulling = false;
+    // Pull to refresh
+    let startY = 0, isPulling = false;
+    const indicator = document.getElementById('pullIndicator');
 
     document.addEventListener('touchstart', (e) => {
-        if (window.scrollY === 0) {
-            startY = e.touches[0].pageY;
-            startX = e.touches[0].pageX;
-            isPulling = false;
-        }
-    });
+        if (window.scrollY === 0) { startY = e.touches[0].pageY; isPulling = false; }
+    }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
         if (window.scrollY === 0 && startY > 0) {
-            const currentY = e.touches[0].pageY;
-            const currentX = e.touches[0].pageX;
-            const pullDistanceY = currentY - startY;
-            const pullDistanceX = Math.abs(currentX - startX);
-
-            // Only activate pull-to-refresh if:
-            // 1. Vertical movement is downward (pullDistanceY > 0)
-            // 2. Vertical movement exceeds horizontal movement (predominantly vertical gesture)
-            // 3. Vertical movement exceeds dead zone (10px)
-            if (pullDistanceY > 10 && pullDistanceY > pullDistanceX) {
-                if (pullDistanceY < 100) {
-                    isPulling = true;
-                    const indicator = document.getElementById('pullIndicator');
-                    indicator.style.opacity = Math.min(pullDistanceY / 100, 1);
-                    indicator.style.transform = `translateY(${Math.min(pullDistanceY, 80)}px)`;
-                }
-            } else {
-                // Reset if gesture is horizontal
-                isPulling = false;
+            const dist = e.touches[0].pageY - startY;
+            if (dist > 0 && dist < 120) {
+                isPulling = true;
+                indicator.style.opacity = Math.min(dist / 80, 1);
+                indicator.style.transform = `translateX(-50%) translateY(${Math.min(dist * 0.7, 70)}px)`;
             }
         }
-    });
+    }, { passive: true });
 
     document.addEventListener('touchend', () => {
-        const indicator = document.getElementById('pullIndicator');
         if (isPulling) {
-            const currentY = event.changedTouches ? event.changedTouches[0].pageY : startY;
-            const finalPullDistance = currentY - startY;
-            
             indicator.style.opacity = '0';
-            indicator.style.transform = 'translateY(-100%)';
-            
-            // Only reload if pull distance exceeds threshold (60px minimum)
-            if (finalPullDistance >= 60) {
-                location.reload();
-            }
+            indicator.style.transform = 'translateX(-50%) translateY(-80px)';
+            location.reload();
         }
         isPulling = false;
         startY = 0;
-        startX = 0;
     });
 
-    // iOS Large Title scroll behavior (throttled with requestAnimationFrame)
-    let lastScrollTop = 0;
-    const navTabs = document.querySelector('.nav-tabs');
-    const iosNavbar = document.querySelector('.ios-navbar');
-
-    const handleScroll = () => {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-        // iOS large title collapse behavior
-        if (iosNavbar && window.innerWidth <= 768) {
-            if (scrollTop > 50) {
-                iosNavbar.classList.add('scrolled');
-            } else {
-                iosNavbar.classList.remove('scrolled');
-            }
-        }
-
-        // Old navigation hiding behavior (for desktop if needed)
-        if (navTabs && window.innerWidth <= 639) {
-            if (scrollTop > lastScrollTop && scrollTop > 100) {
-                // Scrolling down
-                navTabs.classList.add('hidden');
-            } else {
-                // Scrolling up
-                navTabs.classList.remove('hidden');
-            }
-        }
-
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-    };
-
-    window.addEventListener('scroll', throttleRAF(handleScroll), false);
+    // Scroll: nothing fancy needed anymore
 }
-
-
-
-
-
 
 // ==================== Live Match Navigation ====================
 
-/**
- * Open live match page with match data
- */
-window.openLiveMatch = function (match) {
+window.openLiveMatch = function(match) {
     const matchData = encodeURIComponent(JSON.stringify(match));
     window.location.href = `live-match.html?match=${matchData}`;
 };
 
-// ==================== Initialization ====================
+// ==================== Init ====================
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
     loadExcelFile();
 });
 
-// Make closeTeamModal available globally
 window.closeTeamModal = closeTeamModal;
 window.showTeamDetail = showTeamDetail;

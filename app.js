@@ -96,13 +96,23 @@ async function loadStandings() {
     }
 }
 
+function shortLeagueName(name) {
+    if (!name) return '';
+    return name
+        .replace(/Seconda Div\. F/i, '2ª Div. F')
+        .replace(/Under (\d+) F/i, 'U$1 F')
+        .replace(/Gir\.\s*/i, 'Gir. ')
+        .replace(/Serie D Femminile/i, 'Serie D F')
+        .trim();
+}
+
 function populateLeagueSelector() {
     const select = document.getElementById('leagueSelect');
     select.innerHTML = '';
     Object.keys(standingsData).forEach(league => {
         const option = document.createElement('option');
         option.value = league;
-        option.textContent = league;
+        option.textContent = shortLeagueName(league);
         select.appendChild(option);
     });
 }
@@ -395,7 +405,7 @@ function renderNextMatch() {
                 <span>${dateStr}</span>
                 <span>·</span>
                 <span>${match.Ora || 'TBD'}</span>
-                ${match.Campionato ? `<span>·</span><span>${match.Campionato}</span>` : ''}
+                ${match.Campionato ? `<span>·</span><span>${shortChampionship(match.Campionato)}</span>` : ''}
             </div>
             <div class="next-match-body">
                 <span class="next-team-name${isRmHome ? ' rm' : ''}">${match.SquadraCasa || 'TBD'}</span>
@@ -616,7 +626,7 @@ function createMatchCardHTML(match) {
             <div class="match-card-header">
                 <span class="match-date-label">${dateStr}</span>
                 ${match.Ora ? `<span class="match-date-label">· ${match.Ora}</span>` : ''}
-                <span class="match-championship-label">${match.Campionato || ''}</span>
+                <span class="match-championship-label">${shortChampionship(match.Campionato)}</span>
                 <span class="match-status ${statusClass}">${statusText}</span>
             </div>
             <div class="match-card-body">
@@ -806,6 +816,16 @@ function parseDate(dateStr) {
     if (!dateStr) return new Date();
     const [day, month, year] = dateStr.split('/');
     return new Date(year, month - 1, day);
+}
+
+function shortChampionship(name) {
+    if (!name) return '';
+    return name
+        .replace(/SECONDA DIVISIONE FEMMINILE/i, '2ª Div. F')
+        .replace(/UNDER (\d+) FEMMINILE\s*/i, 'U$1 F ')
+        .replace(/\s*-\s*GIRONE\s*/i, ' Gir. ')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 // ==================== Event Listeners ====================

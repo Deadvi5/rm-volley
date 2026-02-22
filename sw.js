@@ -1,8 +1,8 @@
 // RM Volley Dashboard - Enhanced Service Worker
 // Strategic caching for offline capability
 
-const STATIC_CACHE = 'rm-volley-static-v5';
-const DATA_CACHE = 'rm-volley-data-v5';
+const STATIC_CACHE = 'rm-volley-static-v6';
+const DATA_CACHE = 'rm-volley-data-v6';
 
 // Critical static assets that should be cached immediately
 const staticAssets = [

@@ -473,13 +473,15 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 .today-team-name {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--text);
     flex: 1;
-    text-align: center;
-    line-height: 1.3;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.3;
 }
 
 .today-team-score {
@@ -516,8 +518,9 @@ button { font-family: inherit; cursor: pointer; }
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     color: var(--text-2);
+    overflow: hidden;
 }
 
 .today-venue-link {
@@ -526,6 +529,10 @@ button { font-family: inherit; cursor: pointer; }
     gap: 5px;
     color: var(--text-2);
     transition: color var(--transition);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .today-venue-link:hover { color: var(--accent); text-decoration: none; }
@@ -541,11 +548,14 @@ button { font-family: inherit; cursor: pointer; }
 .next-match-meta {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 6px;
     margin-bottom: 12px;
     font-size: 0.8125rem;
     color: var(--text-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .next-match-body {
@@ -557,11 +567,14 @@ button { font-family: inherit; cursor: pointer; }
 
 .next-team-name {
     flex: 1;
-    font-size: 1rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     color: var(--text);
     text-align: center;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .next-team-name.rm { color: var(--accent); }
@@ -597,10 +610,13 @@ button { font-family: inherit; cursor: pointer; }
 
 .result-teams {
     flex: 1;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--text);
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .result-score {
@@ -655,10 +671,14 @@ button { font-family: inherit; cursor: pointer; }
 }
 
 .match-championship-label {
-    font-size: 0.75rem;
-    color: var(--text-2);
+    font-size: 0.6875rem;
+    color: var(--text-3);
     font-weight: 500;
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .match-status {
@@ -680,25 +700,32 @@ button { font-family: inherit; cursor: pointer; }
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
 }
 
 .match-team-name {
     flex: 1;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text);
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .match-team-name.rm { color: var(--accent); }
 
 .match-team-name-right {
     flex: 1;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: var(--text);
     min-width: 0;
     text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .match-team-name-right.rm { color: var(--accent); }
@@ -742,6 +769,10 @@ button { font-family: inherit; cursor: pointer; }
     align-items: center;
     gap: 4px;
     transition: color var(--transition);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .match-venue-link:hover { color: var(--accent); text-decoration: none; }
@@ -967,6 +998,10 @@ button { font-family: inherit; cursor: pointer; }
 .team-name-standings {
     font-weight: 600;
     display: block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .highlight-row .team-name-standings { color: var(--accent); }
@@ -1151,10 +1186,13 @@ button { font-family: inherit; cursor: pointer; }
 
 .timeline-match {
     flex: 1;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     color: var(--text);
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .timeline-score {
@@ -1230,7 +1268,7 @@ button { font-family: inherit; cursor: pointer; }
     }
 
     .content-area {
-        padding: 20px 16px 24px;
+        padding: 16px 14px 20px;
     }
 
     .topbar    { display: flex; }
@@ -1241,44 +1279,275 @@ button { font-family: inherit; cursor: pointer; }
         margin-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Match card body: stack teams vertically on very small */
+    /* Today match cards: always 3-col horizontal on mobile */
     .today-match-body {
-        grid-template-columns: 1fr;
-        gap: 6px;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 8px;
+    }
+
+    .today-team-box {
+        padding: 6px 8px;
+        min-height: 36px;
+    }
+
+    .today-team-name {
+        font-size: 0.75rem;
+    }
+
+    .today-team-score {
+        font-size: 1.125rem;
     }
 
     .vs-circle {
-        margin: 0 auto;
-        width: 28px;
-        height: 28px;
-        font-size: 0.625rem;
+        width: 26px;
+        height: 26px;
+        font-size: 0.5625rem;
     }
 
     .col-hide { display: none; }
 
+    /* Standings */
     .standings-table th,
     .standings-table td {
-        padding: 9px 8px;
-        font-size: 0.875rem;
+        padding: 8px 6px;
+        font-size: 0.8125rem;
     }
 
+    .team-name-standings {
+        max-width: 120px;
+        font-size: 0.8125rem;
+    }
+
+    .rank-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
+    }
+
+    /* Teams grid */
     .teams-grid {
         grid-template-columns: 1fr;
     }
 
     .charts-grid { grid-template-columns: 1fr; }
 
-    .match-card-header { flex-wrap: wrap; }
+    /* Match card (Partite) */
+    .match-card {
+        padding: 12px 14px;
+    }
+
+    .match-card-header {
+        flex-wrap: nowrap;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .match-date-label {
+        font-size: 0.6875rem;
+        flex-shrink: 0;
+    }
+
+    .match-championship-label {
+        font-size: 0.625rem;
+    }
+
+    .match-team-name,
+    .match-team-name-right {
+        font-size: 0.8125rem;
+    }
+
+    .match-card-body {
+        gap: 6px;
+    }
+
+    .match-score-block {
+        min-width: 44px;
+    }
+
+    .match-score-main {
+        font-size: 1rem;
+    }
+
+    .match-venue-row {
+        font-size: 0.75rem;
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+
+    /* Result rows (Home tab) */
+    .result-row {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .result-date {
+        font-size: 0.6875rem;
+        width: 36px;
+    }
+
+    .result-teams {
+        font-size: 0.75rem;
+    }
+
+    .result-score {
+        font-size: 0.8125rem;
+    }
+
+    .result-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 0.625rem;
+    }
+
+    /* Next match */
+    .next-match-card {
+        padding: 14px;
+    }
+
+    .next-match-meta {
+        font-size: 0.75rem;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .next-team-name {
+        font-size: 0.8125rem;
+    }
+
+    /* Team cards */
+    .team-card {
+        padding: 14px;
+    }
 
     .team-stats-row { gap: 6px; }
 
     .stat-box { padding: 8px 4px; }
     .stat-box-value { font-size: 1.0625rem; }
+
+    /* Filter section */
+    .filters {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+    .filter-label {
+        font-size: 0.6875rem;
+    }
+
+    .filter-select,
+    .filter-input {
+        padding: 7px 8px;
+        font-size: 0.8125rem;
+    }
+
+    /* Section titles */
+    .section-title {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+
+    /* Standings header */
+    .standings-header {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .standings-controls {
+        width: 100%;
+    }
+
+    .standings-controls .filter-select {
+        flex: 1;
+    }
+
+    /* Modal */
+    .modal-body {
+        padding: 16px;
+    }
+
+    .timeline-item {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .timeline-date {
+        width: 44px;
+        font-size: 0.6875rem;
+    }
+
+    .timeline-match {
+        font-size: 0.75rem;
+    }
+
+    .timeline-score {
+        font-size: 0.8125rem;
+    }
+
+    /* Stats grid in modal */
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .stat-detail-card {
+        padding: 10px 6px;
+    }
+
+    .stat-detail-value {
+        font-size: 1.375rem;
+    }
+
+    .stat-detail-label {
+        font-size: 0.625rem;
+    }
+
+    /* Matches count */
+    .matches-count {
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+    }
 }
 
-@media (max-width: 480px) {
-    .today-match-body {
-        grid-template-columns: 1fr auto 1fr;
+/* ==================== Responsive — Small phones ==================== */
+@media (max-width: 380px) {
+    .content-area {
+        padding: 14px 12px 18px;
+    }
+
+    .today-team-name {
+        font-size: 0.6875rem;
+    }
+
+    .today-team-box {
+        padding: 5px 6px;
+        gap: 4px;
+    }
+
+    .match-team-name,
+    .match-team-name-right {
+        font-size: 0.75rem;
+    }
+
+    .match-score-block {
+        min-width: 40px;
+    }
+
+    .result-teams {
+        font-size: 0.6875rem;
+    }
+
+    .team-name-standings {
+        max-width: 100px;
+    }
+
+    .next-team-name {
+        font-size: 0.75rem;
+    }
+
+    .standings-table th,
+    .standings-table td {
+        padding: 7px 5px;
+        font-size: 0.75rem;
     }
 }
 

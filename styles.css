@@ -63,7 +63,6 @@ body {
     min-height: 100vh;
     /* Prevent iOS rubber-band horizontal scroll */
     width: 100%;
-    max-width: 100vw;
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -548,12 +547,15 @@ button { font-family: inherit; cursor: pointer; }
     margin-bottom: 12px;
     font-size: 0.8125rem;
     color: var(--text-2);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .next-match-body {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
 
 .next-team-name {
@@ -562,6 +564,10 @@ button { font-family: inherit; cursor: pointer; }
     font-weight: 700;
     color: var(--text);
     text-align: center;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .next-team-name.rm { color: var(--accent); }

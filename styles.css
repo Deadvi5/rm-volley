@@ -175,6 +175,7 @@ button { font-family: inherit; cursor: pointer; }
 .main-content {
     grid-column: 2;
     min-height: 100vh;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }

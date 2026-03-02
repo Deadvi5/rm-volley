@@ -1070,6 +1070,21 @@
   "Under 14 F Gir. E": [
     {
       "Pos.": 1,
+      "Squadra": "VOLLEY TEAM 03 PIACENZA",
+      "Punti": 34,
+      "PG": 12,
+      "PV": 11,
+      "PP": 1,
+      "SF": 35,
+      "SS": 3,
+      "QS": 1167,
+      "PF": 929,
+      "PS": 508,
+      "QP": 183,
+      "Penal.": 0
+    },
+    {
+      "Pos.": 2,
       "Squadra": "ARDAVOLLEY FIORENZUOLA",
       "Punti": 32,
       "PG": 11,
@@ -1081,21 +1096,6 @@
       "PF": 893,
       "PS": 543,
       "QP": 164,
-      "Penal.": 0
-    },
-    {
-      "Pos.": 2,
-      "Squadra": "VOLLEY TEAM 03 PIACENZA",
-      "Punti": 31,
-      "PG": 11,
-      "PV": 10,
-      "PP": 1,
-      "SF": 32,
-      "SS": 3,
-      "QS": 1067,
-      "PF": 852,
-      "PS": 444,
-      "QP": 192,
       "Penal.": 0
     },
     {
@@ -1117,15 +1117,15 @@
       "Pos.": 4,
       "Squadra": "KZERO U12 VAP",
       "Punti": 20,
-      "PG": 10,
+      "PG": 11,
       "PV": 7,
-      "PP": 3,
+      "PP": 4,
       "SF": 23,
-      "SS": 13,
-      "QS": 177,
-      "PF": 797,
-      "PS": 682,
-      "QP": 117,
+      "SS": 16,
+      "QS": 144,
+      "PF": 861,
+      "PS": 759,
+      "QP": 113,
       "Penal.": 0
     },
     {
